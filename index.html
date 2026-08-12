@@ -892,77 +892,59 @@
         });
 
         // ===== ONLINE: CREATE =====
-        // [FIX 9] Check room code uniqueness before creating
-        async function generateUniqueRoomCode() {
-            let code, attempts = 0;
-            do {
-                code = genRoomCode();
-                attempts++;
-                try {
-                    const snap = await db.ref('rooms/' + code).once('value');
-                    if (!snap.exists()) return code;
-                } catch (e) {
-                    console.warn('Room check failed, using code anyway:', code);
-                    return code; // fallback — use the code even if we can't check
-                }
-            } while (attempts < 5);
-            return code;
-        }
-
-        document.getElementById('create-room-btn').addEventListener('click', async () => {
+        document.getElementById('create-room-btn').addEventListener('click', () => {
+            console.log('Create room clicked');
             const btn = document.getElementById('create-room-btn');
             btn.disabled = true;
             stopOnlineCamera('create');
             onlineStarted = false;
 
-            try {
-                roomCode = await generateUniqueRoomCode();
-                playerIndex = 0;
-                photos = [null, null];
-                emojis = [null, null];
+            roomCode = genRoomCode();
+            playerIndex = 0;
+            photos = [null, null];
+            emojis = [null, null];
 
-                const p0 = onlineCreateData;
-                if (p0.photo) photos[0] = p0.photo;
-                else emojis[0] = p0.emoji;
+            const p0 = onlineCreateData;
+            if (p0.photo) photos[0] = p0.photo;
+            else emojis[0] = p0.emoji;
 
-                roomRef = db.ref('rooms/' + roomCode);
+            roomRef = db.ref('rooms/' + roomCode);
+            console.log('Creating room:', roomCode);
 
-                await roomRef.set({
-                    players: { 0: { emoji: p0.emoji, photo: p0.photo }, 1: null },
-                    board: Array(9).fill(null),
-                    turn: 0,
-                    scores: [0, 0, 0],
-                    created: Date.now()
-                });
-
-                // [FIX 6] Auto-cleanup if host disconnects
+            roomRef.set({
+                players: { 0: { emoji: p0.emoji, photo: p0.photo }, 1: null },
+                board: Array(9).fill(null),
+                turn: 0,
+                scores: [0, 0, 0],
+                created: Date.now()
+            }).then(() => {
+                console.log('Room created successfully');
                 roomRef.onDisconnect().remove();
 
-            // [FIX 4] Listen for Player 2 joining (once)
-            playerJoinListener = roomRef.child('players/1').on('value', snap => {
-                const p2 = snap.val();
-                if (p2 && !onlineStarted) {
-                    onlineStarted = true; // [FIX 4] guard
-                    if (p2.photo) { photos[1] = p2.photo; emojis[1] = null; }
-                    else { emojis[1] = p2.emoji; photos[1] = null; }
-                    // [FIX 4] Detach join listener before starting game
-                    roomRef.child('players/1').off('value', playerJoinListener);
-                    playerJoinListener = null;
-                    startOnlineGame();
-                }
-            });
+                // Listen for Player 2 joining
+                playerJoinListener = roomRef.child('players/1').on('value', snap => {
+                    const p2 = snap.val();
+                    if (p2 && !onlineStarted) {
+                        onlineStarted = true;
+                        if (p2.photo) { photos[1] = p2.photo; emojis[1] = null; }
+                        else { emojis[1] = p2.emoji; photos[1] = null; }
+                        roomRef.child('players/1').off('value', playerJoinListener);
+                        playerJoinListener = null;
+                        startOnlineGame();
+                    }
+                });
 
-            screenMode.classList.add('hidden');
-            screenWaiting.classList.remove('hidden');
-            document.getElementById('room-code-display').textContent = roomCode;
-            const url = window.location.origin + window.location.pathname + '?room=' + roomCode;
-            document.getElementById('share-url').textContent = url;
+                screenMode.classList.add('hidden');
+                screenWaiting.classList.remove('hidden');
+                document.getElementById('room-code-display').textContent = roomCode;
+                const url = window.location.origin + window.location.pathname + '?room=' + roomCode;
+                document.getElementById('share-url').textContent = url;
 
-            } catch (err) {
+            }).catch(err => {
                 console.error('Create room failed:', err);
-                showErr('Failed to create room. Check your connection and try again.');
+                showErr('Failed to create room: ' + err.message);
                 btn.disabled = false;
-            }
+            });
         });
 
         document.getElementById('share-url').addEventListener('click', () => {
@@ -998,16 +980,17 @@
             updateJoinBtnState(); // [FIX 5]
         });
 
-        document.getElementById('join-room-btn').addEventListener('click', async () => {
+        document.getElementById('join-room-btn').addEventListener('click', () => {
             const btn = document.getElementById('join-room-btn');
             btn.disabled = true;
             stopOnlineCamera('join');
             const code = document.getElementById('room-code-input').value.trim();
             document.getElementById('online-error').classList.add('hidden');
 
-            try {
-                const snapshot = await db.ref('rooms/' + code).once('value').catch(() => null);
-                if (!snapshot || !snapshot.exists()) {
+            console.log('Joining room:', code);
+
+            db.ref('rooms/' + code).once('value').then(snapshot => {
+                if (!snapshot.exists()) {
                     showErr('Room not found. Check the code.');
                     btn.disabled = false;
                     return;
@@ -1023,22 +1006,21 @@
                 if (p1.photo) photos[1] = p1.photo;
                 else emojis[1] = p1.emoji;
 
-                await roomRef.child('players/1').set({ emoji: p1.emoji, photo: p1.photo });
+                return roomRef.child('players/1').set({ emoji: p1.emoji, photo: p1.photo }).then(() => {
+                    roomRef.child('players/1').onDisconnect().remove();
 
-                // [FIX 6] Auto-cleanup if this player disconnects
-                roomRef.child('players/1').onDisconnect().remove();
+                    const data = snapshot.val();
+                    if (data.players[0].photo) photos[0] = data.players[0].photo;
+                    else emojis[0] = data.players[0].emoji;
 
-                const data = snapshot.val();
-                if (data.players[0].photo) photos[0] = data.players[0].photo;
-                else emojis[0] = data.players[0].emoji;
+                    startOnlineGame();
+                });
 
-                startOnlineGame();
-
-            } catch (err) {
+            }).catch(err => {
                 console.error('Join room failed:', err);
-                showErr('Failed to join room. Check your connection.');
+                showErr('Failed to join room: ' + err.message);
                 btn.disabled = false;
-            }
+            });
         });
 
         // ===== START ONLINE GAME =====
