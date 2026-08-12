@@ -256,6 +256,7 @@
         let gameListener = null, joinListener = null, onlineStarted = false;
         let onlinePickData = { emoji: null, photo: null };
         let autoRematchTimeout = null;
+        let moveInProgress = false;
         const state = { board: Array(9).fill(null), turn: 0, gameOver: false, scores: [0,0,0] };
 
         const $ = id => document.getElementById(id);
@@ -631,6 +632,7 @@
             gameListener = roomRef.on('value', snap => {
                 const d=snap.val();
                 if(!d){if(!state.gameOver)setTimeout(()=>leaveGame(),1500);return;}
+                if(moveInProgress)return;
                 const rb=d.board, nb=Array(9).fill(null);
                 if(rb&&typeof rb==='object'){for(let i=0;i<9;i++)if(rb[i]!=null)nb[i]=rb[i];}
                 state.board=nb; state.turn=d.turn!=null?d.turn:0;
@@ -694,10 +696,11 @@
             for(const[a,b,c]of WIN_LINES){if(state.board[a]!==null&&state.board[a]===state.board[b]&&state.board[a]===state.board[c]){w=state.board[a];wl=[a,b,c];break;}}
             const draw=w===null&&state.board.every(c=>c!==null);
             if(roomRef){
+                moveInProgress=true;
                 const nt=(w!==null||draw)?cur:1-cur;
                 const ns=[...state.scores];
                 if(w!==null)ns[w]++;else if(draw)ns[2]++;
-                roomRef.update({board:state.board,turn:nt,scores:ns,gameOver:w!==null||draw}).catch(()=>{});
+                roomRef.update({board:state.board,turn:nt,scores:ns,gameOver:w!==null||draw}).then(()=>{moveInProgress=false;}).catch(()=>{moveInProgress=false;});
                 state.scores=ns;renderBoard();
                 if(w!==null)endGame(w,wl);else if(draw)endGame(null);else{state.turn=1-cur;updateTurn();}
             }else{
