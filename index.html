@@ -362,16 +362,61 @@
 
             <!-- Create -->
             <div id="create-section" style="display:flex; flex-direction:column; align-items:center; gap:12px;">
-                <p style="font-size:0.8rem;">Pick your emoji, then create a room</p>
-                <div class="emoji-grid" id="online-emoji-grid"></div>
+                <p style="font-size:0.8rem;">Snap a photo or pick an emoji</p>
+                <div class="mode-tabs" id="online-input-toggle" style="margin-bottom:4px;">
+                    <button class="active" data-input="camera">📸 Photo</button>
+                    <button data-input="emoji">😀 Emoji</button>
+                </div>
+                <div id="online-camera-area">
+                    <div class="snap-box" id="online-snap-box" style="width:180px;height:180px;">
+                        <video id="online-camera-video" playsinline autoplay></video>
+                        <img class="captured" id="online-captured-img" alt="">
+                        <div class="countdown" id="online-countdown">3</div>
+                        <div class="flash" id="online-flash"></div>
+                    </div>
+                    <div style="display:flex;gap:8px;margin-top:8px;justify-content:center;">
+                        <button class="btn btn-primary btn-small" id="online-snap-btn">📸 Snap</button>
+                        <button class="btn btn-secondary btn-small hidden" id="online-retake-btn">Retake</button>
+                    </div>
+                </div>
+                <div id="online-emoji-area" style="display:none;">
+                    <div class="emoji-grid" id="online-emoji-grid"></div>
+                </div>
+                <div id="online-preview" style="display:none; text-align:center;">
+                    <div id="online-preview-img" style="font-size:1.5rem;"></div>
+                    <div style="font-size:0.7rem; color:var(--text-dim); margin-top:4px;">Ready!</div>
+                </div>
                 <button class="btn btn-primary" id="create-room-btn" disabled>Create Room</button>
             </div>
 
             <!-- Join -->
             <div id="join-section" style="display:none; flex-direction:column; align-items:center; gap:12px;">
-                <p style="font-size:0.8rem;">Enter the room code from your friend</p>
+                <p style="font-size:0.8rem;">Enter the room code, then pick your avatar</p>
                 <div class="join-input">
                     <input type="text" id="room-code-input" maxlength="6" placeholder="ABC123" autocomplete="off">
+                </div>
+                <div class="mode-tabs" id="join-input-toggle" style="margin-bottom:4px;">
+                    <button class="active" data-input="camera">📸 Photo</button>
+                    <button data-input="emoji">😀 Emoji</button>
+                </div>
+                <div id="join-camera-area">
+                    <div class="snap-box" id="join-snap-box" style="width:180px;height:180px;">
+                        <video id="join-camera-video" playsinline autoplay></video>
+                        <img class="captured" id="join-captured-img" alt="">
+                        <div class="countdown" id="join-countdown">3</div>
+                        <div class="flash" id="join-flash"></div>
+                    </div>
+                    <div style="display:flex;gap:8px;margin-top:8px;justify-content:center;">
+                        <button class="btn btn-primary btn-small" id="join-snap-btn">📸 Snap</button>
+                        <button class="btn btn-secondary btn-small hidden" id="join-retake-btn">Retake</button>
+                    </div>
+                </div>
+                <div id="join-emoji-area" style="display:none;">
+                    <div class="emoji-grid" id="join-emoji-grid"></div>
+                </div>
+                <div id="join-preview" style="display:none; text-align:center;">
+                    <div id="join-preview-img" style="font-size:1.5rem;"></div>
+                    <div style="font-size:0.7rem; color:var(--text-dim); margin-top:4px;">Ready!</div>
                 </div>
                 <button class="btn btn-primary" id="join-room-btn" disabled>Join Room</button>
             </div>
@@ -516,8 +561,14 @@
                 document.getElementById('local-section').style.flexDirection = 'column';
                 document.getElementById('local-section').style.alignItems = 'center';
                 document.getElementById('local-section').style.gap = '16px';
-                if (gameMode === 'online') stopCamera();
-                else if (inputMode === 'camera') startCamera();
+                if (gameMode === 'online') {
+                    stopCamera();
+                    setTimeout(() => startOnlineCamera('create'), 300);
+                } else {
+                    stopOnlineCamera('create');
+                    stopOnlineCamera('join');
+                    if (inputMode === 'camera') startCamera();
+                }
             });
         });
 
@@ -542,8 +593,142 @@
                 btn.classList.add('active');
                 document.getElementById('create-section').style.display = btn.dataset.role === 'create' ? 'flex' : 'none';
                 document.getElementById('join-section').style.display = btn.dataset.role === 'join' ? 'flex' : 'none';
+                // Start camera for whichever section is visible
+                if (btn.dataset.role === 'create') startOnlineCamera('create');
+                else startOnlineCamera('join');
             });
         });
+
+        // Online input toggles
+        function setupOnlineInputToggle(toggleId, role) {
+            document.querySelectorAll(`#${toggleId} button`).forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll(`#${toggleId} button`).forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    const isCam = btn.dataset.input === 'camera';
+                    document.getElementById(`${role}-camera-area`).style.display = isCam ? 'block' : 'none';
+                    document.getElementById(`${role}-emoji-area`).style.display = isCam ? 'none' : 'block';
+                    document.getElementById(`${role}-preview`).style.display = 'none';
+                    if (role === 'create') {
+                        onlineCreateData = { emoji: null, photo: null };
+                        document.getElementById('create-room-btn').disabled = true;
+                    } else {
+                        onlineJoinData = { emoji: null, photo: null };
+                        document.getElementById('join-room-btn').disabled = true;
+                    }
+                    if (isCam) startOnlineCamera(role);
+                    else stopOnlineCamera(role);
+                });
+            });
+        }
+        setupOnlineInputToggle('online-input-toggle', 'create');
+        setupOnlineInputToggle('join-input-toggle', 'join');
+
+        // Online camera streams
+        const onlineCameras = { create: null, join: null };
+
+        async function startOnlineCamera(role) {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'user', width: { ideal: 320 }, height: { ideal: 320 } }
+                });
+                onlineCameras[role] = stream;
+                document.getElementById(`${role}-camera-video`).srcObject = stream;
+                document.getElementById(`${role}-snap-btn`).disabled = false;
+            } catch (e) {
+                document.getElementById(`${role}-snap-btn`).disabled = true;
+            }
+        }
+
+        function stopOnlineCamera(role) {
+            if (onlineCameras[role]) {
+                onlineCameras[role].getTracks().forEach(t => t.stop());
+                onlineCameras[role] = null;
+            }
+        }
+
+        // Online snap handlers
+        function setupOnlineSnap(role) {
+            document.getElementById(`${role}-snap-btn`).addEventListener('click', async () => {
+                const btn = document.getElementById(`${role}-snap-btn`);
+                btn.disabled = true; sndTick();
+                let count = 3;
+                const cd = document.getElementById(`${role}-countdown`);
+                cd.textContent = count; cd.classList.add('show');
+                await new Promise(r => { const iv = setInterval(() => { count--; if(count>0){cd.textContent=count;sndTick();}else{clearInterval(iv);cd.classList.remove('show');r();}},700); });
+                sndSnap();
+                const fl = document.getElementById(`${role}-flash`); fl.classList.add('fire'); setTimeout(()=>fl.classList.remove('fire'),150);
+                const v = document.getElementById(`${role}-camera-video`);
+                const vw=v.videoWidth, vh=v.videoHeight, s=Math.min(vw,vh);
+                const tmp=document.createElement('canvas'); tmp.width=256; tmp.height=256;
+                tmp.getContext('2d').drawImage(v,(vw-s)/2,(vh-s)/2,s,s,0,0,256,256);
+                const fullPhoto = tmp.toDataURL('image/jpeg',0.85);
+                const smallPhoto = await resizePhoto(fullPhoto, 64);
+
+                if (role === 'create') {
+                    onlineCreateData = { emoji: null, photo: smallPhoto };
+                    document.getElementById('create-room-btn').disabled = false;
+                } else {
+                    onlineJoinData = { emoji: null, photo: smallPhoto };
+                    document.getElementById('join-room-btn').disabled = false;
+                }
+
+                v.style.display='none';
+                const ci = document.getElementById(`${role}-captured-img`);
+                ci.src = fullPhoto; ci.style.display='block';
+                document.getElementById(`${role}-snap-box`).classList.add('done');
+                btn.classList.add('hidden');
+                document.getElementById(`${role}-retake-btn`).classList.remove('hidden');
+                document.getElementById(`${role}-preview`).style.display = 'block';
+                document.getElementById(`${role}-preview-img`).innerHTML = `<img src="${smallPhoto}" style="width:48px;height:48px;border-radius:8px;object-fit:cover;transform:scaleX(-1);" alt="">`;
+                stopOnlineCamera(role);
+            });
+
+            document.getElementById(`${role}-retake-btn`).addEventListener('click', () => {
+                if (role === 'create') onlineCreateData = { emoji: null, photo: null };
+                else onlineJoinData = { emoji: null, photo: null };
+                document.getElementById(`${role}-camera-video`).style.display='block';
+                document.getElementById(`${role}-captured-img`).style.display='none';
+                document.getElementById(`${role}-snap-box`).classList.remove('done');
+                document.getElementById(`${role}-snap-btn`).classList.remove('hidden');
+                document.getElementById(`${role}-snap-btn').disabled=false;
+                document.getElementById(`${role}-retake-btn`).classList.add('hidden');
+                document.getElementById(`${role}-preview`).style.display='none';
+                if (role === 'create') document.getElementById('create-room-btn').disabled=true;
+                else document.getElementById('join-room-btn').disabled=true;
+                startOnlineCamera(role);
+            });
+        }
+        setupOnlineSnap('create');
+        setupOnlineSnap('join');
+
+        // Online emoji pickers
+        function buildOnlineEmojiGrid(gridId, role) {
+            const grid = document.getElementById(gridId);
+            grid.innerHTML = '';
+            EMOJIS.forEach(e => {
+                const btn = document.createElement('button');
+                btn.className = 'emoji-btn'; btn.textContent = e;
+                btn.addEventListener('click', () => {
+                    grid.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    if (role === 'create') {
+                        onlineCreateData = { emoji: e, photo: null };
+                        document.getElementById('create-room-btn').disabled = false;
+                        document.getElementById('create-preview').style.display = 'block';
+                        document.getElementById('create-preview-img').textContent = e;
+                    } else {
+                        onlineJoinData = { emoji: e, photo: null };
+                        document.getElementById('join-room-btn').disabled = false;
+                        document.getElementById('join-preview').style.display = 'block';
+                        document.getElementById('join-preview-img').textContent = e;
+                    }
+                });
+                grid.appendChild(btn);
+            });
+        }
+        buildOnlineEmojiGrid('online-emoji-grid', 'create');
+        buildOnlineEmojiGrid('join-emoji-grid', 'join');
 
         // ===== CAMERA =====
         async function startCamera() {
@@ -624,24 +809,7 @@
             });
         }
 
-        // ===== EMOJI PICKER (ONLINE) =====
-        let onlineEmoji = null;
-        function buildOnlineEmojiGrid() {
-            const grid = document.getElementById('online-emoji-grid');
-            grid.innerHTML = '';
-            EMOJIS.forEach(e => {
-                const btn = document.createElement('button');
-                btn.className = 'emoji-btn'; btn.textContent = e;
-                if (onlineEmoji === e) btn.classList.add('selected');
-                btn.addEventListener('click', () => {
-                    onlineEmoji = e;
-                    grid.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
-                    btn.classList.add('selected');
-                    document.getElementById('create-room-btn').disabled = false;
-                });
-                grid.appendChild(btn);
-            });
-        }
+        // (Online emoji grids built by buildOnlineEmojiGrid above)
 
         function updateLocalPicks() {
             ['p1-preview','p2-preview'].forEach((id,i) => {
@@ -680,6 +848,25 @@
         function isPhotoMode() { return photos[0] !== null && photos[1] !== null; }
         function genRoomCode() { return Math.random().toString(36).substring(2, 8).toUpperCase(); }
 
+        // Resize photo to 64x64 for online storage (~3-5KB)
+        function resizePhoto(dataUrl, size = 64) {
+            return new Promise(resolve => {
+                const img = new Image();
+                img.onload = () => {
+                    const c = document.createElement('canvas');
+                    c.width = size; c.height = size;
+                    const ctx = c.getContext('2d');
+                    ctx.drawImage(img, 0, 0, size, size);
+                    resolve(c.toDataURL('image/jpeg', 0.6));
+                };
+                img.src = dataUrl;
+            });
+        }
+
+        // Online input state
+        let onlineCreateData = { emoji: null, photo: null };
+        let onlineJoinData = { emoji: null, photo: null };
+
         // ===== LOCAL GAME =====
         document.getElementById('start-local-btn').addEventListener('click', () => {
             stopCamera();
@@ -694,14 +881,19 @@
 
         // ===== ONLINE: CREATE =====
         document.getElementById('create-room-btn').addEventListener('click', async () => {
+            stopOnlineCamera('create');
             roomCode = genRoomCode();
             playerIndex = 0;
             photos = [null, null];
-            emojis = [onlineEmoji, null];
+            emojis = [null, null];
+
+            const p0 = onlineCreateData;
+            if (p0.photo) photos[0] = p0.photo;
+            else emojis[0] = p0.emoji;
 
             roomRef = db.ref('rooms/' + roomCode);
             await roomRef.set({
-                players: { 0: { emoji: onlineEmoji, photo: null }, 1: null },
+                players: { 0: { emoji: p0.emoji, photo: p0.photo }, 1: null },
                 board: Array(9).fill(null),
                 turn: 0,
                 scores: [0, 0, 0],
@@ -712,8 +904,8 @@
             roomRef.child('players/1').on('value', snap => {
                 const p2 = snap.val();
                 if (p2) {
-                    emojis[1] = p2.emoji;
-                    photos[1] = p2.photo;
+                    if (p2.photo) { photos[1] = p2.photo; emojis[1] = null; }
+                    else { emojis[1] = p2.emoji; photos[1] = null; }
                     startOnlineGame();
                 }
             });
@@ -738,6 +930,7 @@
             roomRef = null; roomCode = null;
             screenWaiting.classList.add('hidden');
             screenMode.classList.remove('hidden');
+            startOnlineCamera('create');
         });
 
         // ===== ONLINE: JOIN =====
@@ -747,6 +940,7 @@
         });
 
         document.getElementById('join-room-btn').addEventListener('click', async () => {
+            stopOnlineCamera('join');
             const code = document.getElementById('room-code-input').value.trim();
             const errEl = document.getElementById('online-error');
             errEl.classList.add('hidden');
@@ -762,15 +956,18 @@
             playerIndex = 1;
             roomRef = db.ref('rooms/' + roomCode);
 
-            // Join as Player 2
-            emojis = [null, onlineEmoji];
+            const p1 = onlineJoinData;
+            emojis = [null, null];
             photos = [null, null];
-            await roomRef.child('players/1').set({ emoji: onlineEmoji, photo: null });
+            if (p1.photo) photos[1] = p1.photo;
+            else emojis[1] = p1.emoji;
 
-            // Load game state
+            await roomRef.child('players/1').set({ emoji: p1.emoji, photo: p1.photo });
+
+            // Load Player 1 data
             const data = snapshot.val();
-            emojis[0] = data.players[0].emoji;
-            photos[0] = data.players[0].photo;
+            if (data.players[0].photo) photos[0] = data.players[0].photo;
+            else emojis[0] = data.players[0].emoji;
 
             startOnlineGame();
         });
@@ -1020,12 +1217,18 @@
                 if (playerIndex === 0) roomRef.remove();
                 roomRef = null; roomCode = null; playerIndex = null;
             }
+            stopOnlineCamera('create');
+            stopOnlineCamera('join');
             screenGame.classList.add('hidden');
             screenWaiting.classList.add('hidden');
             resultOverlay.classList.remove('show');
             screenMode.classList.remove('hidden');
             resetLocalPicker();
-            buildOnlineEmojiGrid();
+            onlineCreateData = { emoji: null, photo: null };
+            onlineJoinData = { emoji: null, photo: null };
+            buildOnlineEmojiGrid('online-emoji-grid', 'create');
+            buildOnlineEmojiGrid('join-emoji-grid', 'join');
+            setTimeout(() => startOnlineCamera('create'), 300);
         }
 
         document.getElementById('leave-btn').addEventListener('click', leaveGame);
@@ -1067,8 +1270,9 @@
 
         // Init
         buildLocalEmojiGrid();
-        buildOnlineEmojiGrid();
         startCamera();
+        // Start online camera for create section (default visible)
+        setTimeout(() => startOnlineCamera('create'), 500);
     })();
     </script>
 </body>
