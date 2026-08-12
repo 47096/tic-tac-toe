@@ -224,7 +224,7 @@
         </div>
         <div class="ctrls">
             <button class="btn btn-sm" id="btn-restart">Restart</button>
-            <button class="btn btn-sm" id="btn-leave">Exit</button>
+            <button class="btn btn-sm" id="btn-leave">Back</button>
         </div>
     </div>
 
@@ -739,13 +739,12 @@
             let w=null,wl=null;
             for(const[a,b,c]of WIN_LINES){if(state.board[a]!==null&&state.board[a]===state.board[b]&&state.board[a]===state.board[c]){w=state.board[a];wl=[a,b,c];break;}}
             const draw=w===null&&state.board.every(c=>c!==null);
+            if(w!==null)state.scores[w]++;else if(draw)state.scores[2]++;
             if(roomRef){
                 moveInProgress=true;
                 const nt=(w!==null||draw)?cur:1-cur;
-                const ns=[...state.scores];
-                if(w!==null)ns[w]++;else if(draw)ns[2]++;
-                roomRef.update({board:state.board,turn:nt,scores:ns,gameOver:w!==null||draw}).then(()=>{moveInProgress=false;}).catch(()=>{moveInProgress=false;});
-                state.scores=ns;renderBoard();
+                roomRef.update({board:state.board,turn:nt,scores:state.scores,gameOver:w!==null||draw}).then(()=>{moveInProgress=false;}).catch(()=>{moveInProgress=false;});
+                renderBoard();
                 if(w!==null)endGame(w,wl);else if(draw)endGame(null);else{state.turn=1-cur;updateTurn();}
             }else{
                 renderBoard();
