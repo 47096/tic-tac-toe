@@ -1140,6 +1140,22 @@
                     }
                     launchConfetti();
                     setTimeout(() => resultOverlay.classList.add('show'), winner !== null ? 700 : 400);
+
+                    // Auto-rematch after 4 seconds
+                    setTimeout(() => {
+                        resultOverlay.classList.remove('show');
+                        clearWinLine();
+                        state.gameOver = false;
+                        // Reset board in Firebase (keep scores)
+                        if (roomRef) {
+                            roomRef.update({
+                                board: Array(9).fill(null),
+                                turn: 0,
+                                gameOver: false
+                            }).catch(() => {});
+                        }
+                        resetBoard();
+                    }, 4500);
                 }
             });
         }
@@ -1312,6 +1328,16 @@
             updateScores();
             launchConfetti();
             setTimeout(() => resultOverlay.classList.add('show'), winner !== null ? 700 : 400);
+
+            // Auto-rematch after 4 seconds (local mode only — online handled in listener)
+            if (playerIndex === null) {
+                setTimeout(() => {
+                    resultOverlay.classList.remove('show');
+                    clearWinLine();
+                    state.gameOver = false;
+                    resetBoard();
+                }, 4500);
+            }
         }
 
         // ===== WIN LINE =====
