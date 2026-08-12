@@ -1059,7 +1059,6 @@
             gameListener = roomRef.on('value', snap => {
                 const data = snap.val();
                 if (!data) {
-                    // [FIX 7] Room was deleted (host left)
                     if (!state.gameOver) {
                         showErr('Game ended — host left.');
                         setTimeout(() => leaveGame(), 2000);
@@ -1067,18 +1066,14 @@
                     return;
                 }
 
-                // Sync board — [FIX 2] handle sparse arrays from Firebase
+                // Sync board
                 const rawBoard = data.board;
-                const newBoard = Array.isArray(rawBoard) ? rawBoard : Array(9).fill(null);
-                // Fill any holes Firebase may have created
+                const newBoard = Array.isArray(rawBoard) ? [...rawBoard] : Array(9).fill(null);
                 for (let i = 0; i < 9; i++) { if (newBoard[i] === undefined) newBoard[i] = null; }
 
-                const newTurn = data.turn != null ? data.turn : 0;
-                const newScores = Array.isArray(data.scores) ? data.scores : [0,0,0];
-
                 state.board = newBoard;
-                state.turn = newTurn;
-                state.scores = newScores;
+                state.turn = data.turn != null ? data.turn : 0;
+                state.scores = Array.isArray(data.scores) ? [...data.scores] : [0,0,0];
 
                 // Sync player data
                 if (data.players && data.players[0]) {
@@ -1102,10 +1097,35 @@
                     notYourTurn.classList.remove('show');
                 }
 
-                // [FIX 1] Only check win if it was YOUR turn (the mover detects win)
-                // This prevents double-counting
-                if (playerIndex === null || state.turn !== playerIndex) {
-                    checkWinFromState();
+                // Check for game over from Firebase (winner already wrote scores)
+                if (data.gameOver && !state.gameOver) {
+                    state.gameOver = true;
+                    // Find the winning line
+                    let winner = null;
+                    let winLine = null;
+                    for (const [a,b,c] of WIN_LINES) {
+                        if (state.board[a] !== null && state.board[a] === state.board[b] && state.board[a] === state.board[c]) {
+                            winner = state.board[a]; winLine = [a,b,c]; break;
+                        }
+                    }
+                    if (winner !== null) {
+                        winLine.forEach(i => cells[i].classList.add('win-cell'));
+                        drawWinLine(winLine);
+                        sndWin();
+                        if (navigator.vibrate) navigator.vibrate([50,30,50]);
+                        if (playerHasPhoto(winner)) {
+                            resultVisual.innerHTML = `<img class="winner-img" src="${photos[winner]}" alt="">`;
+                        } else {
+                            resultVisual.innerHTML = `<div class="winner-emoji">${emojis[winner]}</div>`;
+                        }
+                        resultText.textContent = `Player ${winner + 1} Wins!`;
+                    } else {
+                        sndDraw();
+                        resultVisual.innerHTML = '<div class="draw-display">🤝</div>';
+                        resultText.textContent = "It's a Draw!";
+                    }
+                    launchConfetti();
+                    setTimeout(() => resultOverlay.classList.add('show'), winner !== null ? 700 : 400);
                 }
             });
         }
@@ -1194,58 +1214,68 @@
             if (state.gameOver || state.board[i] !== null) return;
             if (playerIndex !== null && state.turn !== playerIndex) return;
 
-            state.board[i] = state.turn;
+            const currentPlayer = state.turn;
+            state.board[i] = currentPlayer;
             sndPlace();
             if (navigator.vibrate) navigator.vibrate(10);
 
-            // [FIX 2] Atomic write — single update instead of two .set() calls
+            // Check win locally first
+            let winner = null;
+            let winLine = null;
+            for (const [a,b,c] of WIN_LINES) {
+                if (state.board[a] !== null && state.board[a] === state.board[b] && state.board[a] === state.board[c]) {
+                    winner = state.board[a]; winLine = [a,b,c]; break;
+                }
+            }
+            const isDraw = winner === null && state.board.every(c => c !== null);
+
             if (roomRef) {
-                fbCatch(roomRef.update({
+                // Online: single atomic write with everything
+                const nextTurn = (winner !== null || isDraw) ? currentPlayer : 1 - currentPlayer;
+                const newScores = [...state.scores];
+                if (winner !== null) newScores[winner]++;
+                else if (isDraw) newScores[2]++;
+
+                roomRef.update({
                     board: state.board,
-                    turn: 1 - state.turn
-                }), 'Move failed. Check connection.');
-                // [FIX 1] After writing, check if this move won (only the mover checks)
-                renderBoard();
-                checkWin();
-                if (!state.gameOver) { state.turn = 1 - state.turn; updateTurn(); }
-            }
+                    turn: nextTurn,
+                    scores: newScores,
+                    gameOver: winner !== null || isDraw
+                }).catch(err => console.error('Move failed:', err));
 
-            if (playerIndex === null) {
+                // Update local state
+                state.scores = newScores;
                 renderBoard();
-                checkWin();
-                if (!state.gameOver) { state.turn = 1 - state.turn; updateTurn(); }
-            }
-        }
-
-        function checkWin() {
-            for (const [a,b,c] of WIN_LINES) {
-                if (state.board[a] !== null && state.board[a] === state.board[b] && state.board[a] === state.board[c]) {
-                    endGame(state.board[a], [a,b,c]); return;
+                if (winner !== null) {
+                    endGame(winner, winLine);
+                } else if (isDraw) {
+                    endGame(null);
+                } else {
+                    state.turn = 1 - currentPlayer;
+                    updateTurn();
+                }
+            } else {
+                // Local game
+                renderBoard();
+                if (winner !== null) {
+                    endGame(winner, winLine);
+                } else if (isDraw) {
+                    endGame(null);
+                } else {
+                    state.turn = 1 - currentPlayer;
+                    updateTurn();
                 }
             }
-            if (state.board.every(c => c !== null)) endGame(null);
-        }
-
-        // [FIX 1] checkWinFromState — only for opponent's moves (read from Firebase)
-        function checkWinFromState() {
-            for (const [a,b,c] of WIN_LINES) {
-                if (state.board[a] !== null && state.board[a] === state.board[b] && state.board[a] === state.board[c]) {
-                    if (!state.gameOver) endGame(state.board[a], [a,b,c]);
-                    return;
-                }
-            }
-            if (state.board.every(c => c !== null) && !state.gameOver) endGame(null);
         }
 
         let lastWinLine = null;
 
-        // [FIX 1] Only the mover writes scores
+        // endGame — UI only (caller handles Firebase writes)
         function endGame(winner, winLine) {
             state.gameOver = true;
             lastWinLine = winLine;
 
-            if (winner !== null) {
-                state.scores[winner]++;
+            if (winner !== null && winLine) {
                 winLine.forEach(i => cells[i].classList.add('win-cell'));
                 drawWinLine(winLine);
                 sndWin();
@@ -1257,27 +1287,12 @@
                 }
                 resultText.textContent = `Player ${winner + 1} Wins!`;
             } else {
-                state.scores[2]++;
                 sndDraw();
                 resultVisual.innerHTML = '<div class="draw-display">🤝</div>';
                 resultText.textContent = "It's a Draw!";
             }
 
             updateScores();
-
-            // [FIX 1] Only the player who made the move writes scores to Firebase
-            // In online mode: the mover already called checkWin() after handleCellClick
-            // In online mode from checkWinFromState: we're the opponent, don't write
-            // Only write if this endGame was triggered by our own move (local or our handleCellClick)
-            if (roomRef && playerIndex !== null && state.turn === playerIndex) {
-                // We made the winning move — write scores
-                fbCatch(roomRef.update({ scores: state.scores, board: state.board }), 'Failed to update scores.');
-            } else if (roomRef && playerIndex === null) {
-                // Local game
-                fbCatch(roomRef.child('scores').set(state.scores), 'Failed to update scores.');
-            }
-            // If we're online and it wasn't our turn, the opponent will write scores
-
             launchConfetti();
             setTimeout(() => resultOverlay.classList.add('show'), winner !== null ? 700 : 400);
         }
