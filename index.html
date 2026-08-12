@@ -353,14 +353,21 @@
             btn.textContent = 'Opening camera…';
             btn.disabled = true;
             const preview = $('camera-preview');
+            const video = $('snap-video');
             try {
                 snapStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 320 }, height: { ideal: 320 } } });
-                const video = $('snap-video');
                 video.srcObject = snapStream;
+                // Wait until camera is actually playing
+                await new Promise((resolve, reject) => {
+                    video.onplaying = resolve;
+                    video.onerror = reject;
+                    setTimeout(reject, 5000); // 5s timeout
+                });
+                // Camera is ready — show preview
                 preview.style.display = 'block';
                 btn.textContent = '📸 Capturing…';
-                // Wait for camera to stabilize
-                await new Promise(r => setTimeout(r, 1200));
+                // Wait a bit for camera to stabilise
+                await new Promise(r => setTimeout(r, 1000));
                 // Capture
                 const vw = video.videoWidth, vh = video.videoHeight, s = Math.min(vw, vh);
                 const canvas = $('snap-canvas');
@@ -397,12 +404,13 @@
             } catch (e) {
                 console.error('Camera error:', e);
                 preview.style.display = 'none';
+                if (snapStream) { snapStream.getTracks().forEach(t => t.stop()); snapStream = null; }
                 if (e.name === 'NotAllowedError') {
-                    btn.textContent = '📸 Camera blocked — check Chrome settings';
+                    btn.textContent = '📸 Camera blocked — allow in Chrome settings';
                 } else if (e.name === 'NotFoundError') {
                     btn.textContent = '📸 No camera found';
                 } else {
-                    btn.textContent = '📸 Camera error: ' + e.name;
+                    btn.textContent = '📸 Camera error — try again';
                 }
                 setTimeout(() => { btn.textContent = '📸 Take photo instead'; btn.disabled = false; }, 3000);
             }
