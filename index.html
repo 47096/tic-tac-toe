@@ -38,6 +38,7 @@
         }
 
         .screen { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 16px; width: 100%; max-width: 500px; }
+        #local-section, #online-section { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 16px; }
         .screen.hidden { display: none; }
 
         .screen h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.03em; }
@@ -558,9 +559,6 @@
                 gameMode = btn.dataset.mode;
                 document.getElementById('local-section').style.display = gameMode === 'local' ? 'flex' : 'none';
                 document.getElementById('online-section').style.display = gameMode === 'online' ? 'flex' : 'none';
-                document.getElementById('local-section').style.flexDirection = 'column';
-                document.getElementById('local-section').style.alignItems = 'center';
-                document.getElementById('local-section').style.gap = '16px';
                 if (gameMode === 'online') {
                     stopCamera();
                     setTimeout(() => startOnlineCamera('create'), 300);
