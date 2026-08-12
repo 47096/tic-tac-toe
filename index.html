@@ -58,6 +58,7 @@
         .btn:hover { background: var(--text); color: var(--bg); }
         .btn:disabled { opacity: 0.25; cursor: default; background: transparent; color: var(--text-dim); border-color: var(--border); }
         .btn-sm { padding: 6px 14px; font-size: 0.65rem; }
+        .start-btn { margin-top: 12px; padding: 10px 28px; font-size: 0.75rem; letter-spacing: 0.08em; }
 
         .online-link { font-size: 0.65rem; color: var(--text-dim); cursor: pointer; letter-spacing: 0.05em; margin-top: 6px; }
         .online-link:hover { color: var(--text); }
@@ -157,6 +158,7 @@
                 <div class="box empty" id="p2-box">?</div>
             </div>
         </div>
+        <button class="btn start-btn hidden" id="start-btn">Start Game</button>
         <div class="online-link" id="go-online">Play with a friend online →</div>
     </div>
 
@@ -330,25 +332,39 @@
             }
         }
 
-        buildGrid('emoji-grid', (e) => {
+        buildGrid('emoji-grid', (e, btn) => {
+            // Toggle: if clicking same emoji, deselect it
+            if (picks[pickStep] === e) {
+                picks[pickStep] = null;
+                emojis[pickStep] = null;
+                photos[pickStep] = null;
+                updatePickerUI();
+                $('start-btn').classList.add('hidden');
+                return;
+            }
+
             picks[pickStep] = e;
             emojis[pickStep] = e;
             photos[pickStep] = null;
             updatePickerUI();
+
             if (pickStep === 0) {
                 pickStep = 1;
                 setTimeout(updatePickerUI, 300);
             } else {
-                // Both picked — auto-start after brief delay
-                setTimeout(() => {
-                    isOnline = false;
-                    playerIndex = null;
-                    $('picker').classList.add('hidden');
-                    $('game-screen').classList.remove('hidden');
-                    resetBoard();
-                    resizeConfetti();
-                }, 500);
+                // Both picked — show start button
+                $('start-btn').classList.remove('hidden');
             }
+        });
+
+        // Start Game button
+        $('start-btn').addEventListener('click', () => {
+            isOnline = false;
+            playerIndex = null;
+            $('picker').classList.add('hidden');
+            $('game-screen').classList.remove('hidden');
+            resetBoard();
+            resizeConfetti();
         });
 
         updatePickerUI();
@@ -466,6 +482,7 @@
             $('online-screen').classList.add('hidden');
             $('picker').classList.remove('hidden');
             picks = [null, null]; emojis = [null, null]; photos = [null, null]; pickStep = 0;
+            $('start-btn').classList.add('hidden');
             updatePickerUI();
         });
 
@@ -768,6 +785,7 @@
             $('online-screen').classList.add('hidden');
             resultOverlay.classList.remove('show');$('picker').classList.remove('hidden');
             picks=[null,null];emojis=[null,null];photos=[null,null];pickStep=0;
+            $('start-btn').classList.add('hidden');
             updatePickerUI();
         }
         $('leave-btn').addEventListener('click',continueGame);
