@@ -321,9 +321,11 @@
 
             // Mark used emojis
             document.querySelectorAll('#emoji-grid .e').forEach(btn => {
-                btn.classList.toggle('sel', btn.textContent === picks[0] || btn.textContent === picks[1]);
-                // Only mark as "used" if selected by the OTHER player
-                btn.classList.toggle('used', (picks[1] && btn.textContent === picks[1] && pickStep === 0) || (picks[0] && btn.textContent === picks[0] && pickStep === 1));
+                const isP1Emoji = picks[0] && btn.textContent === picks[0];
+                const isP2Emoji = picks[1] && btn.textContent === picks[1];
+                btn.classList.toggle('sel', isP1Emoji || isP2Emoji);
+                // Mark as "used" if selected by the OTHER player, or if both have selected
+                btn.classList.toggle('used', (isP1Emoji && pickStep === 1) || (isP2Emoji && pickStep === 0) || (picks[0] && picks[1] && (isP1Emoji || isP2Emoji)));
             });
 
             if (pickStep === 0) {
