@@ -161,7 +161,7 @@
                 <div class="pick-header active">Pick your emoji</div>
                 <div class="emoji-grid" id="online-emoji-grid"></div>
             </div>
-            <button class="btn" id="create-btn" disabled>Create Room</button>
+            <button class="btn" id="create-btn">Create Room</button>
         </div>
 
         <div id="join-area" style="display:none; flex-direction:column; align-items:center; gap:10px; width:100%;">
@@ -431,18 +431,19 @@
             });
         });
 
-        $('room-code-input').addEventListener('input', e => { e.target.value=e.target.value.toUpperCase(); updateJoinBtn(); });
-        function updateJoinBtn() { $('join-btn').disabled = !($('room-code-input').value.trim().length>=4 && onlinePickData.emoji); }
+        $('room-code-input').addEventListener('input', e => { e.target.value=e.target.value.toUpperCase(); $('join-btn').disabled = e.target.value.trim().length < 4; });
 
         // Create room
         $('create-btn').addEventListener('click', () => {
             const btn=$('create-btn'); btn.textContent='Creating…'; btn.disabled=true;
             isOnline=true; onlineStarted=false;
             roomCode = genCode(); playerIndex=0;
-            emojis=[onlinePickData.emoji,null]; photos=[null,null];
+            // Auto-pick random emoji if none selected
+            const myEmoji = onlinePickData.emoji || EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
+            emojis=[myEmoji,null]; photos=[null,null];
             roomRef = db.ref('rooms/'+roomCode);
             roomRef.set({
-                players:{0:{emoji:onlinePickData.emoji,photo:null},1:null},
+                players:{0:{emoji:myEmoji,photo:null},1:null},
                 board:Array(9).fill(null),turn:0,scores:[0,0,0],gameOver:false,created:Date.now()
             }).then(() => {
                 roomRef.onDisconnect().remove();
@@ -488,11 +489,12 @@
             const code=$('room-code-input').value.trim();
             $('online-error').classList.add('hidden');
             isOnline=true;
+            const myEmoji = onlinePickData.emoji || EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
             db.ref('rooms/'+code).once('value').then(snap => {
                 if(!snap.exists()){$('online-error').textContent='Room not found.';$('online-error').classList.remove('hidden');btn.textContent='Join Room';btn.disabled=false;return;}
                 roomCode=code; playerIndex=1; roomRef=db.ref('rooms/'+roomCode);
-                emojis=[null,onlinePickData.emoji]; photos=[null,null];
-                return roomRef.child('players/1').set({emoji:onlinePickData.emoji,photo:null}).then(()=>{
+                emojis=[null,myEmoji]; photos=[null,null];
+                return roomRef.child('players/1').set({emoji:myEmoji,photo:null}).then(()=>{
                     roomRef.child('players/1').onDisconnect().remove();
                     return roomRef.once('value');
                 });
