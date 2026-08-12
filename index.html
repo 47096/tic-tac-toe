@@ -15,11 +15,6 @@
             --text: #1a1a1a;
             --text-dim: #bbb;
             --border: #e0e0e0;
-            --accent: #1a1a1a;
-            --accent-dim: #999;
-            --x-color: #1a1a1a;
-            --o-color: #999;
-            --win: #1a1a1a;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -28,296 +23,191 @@
             font-family: 'Helvetica Neue', 'Arial', sans-serif;
             background: var(--bg);
             color: var(--text);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            overflow-x: hidden;
-            -webkit-user-select: none;
-            user-select: none;
+            height: 100vh; width: 100vw;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            overflow: hidden;
+            -webkit-user-select: none; user-select: none;
         }
 
-        .screen { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 16px; width: 100%; max-width: 460px; }
-        .sections-wrapper { width: 100%; min-height: 400px; display: flex; flex-direction: column; align-items: center; }
-        #local-section, #online-section { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+        .screen { display: flex; flex-direction: column; align-items: center; gap: 14px; width: 100%; max-width: 400px; padding: 16px; }
         .screen.hidden { display: none; }
 
-        .screen h1 { font-size: 1.1rem; font-weight: 300; letter-spacing: 0.3em; text-transform: uppercase; }
-        .screen .sub { font-size: 0.6rem; color: var(--text-dim); letter-spacing: 0.2em; }
+        h1 { font-size: 1.1rem; font-weight: 300; letter-spacing: 0.3em; text-transform: uppercase; }
+        .sub { font-size: 0.6rem; color: var(--text-dim); letter-spacing: 0.15em; }
 
-        .mode-tabs { display: flex; gap: 3px; padding: 3px; border-radius: 8px; background: var(--surface); }
-        .mode-tabs button { padding: 8px 18px; border: none; border-radius: 7px; background: transparent; color: var(--text-dim); font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.15s; }
-        .mode-tabs button.active { background: var(--bg); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+        /* Picker */
+        .pick-section { width: 100%; }
+        .pick-header { font-size: 0.7rem; color: var(--text-dim); letter-spacing: 0.1em; margin-bottom: 6px; text-align: center; }
+        .pick-header.active { color: var(--text); font-weight: 600; }
+        .emoji-grid { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; margin-bottom: 10px; }
+        .emoji-grid .e { width: 40px; height: 40px; font-size: 1.3rem; border: 1px solid var(--border); background: var(--bg); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+        .emoji-grid .e:hover { border-color: var(--text-dim); }
+        .emoji-grid .e.sel { border-color: var(--text); background: var(--surface); }
+        .emoji-grid .e.used { opacity: 0.2; pointer-events: none; }
 
-        .input-tabs { display: flex; gap: 2px; padding: 2px; border-radius: 6px; background: var(--surface); }
-        .input-tabs button { padding: 5px 12px; border: none; border-radius: 5px; background: transparent; color: var(--text-dim); font-size: 0.65rem; font-weight: 600; cursor: pointer; transition: all 0.15s; }
-        .input-tabs button.active { background: var(--bg); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .pick-preview { display: flex; gap: 16px; align-items: center; justify-content: center; margin-bottom: 8px; }
+        .pick-card { text-align: center; }
+        .pick-card .label { font-size: 0.55rem; color: var(--text-dim); letter-spacing: 0.1em; margin-bottom: 3px; }
+        .pick-card .box { width: 44px; height: 44px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; background: var(--surface); }
+        .pick-card .box.filled { border-color: var(--text); }
+        .pick-card .box.empty { border-style: dashed; color: var(--text-dim); font-size: 1rem; }
 
-        .step-label { font-size: 0.7rem; font-weight: 600; color: var(--text-dim); padding: 4px 12px; border-radius: 14px; border: 1px solid var(--border); }
+        .btn-row { display: flex; gap: 8px; margin-top: 4px; }
+        .btn { padding: 10px 24px; border: 1px solid var(--text); background: transparent; color: var(--text); font-size: 0.8rem; font-weight: 600; cursor: pointer; letter-spacing: 0.1em; transition: all 0.15s; }
+        .btn:hover { background: var(--text); color: var(--bg); }
+        .btn:disabled { opacity: 0.25; cursor: default; background: transparent; color: var(--text-dim); border-color: var(--border); }
+        .btn-sm { padding: 6px 14px; font-size: 0.65rem; }
 
-        .snap-box { position: relative; width: 200px; height: 200px; border-radius: 8px; overflow: hidden; background: var(--surface); border: 1px solid var(--border); }
-        .snap-box video { width:100%; height:100%; object-fit:cover; transform:scaleX(-1); }
-        .snap-box .captured { width:100%; height:100%; object-fit:cover; transform:scaleX(-1); display:none; }
-        .snap-box .countdown { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:2.5rem; font-weight:200; color:var(--text); opacity:0; pointer-events:none; }
-        .snap-box .countdown.show { opacity:1; }
-        .snap-box .flash { position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none; }
-        .snap-box .flash.fire { opacity:0.8; transition:opacity 0.05s; }
-        .snap-box.done { border-color: var(--text); }
+        .online-link { font-size: 0.65rem; color: var(--text-dim); cursor: pointer; letter-spacing: 0.05em; margin-top: 6px; }
+        .online-link:hover { color: var(--text); }
 
-        .emoji-grid { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; max-width: 260px; }
-        .emoji-grid .emoji-btn { width: 38px; height: 38px; font-size: 1.2rem; border: 1px solid var(--border); background: var(--bg); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
-        .emoji-grid .emoji-btn:hover { border-color: var(--text-dim); }
-        .emoji-grid .emoji-btn.selected { border-color: var(--text); background: var(--surface); }
-        .emoji-grid .emoji-btn.taken { opacity: 0.25; pointer-events: none; }
+        /* Online */
+        .online-tabs { display: flex; gap: 2px; padding: 2px; border-radius: 6px; background: var(--surface); margin-bottom: 10px; }
+        .online-tabs button { padding: 6px 14px; border: none; border-radius: 5px; background: transparent; color: var(--text-dim); font-size: 0.65rem; font-weight: 600; cursor: pointer; }
+        .online-tabs button.active { background: var(--bg); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
 
-        .picks-row { display: flex; gap: 18px; align-items: center; }
-        .pick-card { display: flex; flex-direction: column; align-items: center; gap: 3px; }
-        .pick-card .pick-label { font-size: 0.6rem; color: var(--text-dim); letter-spacing: 0.1em; }
-        .pick-card .pick-img { width: 48px; height: 48px; border-radius: 6px; object-fit: cover; border: 1px solid var(--border); transform: scaleX(-1); }
-        .pick-card .pick-emoji { width: 48px; height: 48px; border-radius: 6px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; background: var(--surface); }
-        .pick-card .pick-placeholder { width: 48px; height: 48px; border-radius: 6px; border: 1px dashed var(--border); display: flex; align-items: center; justify-content: center; font-size: 1rem; color: var(--text-dim); background: var(--surface); }
-
-        .room-box { padding: 16px; border: 1px solid var(--border); border-radius: 8px; text-align: center; width: 100%; max-width: 280px; }
-        .room-code { font-size: 1.8rem; font-weight: 300; letter-spacing: 0.3em; color: var(--text); margin: 6px 0; }
-        .share-url { padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.65rem; color: var(--text-dim); word-break: break-all; background: var(--surface); cursor: pointer; display: block; }
-        .share-url:hover { border-color: var(--text-dim); }
-
-        .waiting { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--text-dim); }
-        .waiting .spinner { width: 14px; height: 14px; border: 1.5px solid var(--border); border-top-color: var(--text); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        .room-box { padding: 14px; border: 1px solid var(--border); border-radius: 8px; text-align: center; width: 100%; max-width: 260px; }
+        .room-code { font-size: 1.6rem; font-weight: 300; letter-spacing: 0.3em; margin: 4px 0; }
+        .share-url { padding: 5px 8px; border: 1px solid var(--border); border-radius: 5px; font-size: 0.6rem; color: var(--text-dim); word-break: break-all; background: var(--surface); cursor: pointer; display: block; }
+        .waiting { display: flex; align-items: center; gap: 6px; font-size: 0.7rem; color: var(--text-dim); margin-top: 8px; }
+        .spinner { width: 12px; height: 12px; border: 1.5px solid var(--border); border-top-color: var(--text); border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        .join-input { display: flex; gap: 6px; width: 100%; max-width: 260px; }
-        .join-input input { flex: 1; padding: 10px 14px; border: 1px solid var(--border); border-radius: 6px; font-size: 1rem; font-weight: 300; text-align: center; letter-spacing: 0.15em; text-transform: uppercase; outline: none; background: var(--bg); color: var(--text); transition: border-color 0.15s; }
+        .join-input { display: flex; gap: 6px; width: 100%; max-width: 220px; }
+        .join-input input { flex: 1; padding: 8px 12px; border: 1px solid var(--border); border-radius: 5px; font-size: 0.9rem; font-weight: 300; text-align: center; letter-spacing: 0.15em; text-transform: uppercase; outline: none; background: var(--bg); color: var(--text); }
         .join-input input:focus { border-color: var(--text); }
 
-        .error-msg { color: #c00; font-size: 0.7rem; text-align: center; }
+        .error-msg { color: #c00; font-size: 0.65rem; text-align: center; }
 
-        .game-header { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 3px; }
-        .game-header h2 { font-size: 1rem; font-weight: 300; letter-spacing: 0.2em; text-transform: uppercase; }
-
+        /* Game */
         .info-bar { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 4px 0; }
-        .turn-badge { font-size: 0.8rem; padding: 4px 12px; border: 1px solid var(--border); border-radius: 14px; display: flex; align-items: center; gap: 6px; transition: border-color 0.2s; }
-        .turn-badge.p0 { border-color: var(--x-color); }
-        .turn-badge.p1 { border-color: var(--o-color); }
-        .turn-emoji { font-size: 1.1rem; }
-        .turn-img { width: 24px; height: 24px; border-radius: 4px; object-fit: cover; transform: scaleX(-1); }
+        .turn-badge { font-size: 0.75rem; padding: 4px 10px; border: 1px solid var(--border); border-radius: 12px; display: flex; align-items: center; gap: 5px; }
+        .turn-badge .emoji { font-size: 1rem; }
+        .turn-badge .img { width: 22px; height: 22px; border-radius: 3px; object-fit: cover; transform: scaleX(-1); }
+        .scores { font-size: 0.7rem; color: var(--text-dim); display: flex; gap: 8px; align-items: center; }
+        .scores .v { font-weight: 600; color: var(--text); }
+        .scores .emoji { font-size: 0.85rem; }
+        .scores .img { width: 18px; height: 18px; border-radius: 3px; object-fit: cover; transform: scaleX(-1); }
 
-        .scores { display: flex; gap: 10px; font-size: 0.75rem; color: var(--text-dim); align-items: center; letter-spacing: 0.05em; }
-        .score-emoji { font-size: 0.9rem; }
-        .score-img { width: 20px; height: 20px; border-radius: 3px; object-fit: cover; transform: scaleX(-1); }
+        .board-wrap { position: relative; width: min(88vw, 55vh); height: min(88vw, 55vh); }
+        .board { display: grid; grid-template-columns: repeat(3,1fr); grid-template-rows: repeat(3,1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; width: 100%; height: 100%; }
+        .cell { background: var(--bg); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.12s; -webkit-tap-highlight-color: transparent; overflow: hidden; }
+        .cell:hover:not(.m) { background: var(--surface); }
+        .cell.m { cursor: default; }
+        .cell .ce { font-size: 2.2rem; opacity: 0; transform: scale(0.6); transition: opacity 0.15s, transform 0.15s; font-weight: 200; }
+        .cell.m .ce { opacity: 1; transform: scale(1); }
+        .cell img { width: 80%; height: 80%; object-fit: cover; border-radius: 4px; opacity: 0; transform: scale(0.6) scaleX(-1); transition: opacity 0.15s, transform 0.15s; }
+        .cell.m img { opacity: 1; transform: scale(1) scaleX(-1); }
+        .cell.win { animation: wp 0.5s ease-in-out infinite alternate; }
+        @keyframes wp { from { transform: scale(1); } to { transform: scale(1.02); } }
 
-        .you-are { font-size: 0.65rem; padding: 3px 8px; border-radius: 4px; background: var(--surface); color: var(--text-dim); letter-spacing: 0.05em; }
+        #win-canvas { position: absolute; top:0; left:0; width:100%; height:100%; pointer-events: none; z-index: 5; }
+        .not-turn { position: absolute; inset:0; background: rgba(250,250,250,0.65); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: var(--text-dim); border-radius: 6px; pointer-events: none; opacity: 0; transition: opacity 0.15s; }
+        .not-turn.show { opacity: 1; }
 
-        .board-wrapper { position: relative; width: min(88vw, 58vh); height: min(88vw, 58vh); }
-        .board { display: grid; grid-template-columns: repeat(3,1fr); grid-template-rows: repeat(3,1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; width: 100%; height: 100%; transition: border-color 0.3s; }
-        .board.p0-turn { border-color: var(--x-color); }
-        .board.p1-turn { border-color: var(--o-color); }
+        .ctrls { display: flex; gap: 6px; margin-top: 8px; }
 
-        #win-canvas { position: absolute; top:0; left:0; width:100%; height:100%; pointer-events: none; z-index: 10; }
-
-        .cell { background: var(--bg); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.15s; -webkit-tap-highlight-color: transparent; overflow: hidden; }
-        .cell:hover:not(.marked) { background: var(--surface); }
-        .cell:active:not(.marked) { background: #e8e8e8; }
-        .cell.marked { background: var(--bg); cursor: default; }
-        .cell.win-cell { animation: winPulse 0.6s ease-in-out infinite alternate; }
-        @keyframes winPulse { from { transform: scale(1); } to { transform: scale(1.02); } }
-
-        .cell img { width: 80%; height: 80%; object-fit: cover; border-radius: 4px; opacity: 0; transform: scale(0.6) scaleX(-1); transition: opacity 0.2s, transform 0.2s; }
-        .cell.marked img { opacity: 1; transform: scale(1) scaleX(-1); }
-        .cell .cell-emoji { font-size: 2.2rem; opacity: 0; transform: scale(0.6); transition: opacity 0.2s, transform 0.2s; font-weight: 200; }
-        .cell.marked .cell-emoji { opacity: 1; transform: scale(1); }
-
-        .not-your-turn { position: absolute; inset:0; background: rgba(250,250,250,0.7); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; color: var(--text-dim); font-weight: 600; border-radius: 6px; pointer-events: none; opacity: 0; transition: opacity 0.2s; }
-        .not-your-turn.show { opacity: 1; }
-
-        .controls { display: flex; gap: 6px; margin-top: 8px; }
-
-        .result-overlay { position: fixed; inset:0; background: rgba(250,250,250,0.92); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.3s; backdrop-filter: blur(6px); }
+        .result-overlay { position: fixed; inset:0; background: rgba(250,250,250,0.92); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.2s; backdrop-filter: blur(6px); }
         .result-overlay.show { opacity: 1; pointer-events: all; }
-        .result-overlay h2 { font-size: 1.5rem; font-weight: 300; letter-spacing: 0.15em; margin-bottom: 10px; }
-        .result-overlay .winner-img { width: 100px; height: 100px; border-radius: 10px; object-fit: cover; margin-bottom: 14px; border: 1px solid var(--border); transform: scaleX(-1); }
-        .result-overlay .winner-emoji { font-size: 4rem; margin-bottom: 14px; }
-        .result-overlay .draw-display { font-size: 3rem; margin-bottom: 14px; }
-        .result-overlay .btn-group { display: flex; gap: 8px; margin-top: 10px; }
-
-        .btn { padding: 8px 16px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text-dim); font-size: 0.7rem; cursor: pointer; transition: all 0.15s; letter-spacing: 0.05em; }
-        .btn:hover { border-color: var(--text-dim); color: var(--text); }
-        .btn:disabled { opacity: 0.3; cursor: default; }
-        .btn-primary { padding: 10px 24px; border: 1px solid var(--text); background: transparent; color: var(--text); font-size: 0.8rem; font-weight: 600; cursor: pointer; letter-spacing: 0.1em; transition: all 0.15s; }
-        .btn-primary:hover { background: var(--text); color: var(--bg); }
-        .btn-primary:disabled { opacity: 0.3; cursor: default; }
+        .result-overlay h2 { font-size: 1.3rem; font-weight: 300; letter-spacing: 0.15em; margin-bottom: 8px; }
+        .result-overlay .big { font-size: 3.5rem; margin-bottom: 10px; }
+        .result-overlay .big img { width: 90px; height: 90px; border-radius: 8px; object-fit: cover; transform: scaleX(-1); }
 
         #confetti-canvas { position: fixed; top:0; left:0; width:100%; height:100%; pointer-events: none; z-index: 150; }
-
-        @media (max-width: 480px) {
-            .cell .cell-emoji { font-size: 1.8rem; }
-            .snap-box { width: 170px; height: 170px; }
-        }
     </style>
 </head>
 <body>
 
-    <!-- MODE SELECT -->
-    <div class="screen" id="screen-mode">
+    <!-- PICKER -->
+    <div class="screen" id="picker">
         <h1>過三關</h1>
-        <p class="sub">tic tac toe</p>
-
-        <div class="mode-tabs">
-            <button class="active" data-mode="local">Local</button>
-            <button data-mode="online">Online</button>
+        <div class="pick-section">
+            <div class="pick-header active" id="pick-header">Player 1 — pick your emoji</div>
+            <div class="emoji-grid" id="emoji-grid"></div>
         </div>
-
-        <div class="sections-wrapper">
-        <div id="local-section">
-            <div class="step-label" id="step-label">Player 1</div>
-            <div class="input-tabs" id="input-toggle">
-                <button class="active" data-input="camera">Camera</button>
-                <button data-input="emoji">Emoji</button>
+        <div class="pick-preview">
+            <div class="pick-card">
+                <div class="label">P1</div>
+                <div class="box empty" id="p1-box">?</div>
             </div>
-            <div id="camera-area">
-                <div class="snap-box" id="snap-box">
-                    <video id="camera-video" playsinline autoplay></video>
-                    <img class="captured" id="captured-img" alt="">
-                    <div class="countdown" id="countdown">3</div>
-                    <div class="flash" id="flash"></div>
-                </div>
+            <div style="font-size:0.6rem; color:var(--text-dim);">vs</div>
+            <div class="pick-card">
+                <div class="label">P2</div>
+                <div class="box empty" id="p2-box">?</div>
             </div>
-            <div id="emoji-area" style="display:none;">
-                <div class="emoji-grid" id="emoji-grid"></div>
-            </div>
-            <div style="display:flex; gap:8px; align-items:center;">
-                <button class="btn-primary" id="snap-btn">Snap</button>
-                <button class="btn hidden" id="retake-btn">Retake</button>
-                <button class="btn-primary hidden" id="next-btn">Next →</button>
-            </div>
-            <div class="picks-row">
-                <div class="pick-card">
-                    <div id="p1-preview"><div class="pick-placeholder">?</div></div>
-                    <div class="pick-label">Player 1</div>
-                </div>
-                <div style="font-size:0.6rem; color:var(--text-dim);">vs</div>
-                <div class="pick-card">
-                    <div id="p2-preview"><div class="pick-placeholder">?</div></div>
-                    <div class="pick-label">Player 2</div>
-                </div>
-            </div>
-            <button class="btn-primary" id="start-local-btn" disabled>Start</button>
         </div>
-
-        <div id="online-section" style="display:none; width:100%; max-width:320px;">
-            <div class="mode-tabs" id="online-role" style="margin-bottom:10px;">
-                <button class="active" data-role="create">Create</button>
-                <button data-role="join">Join</button>
-            </div>
-            <div id="create-section" style="display:flex; flex-direction:column; align-items:center; gap:10px;">
-                <p style="font-size:0.7rem; color:var(--text-dim);">Snap a photo or pick an emoji</p>
-                <div class="input-tabs" id="create-input-toggle">
-                    <button class="active" data-input="camera">Photo</button>
-                    <button data-input="emoji">Emoji</button>
-                </div>
-                <div id="create-camera-area">
-                    <div class="snap-box" id="create-snap-box" style="width:160px;height:160px;">
-                        <video id="create-camera-video" playsinline autoplay></video>
-                        <img class="captured" id="create-captured-img" alt="">
-                        <div class="countdown" id="create-countdown">3</div>
-                        <div class="flash" id="create-flash"></div>
-                    </div>
-                    <div style="display:flex;gap:6px;margin-top:6px;justify-content:center;">
-                        <button class="btn-primary" id="create-snap-btn" style="padding:8px 16px;font-size:0.7rem;">Snap</button>
-                        <button class="btn hidden" id="create-retake-btn">Retake</button>
-                    </div>
-                </div>
-                <div id="create-emoji-area" style="display:none;">
-                    <div class="emoji-grid" id="create-emoji-grid"></div>
-                </div>
-                <div id="create-preview" style="display:none; text-align:center;">
-                    <div id="create-preview-img" style="font-size:1.3rem;"></div>
-                    <div style="font-size:0.6rem; color:var(--text-dim); margin-top:3px;">Ready</div>
-                </div>
-                <button class="btn-primary" id="create-room-btn" disabled>Create Room</button>
-            </div>
-            <div id="join-section" style="display:none; flex-direction:column; align-items:center; gap:10px;">
-                <p style="font-size:0.7rem; color:var(--text-dim);">Enter room code, pick your avatar</p>
-                <div class="join-input">
-                    <input type="text" id="room-code-input" maxlength="6" placeholder="ABC123" autocomplete="off">
-                </div>
-                <div class="input-tabs" id="join-input-toggle">
-                    <button class="active" data-input="camera">Photo</button>
-                    <button data-input="emoji">Emoji</button>
-                </div>
-                <div id="join-camera-area">
-                    <div class="snap-box" id="join-snap-box" style="width:160px;height:160px;">
-                        <video id="join-camera-video" playsinline autoplay></video>
-                        <img class="captured" id="join-captured-img" alt="">
-                        <div class="countdown" id="join-countdown">3</div>
-                        <div class="flash" id="join-flash"></div>
-                    </div>
-                    <div style="display:flex;gap:6px;margin-top:6px;justify-content:center;">
-                        <button class="btn-primary" id="join-snap-btn" style="padding:8px 16px;font-size:0.7rem;">Snap</button>
-                        <button class="btn hidden" id="join-retake-btn">Retake</button>
-                    </div>
-                </div>
-                <div id="join-emoji-area" style="display:none;">
-                    <div class="emoji-grid" id="join-emoji-grid"></div>
-                </div>
-                <div id="join-preview" style="display:none; text-align:center;">
-                    <div id="join-preview-img" style="font-size:1.3rem;"></div>
-                    <div style="font-size:0.6rem; color:var(--text-dim); margin-top:3px;">Ready</div>
-                </div>
-                <button class="btn-primary" id="join-room-btn" disabled>Join Room</button>
-            </div>
-            <div class="error-msg hidden" id="online-error"></div>
-        </div>
-        </div>
+        <div class="online-link" id="go-online">Play with a friend online →</div>
     </div>
 
-    <!-- WAITING ROOM -->
-    <div class="screen hidden" id="screen-waiting">
+    <!-- ONLINE -->
+    <div class="screen hidden" id="online-screen">
+        <h1>過三關</h1>
+        <div class="online-tabs">
+            <button class="active" data-role="create">Create Room</button>
+            <button data-role="join">Join Room</button>
+        </div>
+
+        <div id="create-area" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+            <div class="pick-section">
+                <div class="pick-header active">Pick your emoji</div>
+                <div class="emoji-grid" id="online-emoji-grid"></div>
+            </div>
+            <button class="btn" id="create-btn" disabled>Create Room</button>
+        </div>
+
+        <div id="join-area" style="display:none; flex-direction:column; align-items:center; gap:10px; width:100%;">
+            <div class="join-input">
+                <input type="text" id="room-code-input" maxlength="6" placeholder="ABC123" autocomplete="off">
+            </div>
+            <div class="pick-section">
+                <div class="pick-header active">Pick your emoji</div>
+                <div class="emoji-grid" id="join-emoji-grid"></div>
+            </div>
+            <button class="btn" id="join-btn" disabled>Join Room</button>
+        </div>
+
+        <div class="error-msg hidden" id="online-error"></div>
+        <div class="online-link" id="go-local">← Back to local play</div>
+    </div>
+
+    <!-- WAITING -->
+    <div class="screen hidden" id="waiting-screen">
         <h1>過三關</h1>
         <div class="room-box">
-            <p style="font-size:0.6rem; color:var(--text-dim); letter-spacing:0.1em;">Room Code</p>
+            <div style="font-size:0.55rem; color:var(--text-dim); letter-spacing:0.1em;">Room Code</div>
             <div class="room-code" id="room-code-display">------</div>
             <div class="share-url" id="share-url" title="Click to copy"></div>
         </div>
-        <div class="waiting">
-            <div class="spinner"></div>
-            <span>Waiting for Player 2…</span>
-        </div>
-        <button class="btn" id="cancel-wait-btn">Cancel</button>
+        <div class="waiting"><div class="spinner"></div><span>Waiting for Player 2…</span></div>
+        <button class="btn btn-sm" id="cancel-btn">Cancel</button>
     </div>
 
     <!-- GAME -->
-    <div class="screen hidden" id="screen-game">
-        <div class="game-header">
-            <h2>過三關</h2>
-            <div class="you-are hidden" id="you-are"></div>
-        </div>
+    <div class="screen hidden" id="game-screen">
+        <h1>過三關</h1>
         <div class="info-bar">
-            <div class="turn-badge" id="turn-badge">
-                <span id="turn-visual"></span>
-                <span id="turn-text"></span>
-            </div>
+            <div class="turn-badge" id="turn-badge"><span id="turn-vis"></span><span id="turn-txt"></span></div>
             <div class="scores" id="scores-bar"></div>
         </div>
-        <div class="board-wrapper" id="board-wrapper">
+        <div class="board-wrap" id="board-wrap">
             <div class="board" id="board"></div>
             <canvas id="win-canvas"></canvas>
-            <div class="not-your-turn" id="not-your-turn">Not your turn</div>
+            <div class="not-turn" id="not-turn">Not your turn</div>
         </div>
-        <div class="controls">
-            <button class="btn" id="btn-restart">Restart</button>
-            <button class="btn" id="btn-leave">Leave</button>
+        <div class="ctrls">
+            <button class="btn btn-sm" id="btn-restart">Restart</button>
+            <button class="btn btn-sm" id="btn-leave">Leave</button>
         </div>
     </div>
 
     <canvas id="confetti-canvas"></canvas>
 
     <div class="result-overlay" id="result-overlay">
-        <div id="result-visual"></div>
+        <div class="big" id="result-big"></div>
         <h2 id="result-text"></h2>
-        <div class="btn-group">
-            <button class="btn" id="leave-btn">Leave</button>
+        <div style="margin-top:12px;">
+            <button class="btn btn-sm" id="leave-btn">Leave</button>
         </div>
     </div>
 
@@ -334,301 +224,174 @@
         });
         const db = firebase.database();
 
-        const EMOJIS = ['✕','○','☯','☁','✿','◆','▲','●','★','△','□','◇','♪','⚓','☀','☂','☃','⚡','✿','♧'];
-        let gameMode = 'local', inputMode = 'camera', step = 0;
-        let photos = [null, null], emojis = [null, null], cameraStream = null;
-        let roomCode = null, playerIndex = null, roomRef = null;
-        let gameListener = null, playerJoinListener = null, onlineStarted = false;
+        const EMOJIS = ['✕','○','☯','☁','✿','◆','▲','●','★','△','□','◇','♪','⚓','☀','☂','⚡','♧','♠','♦'];
         const WIN_LINES = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+
+        let picks = [null, null]; // [p1, p2]
+        let pickStep = 0;
+        let photos = [null, null];
+        let emojis = [null, null];
+        let isOnline = false;
+        let roomCode = null, playerIndex = null, roomRef = null;
+        let gameListener = null, joinListener = null, onlineStarted = false;
+        let onlinePickData = { emoji: null, photo: null };
         const state = { board: Array(9).fill(null), turn: 0, gameOver: false, scores: [0,0,0] };
 
         const $ = id => document.getElementById(id);
-        const boardEl = $('board'), boardWrapper = $('board-wrapper');
-        const turnBadge = $('turn-badge'), turnVisual = $('turn-visual'), turnText = $('turn-text');
-        const scoresBar = $('scores-bar'), youAreEl = $('you-are'), notYourTurn = $('not-your-turn');
-        const resultOverlay = $('result-overlay'), resultVisual = $('result-visual'), resultText = $('result-text');
+        const boardEl = $('board'), boardWrap = $('board-wrap');
+        const turnVis = $('turn-vis'), turnTxt = $('turn-txt'), scoresBar = $('scores-bar');
+        const notTurn = $('not-turn');
+        const resultOverlay = $('result-overlay'), resultBig = $('result-big'), resultText = $('result-text');
         const confettiCanvas = $('confetti-canvas'), confettiCtx = confettiCanvas.getContext('2d');
         const winCanvas = $('win-canvas'), winCtx = winCanvas.getContext('2d');
         const cells = [];
 
         // Sound
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        function playSound(f,d,t='sine',v=0.1) { try { const o=audioCtx.createOscillator(),g=audioCtx.createGain(); o.type=t;o.frequency.value=f;g.gain.setValueAtTime(v,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+d);o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+d); } catch(e){} }
-        function sndPlace() { playSound(800,0.08); }
-        function sndWin() { playSound(523,0.15); setTimeout(()=>playSound(659,0.15),100); setTimeout(()=>playSound(784,0.3),200); }
-        function sndDraw() { playSound(300,0.3,'triangle',0.06); }
-        function sndSnap() { playSound(1000,0.04,'square',0.05); }
-        function sndTick() { playSound(600,0.06); }
+        const ax = new (window.AudioContext || window.webkitAudioContext)();
+        function snd(f,d,t='sine',v=0.08) { try{const o=ax.createOscillator(),g=ax.createGain();o.type=t;o.frequency.value=f;g.gain.setValueAtTime(v,ax.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ax.currentTime+d);o.connect(g);g.connect(ax.destination);o.start();o.stop(ax.currentTime+d);}catch(e){} }
+        function sndPlace() { snd(800,0.06); }
+        function sndWin() { snd(523,0.12);setTimeout(()=>snd(659,0.12),80);setTimeout(()=>snd(784,0.25),160); }
+        function sndDraw() { snd(300,0.25,'triangle',0.05); }
 
         // Helpers
-        function getPlayerVisual(i) { if (photos[i]) return `<img class="turn-img" src="${photos[i]}" alt="">`; if (emojis[i]) return `<span class="turn-emoji">${emojis[i]}</span>`; return '?'; }
-        function getPlayerScoreHTML(i) { if (photos[i]) return `<img class="score-img" src="${photos[i]}" alt=""> <span>${state.scores[i]}</span>`; if (emojis[i]) return `<span class="score-emoji">${emojis[i]}</span> <span>${state.scores[i]}</span>`; return '?'; }
-        function playerHasPhoto(i) { return photos[i] !== null; }
-        function playerHasEmoji(i) { return emojis[i] !== null; }
-        function genRoomCode() { return Math.random().toString(36).substring(2,8).toUpperCase(); }
-        function resizePhoto(d,s=64) { return new Promise(r=>{ const i=new Image(); i.onload=()=>{ const c=document.createElement('canvas');c.width=s;c.height=s;c.getContext('2d').drawImage(i,0,0,s,s);r(c.toDataURL('image/jpeg',0.6)); }; i.src=d; }); }
-        function showErr(m) { const el=$('online-error'); el.textContent=m; el.classList.remove('hidden'); }
-        let onlineCreateData = {emoji:null,photo:null}, onlineJoinData = {emoji:null,photo:null};
+        function visFor(i) { if(photos[i]) return `<img class="img" src="${photos[i]}" alt="">`; if(emojis[i]) return `<span class="emoji">${emojis[i]}</span>`; return '?'; }
+        function scoreFor(i) { if(photos[i]) return `<img class="img" src="${photos[i]}" alt=""> <span class="v">${state.scores[i]}</span>`; if(emojis[i]) return `<span class="emoji">${emojis[i]}</span> <span class="v">${state.scores[i]}</span>`; return '?'; }
+        function hasPhoto(i) { return photos[i]!==null; }
+        function hasEmoji(i) { return emojis[i]!==null; }
+        function genCode() { return Math.random().toString(36).substring(2,8).toUpperCase(); }
 
-        // Mode tabs
-        document.querySelectorAll('#screen-mode .mode-tabs button[data-mode]').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('#screen-mode .mode-tabs button[data-mode]').forEach(b=>b.classList.remove('active'));
-                btn.classList.add('active');
-                gameMode = btn.dataset.mode;
-                $('local-section').style.display = gameMode==='local'?'flex':'none';
-                $('online-section').style.display = gameMode==='online'?'flex':'none';
-                if (gameMode==='online') { stopCamera(); setTimeout(()=>startOnlineCamera('create'),300); }
-                else { stopOnlineCamera('create');stopOnlineCamera('join'); if(inputMode==='camera')startCamera(); }
-            });
-        });
+        function resizeConfetti() { confettiCanvas.width=innerWidth; confettiCanvas.height=innerHeight; }
+        addEventListener('resize',resizeConfetti); resizeConfetti();
 
-        // Input toggle (local)
-        document.querySelectorAll('#input-toggle button').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('#input-toggle button').forEach(b=>b.classList.remove('active'));
-                btn.classList.add('active');
-                inputMode = btn.dataset.input;
-                $('camera-area').style.display = inputMode==='camera'?'block':'none';
-                $('emoji-area').style.display = inputMode==='emoji'?'block':'none';
-                $('snap-btn').style.display = inputMode==='camera'?'inline-block':'none';
-                resetLocalPicker();
-                if (inputMode==='camera') startCamera(); else stopCamera();
-            });
-        });
-
-        // Online role tabs
-        document.querySelectorAll('#online-role button').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('#online-role button').forEach(b=>b.classList.remove('active'));
-                btn.classList.add('active');
-                $('create-section').style.display = btn.dataset.role==='create'?'flex':'none';
-                $('join-section').style.display = btn.dataset.role==='join'?'flex':'none';
-                if (btn.dataset.role==='create') startOnlineCamera('create'); else startOnlineCamera('join');
-            });
-        });
-
-        // Online input toggles
-        function setupOnlineInputToggle(toggleId, role) {
-            document.querySelectorAll(`#${toggleId} button`).forEach(btn => {
-                btn.addEventListener('click', () => {
-                    document.querySelectorAll(`#${toggleId} button`).forEach(b=>b.classList.remove('active'));
-                    btn.classList.add('active');
-                    const isCam = btn.dataset.input==='camera';
-                    $(`${role}-camera-area`).style.display = isCam?'block':'none';
-                    $(`${role}-emoji-area`).style.display = isCam?'none':'block';
-                    $(`${role}-preview`).style.display = 'none';
-                    if (role==='create') { onlineCreateData={emoji:null,photo:null}; $('create-room-btn').disabled=true; }
-                    else { onlineJoinData={emoji:null,photo:null}; updateJoinBtnState(); }
-                    if (isCam) startOnlineCamera(role); else stopOnlineCamera(role);
-                });
-            });
-        }
-        setupOnlineInputToggle('create-input-toggle','create');
-        setupOnlineInputToggle('join-input-toggle','join');
-
-        // Online cameras
-        const onlineCameras = {create:null,join:null};
-        async function startOnlineCamera(role) {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:320},height:{ideal:320}}});
-                onlineCameras[role] = stream;
-                $(`${role}-camera-video`).srcObject = stream;
-                $(`${role}-snap-btn`).disabled = false;
-            } catch(e) { $(`${role}-snap-btn`).disabled = true; }
-        }
-        function stopOnlineCamera(role) { if(onlineCameras[role]) { onlineCameras[role].getTracks().forEach(t=>t.stop()); onlineCameras[role]=null; } }
-
-        // Online snap
-        function setupOnlineSnap(role) {
-            $(`${role}-snap-btn`).addEventListener('click', async () => {
-                const btn = $(`${role}-snap-btn`);
-                btn.disabled=true; sndTick();
-                let count=3; const cd=$(`${role}-countdown`);
-                cd.textContent=count; cd.classList.add('show');
-                await new Promise(r=>{ const iv=setInterval(()=>{ count--; if(count>0){cd.textContent=count;sndTick();}else{clearInterval(iv);cd.classList.remove('show');r();}},700); });
-                sndSnap();
-                const fl=$(`${role}-flash`); fl.classList.add('fire'); setTimeout(()=>fl.classList.remove('fire'),150);
-                const v=$(`${role}-camera-video`), vw=v.videoWidth, vh=v.videoHeight, s=Math.min(vw,vh);
-                const tmp=document.createElement('canvas'); tmp.width=256;tmp.height=256;
-                tmp.getContext('2d').drawImage(v,(vw-s)/2,(vh-s)/2,s,s,0,0,256,256);
-                const fullPhoto=tmp.toDataURL('image/jpeg',0.85), smallPhoto=await resizePhoto(fullPhoto,64);
-                if (role==='create') { onlineCreateData={emoji:null,photo:smallPhoto}; $('create-room-btn').disabled=false; }
-                else { onlineJoinData={emoji:null,photo:smallPhoto}; updateJoinBtnState(); }
-                v.style.display='none';
-                const ci=$(`${role}-captured-img`); ci.src=fullPhoto; ci.style.display='block';
-                $(`${role}-snap-box`).classList.add('done');
-                btn.classList.add('hidden');
-                $(`${role}-retake-btn`).classList.remove('hidden');
-                $(`${role}-preview`).style.display='block';
-                $(`${role}-preview-img`).innerHTML=`<img src="${smallPhoto}" style="width:40px;height:40px;border-radius:4px;object-fit:cover;transform:scaleX(-1);" alt="">`;
-                stopOnlineCamera(role);
-            });
-            $(`${role}-retake-btn`).addEventListener('click', () => {
-                if(role==='create') onlineCreateData={emoji:null,photo:null}; else onlineJoinData={emoji:null,photo:null};
-                $(`${role}-camera-video`).style.display='block';
-                $(`${role}-captured-img`).style.display='none';
-                $(`${role}-snap-box`).classList.remove('done');
-                $(`${role}-snap-btn`).classList.remove('hidden'); $(`${role}-snap-btn`).disabled=false;
-                $(`${role}-retake-btn`).classList.add('hidden');
-                $(`${role}-preview`).style.display='none';
-                if(role==='create') $('create-room-btn').disabled=true; else updateJoinBtnState();
-                startOnlineCamera(role);
-            });
-        }
-        setupOnlineSnap('create'); setupOnlineSnap('join');
-
-        // Online emoji pickers
-        function buildOnlineEmojiGrid(gridId, role) {
-            const grid = $(gridId); grid.innerHTML='';
+        // ===== LOCAL PICKER =====
+        function buildGrid(gridId, onPick) {
+            const grid = $(gridId); grid.innerHTML = '';
             EMOJIS.forEach(e => {
                 const btn = document.createElement('button');
-                btn.className='emoji-btn'; btn.textContent=e;
-                btn.addEventListener('click', () => {
-                    grid.querySelectorAll('.emoji-btn').forEach(b=>b.classList.remove('selected'));
-                    btn.classList.add('selected');
-                    if(role==='create') { onlineCreateData={emoji:e,photo:null}; $('create-room-btn').disabled=false; $('create-preview').style.display='block'; $('create-preview-img').textContent=e; }
-                    else { onlineJoinData={emoji:e,photo:null}; updateJoinBtnState(); $('join-preview').style.display='block'; $('join-preview-img').textContent=e; }
-                });
-                grid.appendChild(btn);
-            });
-        }
-        buildOnlineEmojiGrid('create-emoji-grid','create');
-        buildOnlineEmojiGrid('join-emoji-grid','join');
-
-        // Camera (local)
-        async function startCamera() {
-            try {
-                if(cameraStream) cameraStream.getTracks().forEach(t=>t.stop());
-                cameraStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:640},height:{ideal:640}}});
-                $('camera-video').srcObject = cameraStream;
-                $('snap-btn').disabled = false;
-            } catch(e) { $('snap-btn').disabled = true; }
-        }
-        function stopCamera() { if(cameraStream) { cameraStream.getTracks().forEach(t=>t.stop()); cameraStream=null; } }
-
-        // Snap (local)
-        $('snap-btn').addEventListener('click', async () => {
-            const btn=$('snap-btn'); btn.disabled=true; sndTick();
-            let count=3; const cd=$('countdown');
-            cd.textContent=count; cd.classList.add('show');
-            await new Promise(r=>{ const iv=setInterval(()=>{ count--; if(count>0){cd.textContent=count;sndTick();}else{clearInterval(iv);cd.classList.remove('show');r();}},700); });
-            sndSnap();
-            const fl=$('flash'); fl.classList.add('fire'); setTimeout(()=>fl.classList.remove('fire'),150);
-            const v=$('camera-video'), vw=v.videoWidth, vh=v.videoHeight, s=Math.min(vw,vh);
-            const tmp=document.createElement('canvas'); tmp.width=256;tmp.height=256;
-            tmp.getContext('2d').drawImage(v,(vw-s)/2,(vh-s)/2,s,s,0,0,256,256);
-            photos[step]=tmp.toDataURL('image/jpeg',0.85); emojis[step]=null;
-            v.style.display='none';
-            $('captured-img').src=photos[step]; $('captured-img').style.display='block';
-            $('snap-box').classList.add('done');
-            btn.classList.add('hidden'); $('retake-btn').classList.remove('hidden');
-            updateLocalPicks();
-            if(step===0) $('next-btn').classList.remove('hidden');
-            else $('start-local-btn').disabled=false;
-        });
-
-        $('next-btn').addEventListener('click', () => {
-            step=1; $('step-label').textContent='Player 2';
-            $('next-btn').classList.add('hidden');
-            $('camera-video').style.display='block'; $('captured-img').style.display='none';
-            $('snap-box').classList.remove('done');
-            const sb=$('snap-btn'); sb.classList.remove('hidden'); sb.disabled=false;
-            $('retake-btn').classList.add('hidden');
-        });
-
-        $('retake-btn').addEventListener('click', () => {
-            photos[step]=null;
-            $('camera-video').style.display='block'; $('captured-img').style.display='none';
-            $('snap-box').classList.remove('done');
-            const sb=$('snap-btn'); sb.classList.remove('hidden'); sb.disabled=false;
-            $('retake-btn').classList.add('hidden'); $('next-btn').classList.add('hidden');
-            $('start-local-btn').disabled=true;
-            updateLocalPicks();
-        });
-
-        // Emoji (local)
-        function buildLocalEmojiGrid() {
-            const grid=$('emoji-grid'); grid.innerHTML='';
-            EMOJIS.forEach(e => {
-                const btn=document.createElement('button');
-                btn.className='emoji-btn'; btn.textContent=e;
-                if(emojis[0]===e && step===1) btn.classList.add('taken');
-                btn.addEventListener('click', () => {
-                    emojis[step]=e; photos[step]=null; updateLocalPicks();
-                    if(step===0) { step=1; $('step-label').textContent='Player 2'; buildLocalEmojiGrid(); }
-                    else $('start-local-btn').disabled=false;
-                });
+                btn.className = 'e'; btn.textContent = e;
+                btn.addEventListener('click', () => onPick(e, btn));
                 grid.appendChild(btn);
             });
         }
 
-        function updateLocalPicks() {
-            ['p1-preview','p2-preview'].forEach((id,i) => {
-                const el=$(id);
-                if(photos[i]) el.innerHTML=`<img class="pick-img" src="${photos[i]}" alt="">`;
-                else if(emojis[i]) el.innerHTML=`<div class="pick-emoji">${emojis[i]}</div>`;
-                else el.innerHTML='<div class="pick-placeholder">?</div>';
+        function updatePickerUI() {
+            $('p1-box').textContent = picks[0] || '?';
+            $('p1-box').className = picks[0] ? 'box filled' : 'box empty';
+            $('p2-box').textContent = picks[1] || '?';
+            $('p2-box').className = picks[1] ? 'box filled' : 'box empty';
+
+            // Mark used emojis
+            document.querySelectorAll('#emoji-grid .e').forEach(btn => {
+                btn.classList.toggle('sel', btn.textContent === picks[0] || btn.textContent === picks[1]);
+                btn.classList.toggle('used', (picks[0] && btn.textContent === picks[0] && pickStep === 1) || (picks[1] && btn.textContent === picks[1] && pickStep === 0));
+            });
+
+            if (pickStep === 0) {
+                $('pick-header').textContent = 'Player 1 — pick your emoji';
+                $('pick-header').className = 'pick-header active';
+            } else if (!picks[1]) {
+                $('pick-header').textContent = 'Player 2 — pick your emoji';
+                $('pick-header').className = 'pick-header active';
+            } else {
+                $('pick-header').textContent = 'Starting…';
+                $('pick-header').className = 'pick-header';
+            }
+        }
+
+        buildGrid('emoji-grid', (e) => {
+            picks[pickStep] = e;
+            emojis[pickStep] = e;
+            photos[pickStep] = null;
+            updatePickerUI();
+            if (pickStep === 0) {
+                pickStep = 1;
+                setTimeout(updatePickerUI, 300);
+            } else {
+                // Both picked — auto-start after brief delay
+                setTimeout(() => {
+                    isOnline = false;
+                    playerIndex = null;
+                    $('picker').classList.add('hidden');
+                    $('game-screen').classList.remove('hidden');
+                    resetBoard();
+                    resizeConfetti();
+                }, 500);
+            }
+        });
+
+        updatePickerUI();
+
+        // Online link
+        $('go-online').addEventListener('click', () => {
+            $('picker').classList.add('hidden');
+            $('online-screen').classList.remove('hidden');
+            buildOnlineGrids();
+        });
+
+        $('go-local').addEventListener('click', () => {
+            $('online-screen').classList.add('hidden');
+            $('picker').classList.remove('hidden');
+            picks = [null, null]; emojis = [null, null]; photos = [null, null]; pickStep = 0;
+            updatePickerUI();
+        });
+
+        // ===== ONLINE =====
+        function buildOnlineGrids() {
+            buildGrid('online-emoji-grid', (e, btn) => {
+                document.querySelectorAll('#online-emoji-grid .e').forEach(b=>b.classList.remove('sel'));
+                btn.classList.add('sel');
+                onlinePickData = { emoji: e, photo: null };
+                $('create-btn').disabled = false;
+            });
+            buildGrid('join-emoji-grid', (e, btn) => {
+                document.querySelectorAll('#join-emoji-grid .e').forEach(b=>b.classList.remove('sel'));
+                btn.classList.add('sel');
+                onlinePickData = { emoji: e, photo: null };
+                updateJoinBtn();
             });
         }
 
-        function resetLocalPicker() {
-            photos=[null,null]; emojis=[null,null]; step=0;
-            $('step-label').textContent='Player 1';
-            $('camera-video').style.display='block'; $('captured-img').style.display='none';
-            $('snap-box').classList.remove('done');
-            const sb=$('snap-btn'); sb.classList.remove('hidden'); sb.disabled=false;
-            $('retake-btn').classList.add('hidden'); $('next-btn').classList.add('hidden');
-            $('start-local-btn').disabled=true;
-            updateLocalPicks();
-            if(inputMode==='emoji') buildLocalEmojiGrid();
-        }
-
-        function updateJoinBtnState() {
-            const codeOk = $('room-code-input').value.trim().length>=4;
-            const avatarOk = onlineJoinData.emoji!==null || onlineJoinData.photo!==null;
-            $('join-room-btn').disabled = !(codeOk && avatarOk);
-        }
-
-        // Start local
-        $('start-local-btn').addEventListener('click', () => {
-            stopCamera(); playerIndex=null;
-            $('screen-mode').classList.add('hidden');
-            $('screen-game').classList.remove('hidden');
-            youAreEl.classList.add('hidden'); notYourTurn.classList.remove('show');
-            resetBoard(); resizeConfetti();
+        // Online tabs
+        document.querySelectorAll('.online-tabs button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.online-tabs button').forEach(b=>b.classList.remove('active'));
+                btn.classList.add('active');
+                $('create-area').style.display = btn.dataset.role==='create'?'flex':'none';
+                $('join-area').style.display = btn.dataset.role==='join'?'flex':'none';
+            });
         });
+
+        $('room-code-input').addEventListener('input', e => { e.target.value=e.target.value.toUpperCase(); updateJoinBtn(); });
+        function updateJoinBtn() { $('join-btn').disabled = !($('room-code-input').value.trim().length>=4 && onlinePickData.emoji); }
 
         // Create room
-        $('create-room-btn').addEventListener('click', () => {
-            const btn=$('create-room-btn'); btn.textContent='Creating…'; btn.disabled=true;
-            stopOnlineCamera('create'); onlineStarted=false;
-            roomCode = genRoomCode(); playerIndex=0;
-            photos=[null,null]; emojis=[null,null];
-            const p0=onlineCreateData;
-            if(p0.photo) photos[0]=p0.photo; else emojis[0]=p0.emoji;
+        $('create-btn').addEventListener('click', () => {
+            const btn=$('create-btn'); btn.textContent='Creating…'; btn.disabled=true;
+            isOnline=true; onlineStarted=false;
+            roomCode = genCode(); playerIndex=0;
+            emojis=[onlinePickData.emoji,null]; photos=[null,null];
             roomRef = db.ref('rooms/'+roomCode);
             roomRef.set({
-                players:{0:{emoji:p0.emoji,photo:p0.photo},1:null},
-                board:Array(9).fill(null), turn:0, scores:[0,0,0], gameOver:false, created:Date.now()
+                players:{0:{emoji:onlinePickData.emoji,photo:null},1:null},
+                board:Array(9).fill(null),turn:0,scores:[0,0,0],gameOver:false,created:Date.now()
             }).then(() => {
                 roomRef.onDisconnect().remove();
-                playerJoinListener = roomRef.child('players/1').on('value', snap => {
+                joinListener = roomRef.child('players/1').on('value', snap => {
                     const p2=snap.val();
                     if(p2 && !onlineStarted) {
                         onlineStarted=true;
-                        if(p2.photo){photos[1]=p2.photo;emojis[1]=null;} else {emojis[1]=p2.emoji;photos[1]=null;}
-                        roomRef.child('players/1').off('value',playerJoinListener); playerJoinListener=null;
+                        if(p2.photo){photos[1]=p2.photo;emojis[1]=null;}else{emojis[1]=p2.emoji;photos[1]=null;}
+                        roomRef.child('players/1').off('value',joinListener); joinListener=null;
                         startOnlineGame();
                     }
                 });
-                $('screen-mode').classList.add('hidden');
-                $('screen-waiting').classList.remove('hidden');
+                $('online-screen').classList.add('hidden');
+                $('waiting-screen').classList.remove('hidden');
                 $('room-code-display').textContent=roomCode;
-                $('share-url').textContent=window.location.origin+window.location.pathname+'?room='+roomCode;
+                $('share-url').textContent=location.origin+location.pathname+'?room='+roomCode;
             }).catch(err => {
-                console.error('Create room failed:',err);
-                showErr('Failed: '+err.message);
+                $('online-error').textContent='Failed: '+err.message;
+                $('online-error').classList.remove('hidden');
                 btn.textContent='Create Room'; btn.disabled=false;
             });
         });
@@ -637,270 +400,219 @@
             const url=$('share-url').textContent;
             navigator.clipboard.writeText(url);
             $('share-url').textContent='✓ Copied!';
-            setTimeout(()=>{ $('share-url').textContent=url; },1500);
+            setTimeout(()=>{ $('share-url').textContent=url; },1200);
         });
 
-        $('cancel-wait-btn').addEventListener('click', () => {
-            if(playerJoinListener && roomRef) { roomRef.child('players/1').off('value',playerJoinListener); playerJoinListener=null; }
-            if(roomRef) { roomRef.onDisconnect().cancel(); roomRef.remove().catch(()=>{}); }
+        $('cancel-btn').addEventListener('click', () => {
+            if(joinListener && roomRef){roomRef.child('players/1').off('value',joinListener);joinListener=null;}
+            if(roomRef){roomRef.onDisconnect().cancel();roomRef.remove().catch(()=>{});}
             roomRef=null; roomCode=null;
-            $('screen-waiting').classList.add('hidden');
-            $('screen-mode').classList.remove('hidden');
-            startOnlineCamera('create');
+            $('waiting-screen').classList.add('hidden');
+            $('online-screen').classList.remove('hidden');
+            $('create-btn').textContent='Create Room'; $('create-btn').disabled=true;
         });
 
         // Join room
-        $('room-code-input').addEventListener('input', e => { e.target.value=e.target.value.toUpperCase(); updateJoinBtnState(); });
-
-        $('join-room-btn').addEventListener('click', () => {
-            const btn=$('join-room-btn'); btn.textContent='Joining…'; btn.disabled=true;
-            stopOnlineCamera('join');
+        $('join-btn').addEventListener('click', () => {
+            const btn=$('join-btn'); btn.textContent='Joining…'; btn.disabled=true;
             const code=$('room-code-input').value.trim();
             $('online-error').classList.add('hidden');
-            db.ref('rooms/'+code).once('value').then(snapshot => {
-                if(!snapshot.exists()) { showErr('Room not found.'); btn.textContent='Join Room'; btn.disabled=false; return; }
+            isOnline=true;
+            db.ref('rooms/'+code).once('value').then(snap => {
+                if(!snap.exists()){$('online-error').textContent='Room not found.';$('online-error').classList.remove('hidden');btn.textContent='Join Room';btn.disabled=false;return;}
                 roomCode=code; playerIndex=1; roomRef=db.ref('rooms/'+roomCode);
-                const p1=onlineJoinData; emojis=[null,null]; photos=[null,null];
-                if(p1.photo) photos[1]=p1.photo; else emojis[1]=p1.emoji;
-                return roomRef.child('players/1').set({emoji:p1.emoji,photo:p1.photo}).then(() => {
+                emojis=[null,onlinePickData.emoji]; photos=[null,null];
+                return roomRef.child('players/1').set({emoji:onlinePickData.emoji,photo:null}).then(()=>{
                     roomRef.child('players/1').onDisconnect().remove();
                     return roomRef.once('value');
                 });
-            }).then(freshSnap => {
-                if(!freshSnap) return;
-                const data=freshSnap.val();
-                if(data && data.players && data.players[0]) {
-                    if(data.players[0].photo) photos[0]=data.players[0].photo;
-                    else if(data.players[0].emoji) emojis[0]=data.players[0].emoji;
+            }).then(fresh => {
+                if(!fresh)return;
+                const d=fresh.val();
+                if(d&&d.players&&d.players[0]){
+                    if(d.players[0].emoji)emojis[0]=d.players[0].emoji;
+                    if(d.players[0].photo)photos[0]=d.players[0].photo;
                 }
                 startOnlineGame();
             }).catch(err => {
-                console.error('Join failed:',err);
-                showErr('Failed: '+err.message);
+                $('online-error').textContent='Failed: '+err.message;
+                $('online-error').classList.remove('hidden');
                 btn.textContent='Join Room'; btn.disabled=false;
             });
         });
 
         // Start online game
         function startOnlineGame() {
-            $('screen-mode').classList.add('hidden');
-            $('screen-waiting').classList.add('hidden');
-            $('screen-game').classList.remove('hidden');
-            youAreEl.classList.remove('hidden');
-            youAreEl.textContent = `Player ${playerIndex+1} ${emojis[playerIndex]||''}`;
+            $('online-screen').classList.add('hidden');
+            $('waiting-screen').classList.add('hidden');
+            $('game-screen').classList.remove('hidden');
             resetBoard(); resizeConfetti();
 
             if(gameListener && roomRef) roomRef.off('value',gameListener);
 
-            const opponentIdx = 1-playerIndex;
-            roomRef.child(`players/${opponentIdx}`).on('value', snap => {
-                if(!snap.exists() && !state.gameOver && onlineStarted) {
+            roomRef.child(`players/${1-playerIndex}`).on('value', snap => {
+                if(!snap.exists()&&!state.gameOver&&onlineStarted){
                     state.gameOver=true;
-                    resultVisual.innerHTML='<div class="draw-display">👋</div>';
+                    resultBig.textContent='👋';
                     resultText.textContent='Opponent left';
                     resultOverlay.classList.add('show');
                 }
             });
 
             gameListener = roomRef.on('value', snap => {
-                const data=snap.val();
-                if(!data) { if(!state.gameOver){showErr('Host left.');setTimeout(()=>leaveGame(),2000);} return; }
-
-                const rawBoard=data.board;
-                const newBoard=Array(9).fill(null);
-                if(rawBoard && typeof rawBoard==='object') { for(let i=0;i<9;i++) { if(rawBoard[i]!==undefined && rawBoard[i]!==null) newBoard[i]=rawBoard[i]; } }
-                state.board=newBoard;
-                state.turn=data.turn!=null?data.turn:0;
-                const rawScores=data.scores; state.scores=[0,0,0];
-                if(rawScores && typeof rawScores==='object') { if(rawScores[0]!=null)state.scores[0]=rawScores[0]; if(rawScores[1]!=null)state.scores[1]=rawScores[1]; if(rawScores[2]!=null)state.scores[2]=rawScores[2]; }
-
-                if(data.players && data.players[0]) { if(data.players[0].emoji!=null)emojis[0]=data.players[0].emoji; if(data.players[0].photo!=null)photos[0]=data.players[0].photo; }
-                if(data.players && data.players[1]) { if(data.players[1].emoji!=null)emojis[1]=data.players[1].emoji; if(data.players[1].photo!=null)photos[1]=data.players[1].photo; }
-
+                const d=snap.val();
+                if(!d){if(!state.gameOver)setTimeout(()=>leaveGame(),1500);return;}
+                const rb=d.board, nb=Array(9).fill(null);
+                if(rb&&typeof rb==='object'){for(let i=0;i<9;i++)if(rb[i]!=null)nb[i]=rb[i];}
+                state.board=nb; state.turn=d.turn!=null?d.turn:0;
+                const rs=d.scores; state.scores=[0,0,0];
+                if(rs&&typeof rs==='object'){if(rs[0]!=null)state.scores[0]=rs[0];if(rs[1]!=null)state.scores[1]=rs[1];if(rs[2]!=null)state.scores[2]=rs[2];}
+                if(d.players&&d.players[0]){if(d.players[0].emoji)emojis[0]=d.players[0].emoji;if(d.players[0].photo)photos[0]=d.players[0].photo;}
+                if(d.players&&d.players[1]){if(d.players[1].emoji)emojis[1]=d.players[1].emoji;if(d.players[1].photo)photos[1]=d.players[1].photo;}
                 renderBoard(); updateTurn(); updateScores();
-
-                if(playerIndex!==null && state.turn!==playerIndex && !state.gameOver) { notYourTurn.textContent='Not your turn'; notYourTurn.classList.add('show'); }
-                else { notYourTurn.classList.remove('show'); }
-
-                if(data.gameOver && !state.gameOver) {
+                if(playerIndex!==null&&state.turn!==playerIndex&&!state.gameOver){notTurn.classList.add('show');}else{notTurn.classList.remove('show');}
+                if(d.gameOver&&!state.gameOver){
                     state.gameOver=true;
-                    let winner=null, winLine=null;
-                    for(const [a,b,c] of WIN_LINES) { if(state.board[a]!==null && state.board[a]===state.board[b] && state.board[a]===state.board[c]) { winner=state.board[a]; winLine=[a,b,c]; break; } }
-                    if(winner!==null) { winLine.forEach(i=>cells[i].classList.add('win-cell')); drawWinLine(winLine); sndWin(); if(navigator.vibrate)navigator.vibrate([50,30,50]);
-                        if(playerHasPhoto(winner)) resultVisual.innerHTML=`<img class="winner-img" src="${photos[winner]}" alt="">`;
-                        else resultVisual.innerHTML=`<div class="winner-emoji">${emojis[winner]}</div>`;
-                        resultText.textContent=`Player ${winner+1} wins`;
-                    } else { sndDraw(); resultVisual.innerHTML='<div class="draw-display">🤝</div>'; resultText.textContent='Draw'; }
-                    launchConfetti();
-                    setTimeout(()=>resultOverlay.classList.add('show'),winner!==null?700:400);
-                    setTimeout(()=>{ resultOverlay.classList.remove('show'); clearWinLine(); state.gameOver=false;
-                        if(roomRef) roomRef.update({board:Array(9).fill(null),turn:0,gameOver:false}).catch(()=>{});
-                        resetBoard();
-                    },4500);
+                    let w=null,wl=null;
+                    for(const[a,b,c]of WIN_LINES){if(state.board[a]!==null&&state.board[a]===state.board[b]&&state.board[a]===state.board[c]){w=state.board[a];wl=[a,b,c];break;}}
+                    if(w!==null){wl.forEach(i=>cells[i].classList.add('win'));drawWinLine(wl);sndWin();if(navigator.vibrate)navigator.vibrate([50,30,50]);
+                        resultBig.innerHTML=hasPhoto(w)?`<img src="${photos[w]}" alt="">`:`<span style="font-size:3.5rem">${emojis[w]}</span>`;
+                        resultText.textContent=`Player ${w+1} wins`;
+                    }else{sndDraw();resultBig.textContent='🤝';resultText.textContent='Draw';}
+                    launchConfetti();setTimeout(()=>resultOverlay.classList.add('show'),w!==null?600:300);
+                    setTimeout(()=>{resultOverlay.classList.remove('show');clearWinLine();state.gameOver=false;
+                        if(roomRef)roomRef.update({board:Array(9).fill(null),turn:0,gameOver:false}).catch(()=>{});
+                        resetBoard();},4000);
                 }
             });
         }
 
-        // Board
+        // ===== BOARD =====
         function resetBoard() {
-            state.board=Array(9).fill(null); state.turn=0; state.gameOver=false; lastWinLine=null;
-            boardEl.innerHTML=''; cells.length=0;
-            for(let i=0;i<9;i++) {
-                const cell=document.createElement('div'); cell.className='cell';
-                const img=document.createElement('img'); img.alt=''; img.style.display='none';
-                const span=document.createElement('span'); span.className='cell-emoji'; span.style.display='none';
-                cell.appendChild(img); cell.appendChild(span);
-                cell.addEventListener('click',()=>handleCellClick(i));
-                boardEl.appendChild(cell); cells.push(cell);
+            state.board=Array(9).fill(null);state.turn=0;state.gameOver=false;lastWinLine=null;
+            boardEl.innerHTML='';cells.length=0;
+            for(let i=0;i<9;i++){
+                const cell=document.createElement('div');cell.className='cell';
+                const img=document.createElement('img');img.alt='';img.style.display='none';
+                const ce=document.createElement('span');ce.className='ce';ce.style.display='none';
+                cell.appendChild(img);cell.appendChild(ce);
+                cell.addEventListener('click',()=>handleClick(i));
+                boardEl.appendChild(cell);cells.push(cell);
             }
-            resultOverlay.classList.remove('show'); clearWinLine(); renderBoard(); updateTurn(); updateScores();
+            resultOverlay.classList.remove('show');clearWinLine();renderBoard();updateTurn();updateScores();
         }
 
         function renderBoard() {
-            cells.forEach((cell,i) => {
-                const val=state.board[i], img=cell.querySelector('img'), span=cell.querySelector('.cell-emoji');
-                if(val!==null) {
-                    cell.classList.add('marked');
-                    if(playerHasPhoto(val)) { img.src=photos[val]; img.style.display=''; img.style.opacity='1'; img.style.transform='scale(1) scaleX(-1)'; span.style.display='none'; }
-                    else if(playerHasEmoji(val)) { span.textContent=emojis[val]; span.style.display=''; span.style.opacity='1'; span.style.transform='scale(1)'; img.style.display='none'; }
-                } else { cell.classList.remove('marked','win-cell'); img.style.display='none'; span.style.display='none'; }
+            cells.forEach((cell,i)=>{
+                const v=state.board[i],img=cell.querySelector('img'),ce=cell.querySelector('.ce');
+                if(v!==null){
+                    cell.classList.add('m');
+                    if(hasPhoto(v)){img.src=photos[v];img.style.display='';img.style.opacity='1';img.style.transform='scale(1) scaleX(-1)';ce.style.display='none';}
+                    else if(hasEmoji(v)){ce.textContent=emojis[v];ce.style.display='';ce.style.opacity='1';ce.style.transform='scale(1)';img.style.display='none';}
+                }else{cell.classList.remove('m','win');img.style.display='none';ce.style.display='none';}
             });
         }
 
-        function updateTurn() { turnVisual.innerHTML=getPlayerVisual(state.turn); turnText.textContent=`Player ${state.turn+1}`; turnBadge.className=`turn-badge p${state.turn}`; boardEl.className=`board p${state.turn}-turn`; }
-        function updateScores() { scoresBar.innerHTML=`${getPlayerScoreHTML(0)} · Draw <span>${state.scores[2]}</span> · ${getPlayerScoreHTML(1)}`; }
+        function updateTurn(){turnVis.innerHTML=visFor(state.turn);turnTxt.textContent=`P${state.turn+1}`;scoresBar.innerHTML=`${scoreFor(0)} · Draw <span class="v">${state.scores[2]}</span> · ${scoreFor(1)}`;}
+        function updateScores(){scoresBar.innerHTML=`${scoreFor(0)} · Draw <span class="v">${state.scores[2]}</span> · ${scoreFor(1)}`;}
 
-        function handleCellClick(i) {
-            if(state.gameOver || state.board[i]!==null) return;
-            if(playerIndex!==null && state.turn!==playerIndex) return;
-            if(playerIndex!==null && state.gameOver) return;
-            const currentPlayer=state.turn;
-            state.board[i]=currentPlayer; sndPlace();
+        function handleClick(i) {
+            if(state.gameOver||state.board[i]!==null)return;
+            if(playerIndex!==null&&state.turn!==playerIndex)return;
+            const cur=state.turn; state.board[i]=cur; sndPlace();
             if(navigator.vibrate)navigator.vibrate(10);
-            let winner=null, winLine=null;
-            for(const [a,b,c] of WIN_LINES) { if(state.board[a]!==null && state.board[a]===state.board[b] && state.board[a]===state.board[c]) { winner=state.board[a]; winLine=[a,b,c]; break; } }
-            const isDraw = winner===null && state.board.every(c=>c!==null);
-            if(roomRef) {
-                const nextTurn=(winner!==null||isDraw)?currentPlayer:1-currentPlayer;
-                const newScores=[...state.scores];
-                if(winner!==null) newScores[winner]++; else if(isDraw) newScores[2]++;
-                roomRef.update({board:state.board,turn:nextTurn,scores:newScores,gameOver:winner!==null||isDraw}).catch(e=>console.error('Move failed:',e));
-                state.scores=newScores; renderBoard();
-                if(winner!==null) endGame(winner,winLine);
-                else if(isDraw) endGame(null);
-                else { state.turn=1-currentPlayer; updateTurn(); }
-            } else {
+            let w=null,wl=null;
+            for(const[a,b,c]of WIN_LINES){if(state.board[a]!==null&&state.board[a]===state.board[b]&&state.board[a]===state.board[c]){w=state.board[a];wl=[a,b,c];break;}}
+            const draw=w===null&&state.board.every(c=>c!==null);
+            if(roomRef){
+                const nt=(w!==null||draw)?cur:1-cur;
+                const ns=[...state.scores];
+                if(w!==null)ns[w]++;else if(draw)ns[2]++;
+                roomRef.update({board:state.board,turn:nt,scores:ns,gameOver:w!==null||draw}).catch(()=>{});
+                state.scores=ns;renderBoard();
+                if(w!==null)endGame(w,wl);else if(draw)endGame(null);else{state.turn=1-cur;updateTurn();}
+            }else{
                 renderBoard();
-                if(winner!==null) endGame(winner,winLine);
-                else if(isDraw) endGame(null);
-                else { state.turn=1-currentPlayer; updateTurn(); }
+                if(w!==null)endGame(w,wl);else if(draw)endGame(null);else{state.turn=1-cur;updateTurn();}
             }
         }
 
         let lastWinLine=null;
-        function endGame(winner,winLine) {
-            state.gameOver=true; lastWinLine=winLine;
-            if(winner!==null && winLine) {
-                winLine.forEach(i=>cells[i].classList.add('win-cell'));
-                drawWinLine(winLine); sndWin(); if(navigator.vibrate)navigator.vibrate([50,30,50]);
-                if(playerHasPhoto(winner)) resultVisual.innerHTML=`<img class="winner-img" src="${photos[winner]}" alt="">`;
-                else resultVisual.innerHTML=`<div class="winner-emoji">${emojis[winner]}</div>`;
-                resultText.textContent=`Player ${winner+1} wins`;
-            } else { sndDraw(); resultVisual.innerHTML='<div class="draw-display">🤝</div>'; resultText.textContent='Draw'; }
-            updateScores(); launchConfetti();
-            setTimeout(()=>resultOverlay.classList.add('show'),winner!==null?700:400);
-            if(playerIndex===null) { setTimeout(()=>{ resultOverlay.classList.remove('show'); clearWinLine(); state.gameOver=false; resetBoard(); },4500); }
+        function endGame(w,wl) {
+            state.gameOver=true;lastWinLine=wl;
+            if(w!==null&&wl){wl.forEach(i=>cells[i].classList.add('win'));drawWinLine(wl);sndWin();if(navigator.vibrate)navigator.vibrate([50,30,50]);
+                resultBig.innerHTML=hasPhoto(w)?`<img src="${photos[w]}" alt="">`:`<span style="font-size:3.5rem">${emojis[w]}</span>`;
+                resultText.textContent=`Player ${w+1} wins`;
+            }else{sndDraw();resultBig.textContent='🤝';resultText.textContent='Draw';}
+            updateScores();launchConfetti();
+            setTimeout(()=>resultOverlay.classList.add('show'),w!==null?600:300);
+            if(!isOnline)setTimeout(()=>{resultOverlay.classList.remove('show');clearWinLine();state.gameOver=false;resetBoard();},4000);
         }
 
         // Win line
-        function drawWinLine(winLine) {
-            const rect=boardWrapper.getBoundingClientRect(), dpr=window.devicePixelRatio||1;
-            winCanvas.width=rect.width*dpr; winCanvas.height=rect.height*dpr;
-            winCanvas.style.width=rect.width+'px'; winCanvas.style.height=rect.height+'px';
+        function drawWinLine(wl) {
+            const rect=boardWrap.getBoundingClientRect(),dpr=devicePixelRatio||1;
+            winCanvas.width=rect.width*dpr;winCanvas.height=rect.height*dpr;
+            winCanvas.style.width=rect.width+'px';winCanvas.style.height=rect.height+'px';
             winCtx.scale(dpr,dpr);
-            const cw=rect.width/3, ch=rect.height/3;
-            const [a,,c]=winLine;
-            const x1=(a%3)*cw+cw/2, y1=Math.floor(a/3)*ch+ch/2;
-            const x2=(c%3)*cw+cw/2, y2=Math.floor(c/3)*ch+ch/2;
-            const start=performance.now();
-            function anim(now) {
-                const p=Math.min((now-start)/400,1), e=1-Math.pow(1-p,3);
+            const cw=rect.width/3,ch=rect.height/3;
+            const[a,,c]=wl;
+            const x1=(a%3)*cw+cw/2,y1=Math.floor(a/3)*ch+ch/2,x2=(c%3)*cw+cw/2,y2=Math.floor(c/3)*ch+ch/2;
+            const t=performance.now();
+            function anim(n){const p=Math.min((n-t)/350,1),e=1-Math.pow(1-p,3);
                 winCtx.clearRect(0,0,rect.width,rect.height);
-                winCtx.beginPath(); winCtx.moveTo(x1,y1);
-                winCtx.lineTo(x1+(x2-x1)*e,y1+(y2-y1)*e);
-                winCtx.strokeStyle='#1a1a1a'; winCtx.lineWidth=4; winCtx.lineCap='round';
-                winCtx.stroke();
-                if(p<1) requestAnimationFrame(anim);
-            }
+                winCtx.beginPath();winCtx.moveTo(x1,y1);winCtx.lineTo(x1+(x2-x1)*e,y1+(y2-y1)*e);
+                winCtx.strokeStyle='#1a1a1a';winCtx.lineWidth=4;winCtx.lineCap='round';winCtx.stroke();
+                if(p<1)requestAnimationFrame(anim);}
             requestAnimationFrame(anim);
         }
-        function clearWinLine() { winCtx.clearRect(0,0,winCanvas.width,winCanvas.height); }
-        window.addEventListener('resize',()=>{ if(lastWinLine && state.gameOver) drawWinLine(lastWinLine); });
+        function clearWinLine(){winCtx.clearRect(0,0,winCanvas.width,winCanvas.height);}
+        addEventListener('resize',()=>{if(lastWinLine&&state.gameOver)drawWinLine(lastWinLine);});
 
         // Restart / Leave
-        $('btn-restart').addEventListener('click', () => {
-            if(roomRef) { state.scores=[0,0,0]; roomRef.update({board:Array(9).fill(null),turn:0,scores:[0,0,0],gameOver:false}).catch(()=>{}); }
-            lastWinLine=null; state.gameOver=false; resultOverlay.classList.remove('show'); resetBoard();
+        $('btn-restart').addEventListener('click',()=>{
+            if(roomRef){state.scores=[0,0,0];roomRef.update({board:Array(9).fill(null),turn:0,scores:[0,0,0],gameOver:false}).catch(()=>{});}
+            lastWinLine=null;state.gameOver=false;resultOverlay.classList.remove('show');resetBoard();
         });
 
         function leaveGame() {
-            if(playerJoinListener && roomRef) { roomRef.child('players/1').off('value',playerJoinListener); playerJoinListener=null; }
-            if(gameListener && roomRef) { roomRef.off('value',gameListener); gameListener=null; }
-            if(roomRef && playerIndex!==null) roomRef.child(`players/${1-playerIndex}`).off();
-            if(roomRef) { if(playerIndex===0){roomRef.onDisconnect().cancel();roomRef.remove().catch(()=>{});} }
-            roomRef=null; roomCode=null; playerIndex=null; onlineStarted=false;
-            stopOnlineCamera('create'); stopOnlineCamera('join');
-            $('screen-game').classList.add('hidden'); $('screen-waiting').classList.add('hidden');
-            resultOverlay.classList.remove('show'); $('screen-mode').classList.remove('hidden');
-            resetLocalPicker();
-            onlineCreateData={emoji:null,photo:null}; onlineJoinData={emoji:null,photo:null};
-            buildOnlineEmojiGrid('create-emoji-grid','create'); buildOnlineEmojiGrid('join-emoji-grid','join');
-            if(inputMode==='camera') setTimeout(()=>startCamera(),200);
-            setTimeout(()=>startOnlineCamera('create'),300);
+            if(joinListener&&roomRef){roomRef.child('players/1').off('value',joinListener);joinListener=null;}
+            if(gameListener&&roomRef){roomRef.off('value',gameListener);gameListener=null;}
+            if(roomRef&&playerIndex!==null)roomRef.child(`players/${1-playerIndex}`).off();
+            if(roomRef){if(playerIndex===0){roomRef.onDisconnect().cancel();roomRef.remove().catch(()=>{});}}
+            roomRef=null;roomCode=null;playerIndex=null;onlineStarted=false;isOnline=false;
+            $('game-screen').classList.add('hidden');$('waiting-screen').classList.add('hidden');
+            $('online-screen').classList.add('hidden');
+            resultOverlay.classList.remove('show');$('picker').classList.remove('hidden');
+            picks=[null,null];emojis=[null,null];photos=[null,null];pickStep=0;
+            updatePickerUI();
         }
-
-        $('leave-btn').addEventListener('click', leaveGame);
-        $('btn-leave').addEventListener('click', leaveGame);
-
-        window.addEventListener('beforeunload',()=>{});
+        $('leave-btn').addEventListener('click',leaveGame);
+        $('btn-leave').addEventListener('click',leaveGame);
 
         // Confetti
-        function resizeConfetti() { confettiCanvas.width=innerWidth; confettiCanvas.height=innerHeight; }
-        addEventListener('resize',resizeConfetti); resizeConfetti();
         let cp=[],cr=false;
-        function launchConfetti() {
-            cp=[];
-            const cols=['#1a1a1a','#999','#bbb','#d0d0d0','#e0e0e0','#666','#ccc','#888'];
-            for(let i=0;i<60;i++) cp.push({x:Math.random()*confettiCanvas.width,y:-10-Math.random()*80,w:4+Math.random()*4,h:3+Math.random()*3,vx:(Math.random()-0.5)*3,vy:2+Math.random()*3,color:cols[Math.floor(Math.random()*cols.length)],rot:Math.random()*360,rv:(Math.random()-0.5)*8,life:1});
-            if(!cr){cr=true;animC();}
-        }
-        function animC() {
-            confettiCtx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
-            cp=cp.filter(p=>p.life>0);
-            cp.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=0.08;p.rot+=p.rv;p.life-=0.004;confettiCtx.save();confettiCtx.translate(p.x,p.y);confettiCtx.rotate(p.rot*Math.PI/180);confettiCtx.globalAlpha=p.life;confettiCtx.fillStyle=p.color;confettiCtx.fillRect(-p.w/2,-p.h/2,p.w,p.h);confettiCtx.restore();});
-            if(cp.length)requestAnimationFrame(animC);else cr=false;
-        }
+        function launchConfetti(){cp=[];const cols=['#1a1a1a','#999','#bbb','#d0d0d0','#666','#ccc'];
+            for(let i=0;i<50;i++)cp.push({x:Math.random()*confettiCanvas.width,y:-10-Math.random()*60,w:4+Math.random()*4,h:3+Math.random()*3,vx:(Math.random()-0.5)*3,vy:2+Math.random()*3,color:cols[Math.floor(Math.random()*cols.length)],rot:Math.random()*360,rv:(Math.random()-0.5)*8,life:1});
+            if(!cr){cr=true;animC();}}
+        function animC(){confettiCtx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);cp=cp.filter(p=>p.life>0);
+            cp.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=0.08;p.rot+=p.rv;p.life-=0.005;
+                confettiCtx.save();confettiCtx.translate(p.x,p.y);confettiCtx.rotate(p.rot*Math.PI/180);confettiCtx.globalAlpha=p.life;confettiCtx.fillStyle=p.color;confettiCtx.fillRect(-p.w/2,-p.h/2,p.w,p.h);confettiCtx.restore();});
+            if(cp.length)requestAnimationFrame(animC);else cr=false;}
 
         // Auto-join
-        const urlParams=new URLSearchParams(window.location.search);
-        const autoJoinCode=urlParams.get('room');
-        if(autoJoinCode) {
-            document.querySelectorAll('#screen-mode .mode-tabs button[data-mode]').forEach(b=>b.classList.remove('active'));
-            document.querySelector('[data-mode="online"]').classList.add('active');
-            gameMode='online';
-            $('local-section').style.display='none';
-            $('online-section').style.display='flex';
-            document.querySelectorAll('#online-role button').forEach(b=>b.classList.remove('active'));
+        const up=new URLSearchParams(location.search);
+        const ajc=up.get('room');
+        if(ajc){
+            $('picker').classList.add('hidden');
+            $('online-screen').classList.remove('hidden');
+            document.querySelectorAll('.online-tabs button').forEach(b=>b.classList.remove('active'));
             document.querySelector('[data-role="join"]').classList.add('active');
-            $('create-section').style.display='none';
-            $('join-section').style.display='flex';
-            $('room-code-input').value=autoJoinCode.toUpperCase();
-            setTimeout(()=>startOnlineCamera('join'),500);
-            updateJoinBtnState();
+            $('create-area').style.display='none';
+            $('join-area').style.display='flex';
+            $('room-code-input').value=ajc.toUpperCase();
+            buildOnlineGrids();
         }
-
-        buildLocalEmojiGrid();
-        if(!autoJoinCode) { startCamera(); setTimeout(()=>startOnlineCamera('create'),500); }
     })();
     </script>
 </body>
