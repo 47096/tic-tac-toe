@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic Tac Toe — 10 Full Design Mockups</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: system-ui, sans-serif; background: #f5f5f5; }
+
+        .tab-bar { display: flex; overflow-x: auto; background: #111; position: sticky; top: 0; z-index: 100; }
+        .tab-bar button { flex-shrink: 0; padding: 10px 14px; border: none; background: transparent; color: #888; font-size: 0.75rem; font-weight: 600; cursor: pointer; white-space: nowrap; border-bottom: 3px solid transparent; transition: all 0.15s; }
+        .tab-bar button:hover { color: #ccc; }
+        .tab-bar button.active { color: #fff; border-bottom-color: #2563eb; }
+
+        .panel { display: none; min-height: calc(100vh - 44px); }
+        .panel.active { display: flex; flex-direction: column; align-items: center; }
+
+        .screen-tabs { display: flex; gap: 3px; margin: 14px 0 10px; padding: 3px; border-radius: 10px; flex-wrap: wrap; justify-content: center; }
+        .screen-tabs button { padding: 5px 10px; border: none; border-radius: 7px; font-size: 0.6rem; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+        .screen-tabs button.active { box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+
+        .screen-view { display: none; width: 100%; max-width: 380px; padding: 0 12px; }
+        .screen-view.active { display: flex; flex-direction: column; align-items: center; }
+
+        .snap-box { width: 160px; height: 160px; border-radius: 10px; background: #333; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; position: relative; overflow: hidden; }
+        .snap-box .cam-label { font-size: 0.55rem; position: absolute; top: 6px; left: 6px; padding: 2px 6px; border-radius: 4px; }
+        .snap-box .cam-icon { font-size: 2rem; opacity: 0.3; }
+        .snap-preview { width: 160px; height: 160px; border-radius: 10px; object-fit: cover; margin-bottom: 8px; }
+
+        .emoji-grid { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; max-width: 260px; margin-bottom: 10px; }
+        .emoji-btn { width: 36px; height: 36px; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .emoji-btn.sel { outline: 2px solid; outline-offset: 1px; border-radius: 6px; }
+
+        .pick-row { display: flex; gap: 14px; margin-bottom: 10px; align-items: center; }
+        .pick-card { text-align: center; }
+        .pick-label { font-size: 0.55rem; margin-bottom: 3px; }
+        .pick-box { width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; }
+
+        .room-box { padding: 14px; text-align: center; width: 100%; max-width: 260px; margin-bottom: 10px; }
+        .room-code { font-size: 1.6rem; font-weight: 800; letter-spacing: 0.15em; margin: 6px 0; }
+        .share-url { font-size: 0.6rem; padding: 5px 8px; word-break: break-all; margin-bottom: 8px; display: block; }
+
+        .waiting { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; margin-bottom: 10px; }
+        .spinner { width: 14px; height: 14px; border: 2px solid; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .join-input { display: flex; gap: 6px; width: 100%; max-width: 240px; margin-bottom: 10px; }
+        .join-input input { flex: 1; padding: 8px 12px; font-size: 0.9rem; font-weight: 600; text-align: center; letter-spacing: 0.1em; text-transform: uppercase; outline: none; }
+
+        .scores { display: flex; gap: 12px; margin-bottom: 8px; font-size: 0.7rem; }
+        .scores .v { font-weight: 700; }
+
+        .board { display: grid; grid-template-columns: repeat(3,1fr); gap: 2px; width: 240px; height: 240px; }
+        .cell { display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: 700; cursor: pointer; }
+
+        .turn { font-size: 0.7rem; margin-top: 8px; }
+        .btn { padding: 6px 12px; font-size: 0.6rem; cursor: pointer; }
+        .btn-p { padding: 8px 20px; font-size: 0.7rem; cursor: pointer; font-weight: 600; }
+        .ctrls { display: flex; gap: 5px; margin-top: 8px; }
+        .result { text-align: center; }
+        .result h2 { margin-bottom: 6px; }
+        .result .emoji-big { font-size: 3rem; margin-bottom: 8px; }
+
+        .mode-tabs { display: flex; gap: 3px; margin-bottom: 8px; padding: 3px; border-radius: 10px; }
+        .mode-tabs button { padding: 6px 14px; border: none; border-radius: 8px; font-size: 0.65rem; font-weight: 600; cursor: pointer; }
+        .mode-tabs button.active { box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+
+        .input-tabs { display: flex; gap: 3px; margin-bottom: 8px; padding: 2px; border-radius: 8px; }
+        .input-tabs button { padding: 4px 10px; border: none; border-radius: 6px; font-size: 0.6rem; font-weight: 600; cursor: pointer; }
+        .input-tabs button.active { box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
+
+        /* ========== DESIGN 1: NEON ARCADE ========== */
+        .d1 { background: #0a0a1a; font-family: 'Courier New', monospace; color: #fff; }
+        .d1 .screen-tabs, .d1 .mode-tabs, .d1 .input-tabs { background: #111133; }
+        .d1 .screen-tabs button, .d1 .mode-tabs button, .d1 .input-tabs button { background: transparent; color: #666; }
+        .d1 .screen-tabs button.active, .d1 .mode-tabs button.active, .d1 .input-tabs button.active { background: #1a1a44; color: #ff00ff; }
+        .d1 h1 { font-size: 1.4rem; color: #ff00ff; text-shadow: 0 0 20px #ff00ff; letter-spacing: 0.2em; text-transform: uppercase; }
+        .d1 .sub { color: #00ffff; font-size: 0.6rem; text-shadow: 0 0 10px #00ffff; letter-spacing: 0.15em; margin-bottom: 10px; }
+        .d1 .snap-box { background: #111133; border: 1px solid #333366; }
+        .d1 .cam-label { background: rgba(0,255,255,0.2); color: #00ffff; }
+        .d1 .emoji-btn { border: 1px solid #333366; background: #111133; }
+        .d1 .emoji-btn.sel { border-color: #ff00ff; background: #1a1a44; outline: none; }
+        .d1 .pick-label { color: #00ffff; text-shadow: 0 0 8px #00ffff; }
+        .d1 .pick-box { border: 1px solid #333366; background: #111133; }
+        .d1 .room-box { border: 1px dashed #333366; background: #111133; }
+        .d1 .room-code { color: #ff00ff; text-shadow: 0 0 15px #ff00ff; }
+        .d1 .share-url { border: 1px solid #333366; background: #0a0a1a; color: #666; }
+        .d1 .waiting { color: #00ffff; }
+        .d1 .spinner { border-color: #00ffff; border-top-color: transparent; }
+        .d1 .join-input input { border: 1px solid #333366; background: #111133; color: #ff00ff; }
+        .d1 .scores { color: #888; }
+        .d1 .scores .x { color: #ff00ff; text-shadow: 0 0 8px #ff00ff; }
+        .d1 .scores .o { color: #00ffff; text-shadow: 0 0 8px #00ffff; }
+        .d1 .board { gap: 3px; background: #333366; }
+        .d1 .cell { background: #111133; border: 1px solid #333366; }
+        .d1 .cell.x { color: #ff00ff; text-shadow: 0 0 15px #ff00ff; }
+        .d1 .cell.o { color: #00ffff; text-shadow: 0 0 15px #00ffff; }
+        .d1 .turn { color: #ffff00; text-shadow: 0 0 8px #ffff00; }
+        .d1 .btn { border: 1px solid #333366; background: transparent; color: #888; }
+        .d1 .btn-p { border: 1px solid #ff00ff; background: transparent; color: #ff00ff; text-shadow: 0 0 8px #ff00ff; }
+        .d1 .result h2 { color: #ff00ff; text-shadow: 0 0 30px #ff00ff; }
+
+        /* ========== DESIGN 2: PAPER NOTEBOOK ========== */
+        .d2 { background: #f5f0e8; font-family: 'Georgia', serif; color: #2c2c2c; background-image: repeating-linear-gradient(transparent, transparent 29px, #d4cfc4 29px, #d4cfc4 30px); }
+        .d2 .screen-tabs, .d2 .mode-tabs, .d2 .input-tabs { background: #e8e3d8; }
+        .d2 .screen-tabs button, .d2 .mode-tabs button, .d2 .input-tabs button { background: transparent; color: #aaa; }
+        .d2 .screen-tabs button.active, .d2 .mode-tabs button.active, .d2 .input-tabs button.active { background: #f5f0e8; color: #2c2c2c; }
+        .d2 h1 { font-size: 1.3rem; font-style: italic; }
+        .d2 .sub { color: #888; font-size: 0.65rem; margin-bottom: 10px; }
+        .d2 .snap-box { background: #e8e3d8; border: 1px solid #ccc; }
+        .d2 .cam-label { background: rgba(0,0,0,0.1); color: #666; }
+        .d2 .emoji-btn { border: 1px solid #ccc; background: #fff; }
+        .d2 .emoji-btn.sel { border-color: #2c2c2c; background: #f5f0e8; outline: none; }
+        .d2 .pick-label { color: #888; }
+        .d2 .pick-box { border: 1px solid #ccc; background: #fff; }
+        .d2 .room-box { border: 1px dashed #ccc; background: #fff; }
+        .d2 .room-code { color: #2c2c2c; }
+        .d2 .share-url { border: 1px solid #ccc; background: #f5f0e8; color: #888; }
+        .d2 .waiting { color: #888; }
+        .d2 .spinner { border-color: #888; border-top-color: transparent; }
+        .d2 .join-input input { border: 1px solid #ccc; background: #fff; color: #2c2c2c; }
+        .d2 .scores { color: #888; }
+        .d2 .scores .v { color: #2c2c2c; }
+        .d2 .board { gap: 0; border: 2px solid #2c2c2c; background: #ccc; }
+        .d2 .cell { background: #f5f0e8; border: 1px solid #ccc; }
+        .d2 .cell.x { color: #2c2c2c; font-family: 'Courier New', monospace; }
+        .d2 .cell.o { color: #666; font-style: italic; }
+        .d2 .turn { color: #888; font-style: italic; }
+        .d2 .btn { border: 1px solid #ccc; background: transparent; color: #888; }
+        .d2 .btn-p { border: 2px solid #2c2c2c; background: transparent; color: #2c2c2c; }
+        .d2 .result h2 { color: #2c2c2c; font-style: italic; }
+
+        /* ========== DESIGN 3: GLASSMORPHISM ========== */
+        .d3 { background: linear-gradient(135deg, #667eea, #764ba2); font-family: 'Inter', system-ui, sans-serif; color: #fff; }
+        .d3 .screen-tabs, .d3 .mode-tabs, .d3 .input-tabs { background: rgba(255,255,255,0.1); }
+        .d3 .screen-tabs button, .d3 .mode-tabs button, .d3 .input-tabs button { background: transparent; color: rgba(255,255,255,0.4); }
+        .d3 .screen-tabs button.active, .d3 .mode-tabs button.active, .d3 .input-tabs button.active { background: rgba(255,255,255,0.2); color: #fff; }
+        .d3 h1 { font-size: 1.4rem; font-weight: 700; }
+        .d3 .sub { color: rgba(255,255,255,0.7); font-size: 0.65rem; margin-bottom: 10px; }
+        .d3 .snap-box { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(10px); }
+        .d3 .cam-label { background: rgba(255,255,255,0.2); color: #fff; }
+        .d3 .emoji-btn { border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); border-radius: 8px; }
+        .d3 .emoji-btn.sel { border-color: #fff; background: rgba(255,255,255,0.25); outline: none; }
+        .d3 .pick-label { color: rgba(255,255,255,0.7); }
+        .d3 .pick-box { border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; background: rgba(255,255,255,0.1); }
+        .d3 .room-box { border: 1px solid rgba(255,255,255,0.2); border-radius: 16px; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); }
+        .d3 .room-code { color: #fff; }
+        .d3 .share-url { border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.6); border-radius: 6px; }
+        .d3 .waiting { color: rgba(255,255,255,0.7); }
+        .d3 .spinner { border-color: rgba(255,255,255,0.5); border-top-color: transparent; }
+        .d3 .join-input input { border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: #fff; border-radius: 8px; }
+        .d3 .scores { color: rgba(255,255,255,0.7); }
+        .d3 .scores .v { color: #fff; }
+        .d3 .board { gap: 5px; background: transparent; }
+        .d3 .cell { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; color: #fff; }
+        .d3 .cell.x { color: #ffd700; }
+        .d3 .cell.o { color: #fff; }
+        .d3 .turn { color: rgba(255,255,255,0.8); }
+        .d3 .btn { border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: #fff; border-radius: 8px; }
+        .d3 .btn-p { border: none; background: rgba(255,255,255,0.25); color: #fff; border-radius: 10px; }
+        .d3 .result h2 { color: #fff; }
+
+        /* ========== DESIGN 4: BRUTALIST ========== */
+        .d4 { background: #fff; font-family: 'Arial Black', 'Helvetica', sans-serif; color: #000; }
+        .d4 .screen-tabs, .d4 .mode-tabs, .d4 .input-tabs { background: #f0f0f0; }
+        .d4 .screen-tabs button, .d4 .mode-tabs button, .d4 .input-tabs button { background: transparent; color: #999; }
+        .d4 .screen-tabs button.active, .d4 .mode-tabs button.active, .d4 .input-tabs button.active { background: #fff; color: #000; }
+        .d4 h1 { font-size: 1.6rem; text-transform: uppercase; letter-spacing: -0.03em; }
+        .d4 .sub { color: #000; font-size: 0.55rem; text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 10px; }
+        .d4 .snap-box { background: #f0f0f0; border: 3px solid #000; }
+        .d4 .cam-label { background: #000; color: #fff; }
+        .d4 .emoji-btn { border: 3px solid #000; background: #fff; }
+        .d4 .emoji-btn.sel { background: #000; outline: none; }
+        .d4 .pick-label { color: #000; text-transform: uppercase; letter-spacing: 0.1em; }
+        .d4 .pick-box { border: 3px solid #000; }
+        .d4 .room-box { border: 3px solid #000; }
+        .d4 .room-code { color: #000; }
+        .d4 .share-url { border: 2px solid #000; background: #fff; color: #666; }
+        .d4 .waiting { color: #000; }
+        .d4 .spinner { border-color: #000; border-top-color: transparent; }
+        .d4 .join-input input { border: 3px solid #000; background: #fff; color: #000; }
+        .d4 .scores { color: #000; }
+        .d4 .scores .v { font-weight: 900; }
+        .d4 .board { gap: 3px; background: #000; }
+        .d4 .cell { background: #fff; }
+        .d4 .cell.x { color: #000; }
+        .d4 .cell.o { color: #666; }
+        .d4 .turn { color: #000; text-transform: uppercase; letter-spacing: 0.1em; }
+        .d4 .btn { border: 3px solid #000; background: #fff; color: #000; text-transform: uppercase; font-weight: 900; }
+        .d4 .btn:hover { background: #000; color: #fff; }
+        .d4 .btn-p { border: 3px solid #000; background: #000; color: #fff; text-transform: uppercase; font-weight: 900; }
+        .d4 .result h2 { color: #000; text-transform: uppercase; }
+
+        /* ========== DESIGN 5: PASTEL KAWAII ========== */
+        .d5 { background: #fff5f9; font-family: 'Nunito', 'Quicksand', system-ui, sans-serif; color: #2c2c2c; }
+        .d5 .screen-tabs, .d5 .mode-tabs, .d5 .input-tabs { background: #fce4ec; }
+        .d5 .screen-tabs button, .d5 .mode-tabs button, .d5 .input-tabs button { background: transparent; color: #c0849c; }
+        .d5 .screen-tabs button.active, .d5 .mode-tabs button.active, .d5 .input-tabs button.active { background: #fff; color: #e75480; }
+        .d5 h1 { font-size: 1.3rem; color: #e75480; font-weight: 800; }
+        .d5 .sub { color: #c0849c; font-size: 0.65rem; margin-bottom: 10px; }
+        .d5 .snap-box { background: #fce4ec; border: 2px solid #f8bbd0; }
+        .d5 .cam-label { background: rgba(231,84,128,0.2); color: #e75480; }
+        .d5 .emoji-btn { border: 2px solid #fce4ec; background: #fff; border-radius: 10px; }
+        .d5 .emoji-btn.sel { border-color: #e75480; background: #fce4ec; outline: none; }
+        .d5 .pick-label { color: #c0849c; }
+        .d5 .pick-box { border: 2px solid #fce4ec; border-radius: 10px; background: #fff; }
+        .d5 .room-box { border: 2px dashed #f8bbd0; border-radius: 14px; background: #fff; }
+        .d5 .room-code { color: #e75480; }
+        .d5 .share-url { border: 1px solid #fce4ec; background: #fff5f9; color: #c0849c; border-radius: 8px; }
+        .d5 .waiting { color: #c0849c; }
+        .d5 .spinner { border-color: #e75480; border-top-color: transparent; }
+        .d5 .join-input input { border: 2px solid #fce4ec; background: #fff; color: #e75480; border-radius: 10px; }
+        .d5 .scores span { padding: 2px 8px; border-radius: 12px; font-weight: 700; }
+        .d5 .scores .sx { background: #fce4ec; color: #e75480; }
+        .d5 .scores .so { background: #e8f5e9; color: #66bb6a; }
+        .d5 .scores .sd { background: #f3e5f5; color: #ab47bc; }
+        .d5 .board { gap: 5px; background: transparent; }
+        .d5 .cell { background: #fff; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
+        .d5 .cell.x { color: #e75480; background: #fce4ec; }
+        .d5 .cell.o { color: #66bb6a; background: #e8f5e9; }
+        .d5 .turn { color: #c0849c; }
+        .d5 .btn { border: none; background: #fce4ec; color: #e75480; border-radius: 14px; font-weight: 700; }
+        .d5 .btn-p { border: none; background: #e75480; color: #fff; border-radius: 16px; }
+        .d5 .result h2 { color: #e75480; font-weight: 800; }
+
+        /* ========== DESIGN 6: JAPANESE MINIMAL ========== */
+        .d6 { background: #fafafa; font-family: 'Helvetica Neue', 'Arial', sans-serif; color: #1a1a1a; }
+        .d6 .screen-tabs, .d6 .mode-tabs, .d6 .input-tabs { background: #f0f0f0; }
+        .d6 .screen-tabs button, .d6 .mode-tabs button, .d6 .input-tabs button { background: transparent; color: #bbb; }
+        .d6 .screen-tabs button.active, .d6 .mode-tabs button.active, .d6 .input-tabs button.active { background: #fafafa; color: #1a1a1a; }
+        .d6 h1 { font-size: 1rem; font-weight: 300; letter-spacing: 0.3em; text-transform: uppercase; }
+        .d6 .sub { color: #bbb; font-size: 0.55rem; letter-spacing: 0.2em; margin-bottom: 12px; }
+        .d6 .snap-box { background: #f0f0f0; border: 1px solid #e0e0e0; }
+        .d6 .cam-label { background: rgba(0,0,0,0.05); color: #bbb; }
+        .d6 .emoji-btn { border: 1px solid #e0e0e0; background: #fafafa; }
+        .d6 .emoji-btn.sel { border-color: #1a1a1a; outline: none; }
+        .d6 .pick-label { color: #bbb; letter-spacing: 0.1em; }
+        .d6 .pick-box { border: 1px solid #e0e0e0; }
+        .d6 .room-box { border: 1px solid #e0e0e0; }
+        .d6 .room-code { color: #1a1a1a; font-weight: 300; letter-spacing: 0.3em; }
+        .d6 .share-url { border: 1px solid #e0e0e0; background: #fafafa; color: #bbb; }
+        .d6 .waiting { color: #bbb; }
+        .d6 .spinner { border-color: #bbb; border-top-color: transparent; }
+        .d6 .join-input input { border: 1px solid #e0e0e0; background: #fafafa; color: #1a1a1a; font-weight: 300; }
+        .d6 .scores { color: #bbb; letter-spacing: 0.1em; }
+        .d6 .scores .v { color: #1a1a1a; font-weight: 600; }
+        .d6 .board { gap: 1px; background: #e0e0e0; }
+        .d6 .cell { background: #fafafa; font-weight: 200; }
+        .d6 .cell.x { color: #1a1a1a; }
+        .d6 .cell.o { color: #999; }
+        .d6 .turn { color: #bbb; letter-spacing: 0.15em; }
+        .d6 .btn { border: 1px solid #e0e0e0; background: transparent; color: #bbb; letter-spacing: 0.1em; }
+        .d6 .btn-p { border: 1px solid #1a1a1a; background: transparent; color: #1a1a1a; letter-spacing: 0.15em; }
+        .d6 .result h2 { color: #1a1a1a; font-weight: 300; letter-spacing: 0.15em; }
+
+        /* ========== DESIGN 7: SYNTHWAVE 80s ========== */
+        .d7 { background: linear-gradient(180deg, #1a0033, #0d001a); font-family: 'Impact', 'Arial Black', sans-serif; color: #fff; }
+        .d7 .screen-tabs, .d7 .mode-tabs, .d7 .input-tabs { background: rgba(255,0,128,0.1); }
+        .d7 .screen-tabs button, .d7 .mode-tabs button, .d7 .input-tabs button { background: transparent; color: #555; }
+        .d7 .screen-tabs button.active, .d7 .mode-tabs button.active, .d7 .input-tabs button.active { background: rgba(255,0,128,0.15); color: #ff0080; }
+        .d7 h1 { font-size: 1.6rem; color: #ff0080; text-shadow: 0 0 30px #ff0080; text-transform: uppercase; letter-spacing: 0.1em; }
+        .d7 .sub { color: #00ffff; font-size: 0.6rem; text-shadow: 0 0 10px #00ffff; letter-spacing: 0.2em; margin-bottom: 10px; }
+        .d7 .snap-box { background: rgba(255,0,128,0.05); border: 1px solid rgba(255,0,128,0.3); }
+        .d7 .cam-label { background: rgba(255,0,128,0.2); color: #ff0080; }
+        .d7 .emoji-btn { border: 1px solid rgba(255,0,128,0.3); background: rgba(255,0,128,0.05); }
+        .d7 .emoji-btn.sel { border-color: #ff0080; box-shadow: 0 0 10px rgba(255,0,128,0.3); outline: none; }
+        .d7 .pick-label { color: #00ffff; text-shadow: 0 0 8px #00ffff; }
+        .d7 .pick-box { border: 1px solid rgba(255,0,128,0.3); background: rgba(255,0,128,0.05); }
+        .d7 .room-box { border: 1px solid rgba(255,0,128,0.3); background: rgba(255,0,128,0.05); }
+        .d7 .room-code { color: #ff0080; text-shadow: 0 0 15px #ff0080; }
+        .d7 .share-url { border: 1px solid rgba(255,0,128,0.3); background: rgba(0,0,0,0.3); color: #666; }
+        .d7 .waiting { color: #00ffff; text-shadow: 0 0 8px #00ffff; }
+        .d7 .spinner { border-color: #00ffff; border-top-color: transparent; }
+        .d7 .join-input input { border: 1px solid rgba(255,0,128,0.3); background: rgba(255,0,128,0.05); color: #ff0080; }
+        .d7 .scores { color: #888; }
+        .d7 .scores span { color: #ff0080; text-shadow: 0 0 8px #ff0080; }
+        .d7 .scores .o { color: #00ffff; text-shadow: 0 0 8px #00ffff; }
+        .d7 .board { gap: 3px; background: transparent; }
+        .d7 .cell { background: rgba(255,0,128,0.06); border: 1px solid rgba(255,0,128,0.25); }
+        .d7 .cell.x { color: #ff0080; text-shadow: 0 0 15px #ff0080; }
+        .d7 .cell.o { color: #00ffff; text-shadow: 0 0 15px #00ffff; }
+        .d7 .turn { color: #ffff00; text-shadow: 0 0 8px #ffff00; }
+        .d7 .btn { border: 1px solid rgba(255,0,128,0.4); background: transparent; color: #ff0080; text-transform: uppercase; }
+        .d7 .btn-p { border: 1px solid #ff0080; background: rgba(255,0,128,0.15); color: #ff0080; text-transform: uppercase; text-shadow: 0 0 8px #ff0080; }
+        .d7 .result h2 { color: #ff0080; text-shadow: 0 0 30px #ff0080; text-transform: uppercase; }
+
+        /* ========== DESIGN 8: NATURE ORGANIC ========== */
+        .d8 { background: #f0ebe3; font-family: 'Merriweather', 'Georgia', serif; color: #3d5a3e; }
+        .d8 .screen-tabs, .d8 .mode-tabs, .d8 .input-tabs { background: #e8e2d8; }
+        .d8 .screen-tabs button, .d8 .mode-tabs button, .d8 .input-tabs button { background: transparent; color: #aaa; }
+        .d8 .screen-tabs button.active, .d8 .mode-tabs button.active, .d8 .input-tabs button.active { background: #f0ebe3; color: #3d5a3e; }
+        .d8 h1 { font-size: 1.3rem; font-weight: 700; }
+        .d8 .sub { color: #8a9a5b; font-size: 0.6rem; font-style: italic; margin-bottom: 10px; }
+        .d8 .snap-box { background: #e8e2d8; border: 1px solid #d4cfc4; }
+        .d8 .cam-label { background: rgba(61,90,62,0.15); color: #3d5a3e; }
+        .d8 .emoji-btn { border: 1px solid #d4cfc4; background: #e8e2d8; border-radius: 8px; }
+        .d8 .emoji-btn.sel { border-color: #3d5a3e; background: #d4cfc4; outline: none; }
+        .d8 .pick-label { color: #8a9a5b; }
+        .d8 .pick-box { border: 1px solid #d4cfc4; border-radius: 8px; background: #e8e2d8; }
+        .d8 .room-box { border: 1px dashed #d4cfc4; border-radius: 12px; background: #e8e2d8; }
+        .d8 .room-code { color: #3d5a3e; }
+        .d8 .share-url { border: 1px solid #d4cfc4; background: #f0ebe3; color: #8a9a5b; border-radius: 6px; }
+        .d8 .waiting { color: #8a9a5b; }
+        .d8 .spinner { border-color: #3d5a3e; border-top-color: transparent; }
+        .d8 .join-input input { border: 1px solid #d4cfc4; background: #e8e2d8; color: #3d5a3e; border-radius: 8px; }
+        .d8 .scores { color: #8a9a5b; }
+        .d8 .scores .v { color: #3d5a3e; }
+        .d8 .board { gap: 4px; background: transparent; }
+        .d8 .cell { background: #e8e2d8; border-radius: 10px; border: 1px solid #d4cfc4; }
+        .d8 .cell.x { color: #3d5a3e; }
+        .d8 .cell.o { color: #c17817; }
+        .d8 .turn { color: #8a9a5b; font-style: italic; }
+        .d8 .btn { border: 1px solid #d4cfc4; background: #e8e2d8; color: #3d5a3e; border-radius: 6px; }
+        .d8 .btn-p { border: none; background: #3d5a3e; color: #f0ebe3; border-radius: 8px; }
+        .d8 .result h2 { color: #3d5a3e; }
+
+        /* ========== DESIGN 9: DARK LUXURY ========== */
+        .d9 { background: #0a0a0a; font-family: 'Playfair Display', 'Georgia', serif; color: #c9a96e; }
+        .d9 .screen-tabs, .d9 .mode-tabs, .d9 .input-tabs { background: #111; }
+        .d9 .screen-tabs button, .d9 .mode-tabs button, .d9 .input-tabs button { background: transparent; color: #444; }
+        .d9 .screen-tabs button.active, .d9 .mode-tabs button.active, .d9 .input-tabs button.active { background: #1a1a1a; color: #c9a96e; }
+        .d9 h1 { font-size: 1.4rem; color: #c9a96e; font-weight: 400; letter-spacing: 0.1em; }
+        .d9 .sub { color: #555; font-size: 0.55rem; letter-spacing: 0.3em; text-transform: uppercase; margin-bottom: 12px; }
+        .d9 .snap-box { background: #111; border: 1px solid #222; }
+        .d9 .cam-label { background: rgba(201,169,110,0.15); color: #c9a96e; }
+        .d9 .emoji-btn { border: 1px solid #222; background: #111; }
+        .d9 .emoji-btn.sel { border-color: #c9a96e; outline: none; }
+        .d9 .pick-label { color: #555; letter-spacing: 0.15em; text-transform: uppercase; }
+        .d9 .pick-box { border: 1px solid #222; background: #111; }
+        .d9 .room-box { border: 1px solid #222; background: #111; }
+        .d9 .room-code { color: #c9a96e; font-weight: 400; }
+        .d9 .share-url { border: 1px solid #222; background: #0a0a0a; color: #555; }
+        .d9 .waiting { color: #555; }
+        .d9 .spinner { border-color: #c9a96e; border-top-color: transparent; }
+        .d9 .join-input input { border: 1px solid #222; background: #111; color: #c9a96e; font-weight: 400; }
+        .d9 .scores { color: #555; }
+        .d9 .scores .v { color: #c9a96e; }
+        .d9 .board { gap: 2px; background: #1a1a1a; border: 1px solid #222; }
+        .d9 .cell { background: #111; }
+        .d9 .cell.x { color: #c9a96e; }
+        .d9 .cell.o { color: #888; }
+        .d9 .turn { color: #555; letter-spacing: 0.15em; }
+        .d9 .btn { border: 1px solid #333; background: transparent; color: #555; letter-spacing: 0.15em; text-transform: uppercase; }
+        .d9 .btn-p { border: 1px solid #c9a96e; background: transparent; color: #c9a96e; letter-spacing: 0.15em; text-transform: uppercase; }
+        .d9 .result h2 { color: #c9a96e; font-weight: 400; letter-spacing: 0.1em; }
+
+        /* ========== DESIGN 10: PIXEL ART ========== */
+        .d10 { background: #2b2b2b; font-family: 'Courier New', monospace; color: #f8f8f8; }
+        .d10 .screen-tabs, .d10 .mode-tabs, .d10 .input-tabs { background: #222; }
+        .d10 .screen-tabs button, .d10 .mode-tabs button, .d10 .input-tabs button { background: transparent; color: #666; }
+        .d10 .screen-tabs button.active, .d10 .mode-tabs button.active, .d10 .input-tabs button.active { background: #3a3a3a; color: #f8f8f8; }
+        .d10 h1 { font-size: 1.2rem; text-transform: uppercase; letter-spacing: 0.15em; }
+        .d10 .sub { color: #888; font-size: 0.55rem; letter-spacing: 0.1em; margin-bottom: 10px; }
+        .d10 .snap-box { background: #3a3a3a; border: 2px solid #555; }
+        .d10 .cam-label { background: #555; color: #f8f8f8; }
+        .d10 .emoji-btn { border: 2px solid #555; background: #3a3a3a; }
+        .d10 .emoji-btn.sel { border-color: #f8f8f8; outline: none; }
+        .d10 .pick-label { color: #888; }
+        .d10 .pick-box { border: 2px solid #555; background: #3a3a3a; }
+        .d10 .room-box { border: 2px dashed #555; background: #3a3a3a; }
+        .d10 .room-code { color: #f8f8f8; }
+        .d10 .share-url { border: 1px solid #555; background: #2b2b2b; color: #888; }
+        .d10 .waiting { color: #888; }
+        .d10 .spinner { border-color: #f8f8f8; border-top-color: transparent; }
+        .d10 .join-input input { border: 2px solid #555; background: #3a3a3a; color: #f8f8f8; }
+        .d10 .scores { color: #888; }
+        .d10 .scores .x { color: #ff6b6b; }
+        .d10 .scores .o { color: #4ecdc4; }
+        .d10 .board { gap: 3px; background: transparent; }
+        .d10 .cell { background: #3a3a3a; border: 2px solid #555; }
+        .d10 .cell.x { color: #ff6b6b; }
+        .d10 .cell.o { color: #4ecdc4; }
+        .d10 .turn { color: #888; }
+        .d10 .btn { border: 2px solid #555; background: #3a3a3a; color: #888; }
+        .d10 .btn-p { border: 2px solid #f8f8f8; background: #3a3a3a; color: #f8f8f8; text-transform: uppercase; }
+        .d10 .result h2 { color: #f8f8f8; text-transform: uppercase; }
+    </style>
+</head>
+<body>
+    <div class="tab-bar" id="tab-bar"></div>
+    <div id="panels"></div>
+
+    <script>
+    const designs = [
+        { id:1, name:'Neon Arcade', cls:'d1' },
+        { id:2, name:'Paper Notebook', cls:'d2' },
+        { id:3, name:'Glassmorphism', cls:'d3' },
+        { id:4, name:'Brutalist', cls:'d4' },
+        { id:5, name:'Pastel Kawaii', cls:'d5' },
+        { id:6, name:'Japanese Minimal', cls:'d6' },
+        { id:7, name:'Synthwave 80s', cls:'d7' },
+        { id:8, name:'Nature Organic', cls:'d8' },
+        { id:9, name:'Dark Luxury', cls:'d9' },
+        { id:10, name:'Pixel Art', cls:'d10' },
+    ];
+
+    const emojis = ['😀','😎','🥳','🐱','🐶','🌟','🔥','🍕','🚀','💀','🤖','🦊'];
+    const panelsEl = document.getElementById('panels');
+    const tabBar = document.getElementById('tab-bar');
+
+    designs.forEach((d, idx) => {
+        const btn = document.createElement('button');
+        btn.textContent = `${d.id}. ${d.name}`;
+        btn.dataset.id = d.id;
+        if (idx === 0) btn.classList.add('active');
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.tab-bar button').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('p' + d.id).classList.add('active');
+        });
+        tabBar.appendChild(btn);
+
+        const e1 = emojis[(d.id * 2) % emojis.length];
+        const e2 = emojis[(d.id * 2 + 1) % emojis.length];
+        const panel = document.createElement('div');
+        panel.className = `panel ${d.cls}`;
+        panel.id = 'p' + d.id;
+        if (idx === 0) panel.classList.add('active');
+
+        panel.innerHTML = `
+            <div class="screen-tabs">
+                <button class="active" data-scr="local">Local</button>
+                <button data-scr="online-create">Online Create</button>
+                <button data-scr="online-join">Online Join</button>
+                <button data-scr="waiting">Waiting</button>
+                <button data-scr="game">Game</button>
+                <button data-scr="result">Result</button>
+            </div>
+
+            <!-- LOCAL PICKER -->
+            <div class="screen-view active" data-scr="local">
+                <h1>Tic Tac Toe</h1>
+                <div class="sub">${d.name}</div>
+                <div class="mode-tabs">
+                    <button class="active">Local</button>
+                    <button>Online</button>
+                </div>
+                <div class="input-tabs">
+                    <button class="active">Camera</button>
+                    <button>Emoji</button>
+                </div>
+                <div class="snap-box">
+                    <div class="cam-label">Camera</div>
+                    <div class="cam-icon">📸</div>
+                </div>
+                <div style="display:flex;gap:6px;margin-bottom:8px;">
+                    <div class="btn-p">📸 Snap</div>
+                </div>
+                <div class="pick-row">
+                    <div class="pick-card">
+                        <div class="pick-label">Player 1</div>
+                        <div class="pick-box" style="border-radius:8px;">${e1}</div>
+                    </div>
+                    <div style="font-size:0.6rem;">vs</div>
+                    <div class="pick-card">
+                        <div class="pick-label">Player 2</div>
+                        <div class="pick-box" style="border-radius:8px;">?</div>
+                    </div>
+                </div>
+                <div class="btn-p">Start Game</div>
+            </div>
+
+            <!-- ONLINE CREATE -->
+            <div class="screen-view" data-scr="online-create">
+                <h1>Tic Tac Toe</h1>
+                <div class="sub">${d.name}</div>
+                <div class="mode-tabs">
+                    <button>Local</button>
+                    <button class="active">Online</button>
+                </div>
+                <div style="font-size:0.6rem;margin-bottom:6px;">Create Game · Join Game</div>
+                <div class="input-tabs">
+                    <button class="active">Photo</button>
+                    <button>Emoji</button>
+                </div>
+                <div class="snap-box">
+                    <div class="cam-label">Camera</div>
+                    <div class="cam-icon">📸</div>
+                </div>
+                <div style="display:flex;gap:6px;margin-bottom:8px;">
+                    <div class="btn-p">📸 Snap</div>
+                </div>
+                <div class="btn-p">Create Room</div>
+            </div>
+
+            <!-- ONLINE JOIN -->
+            <div class="screen-view" data-scr="online-join">
+                <h1>Tic Tac Toe</h1>
+                <div class="sub">${d.name}</div>
+                <div class="mode-tabs">
+                    <button>Local</button>
+                    <button class="active">Online</button>
+                </div>
+                <div style="font-size:0.6rem;margin-bottom:6px;">Create Game · Join Game</div>
+                <div class="join-input">
+                    <input type="text" placeholder="ABC123" value="XKCD42" readonly>
+                </div>
+                <div class="input-tabs">
+                    <button class="active">Photo</button>
+                    <button>Emoji</button>
+                </div>
+                <div class="emoji-grid">
+                    ${emojis.slice(0,8).map(e => `<div class="emoji-btn${e===e2?' sel':''}">${e}</div>`).join('')}
+                </div>
+                <div class="btn-p">Join Room</div>
+            </div>
+
+            <!-- WAITING ROOM -->
+            <div class="screen-view" data-scr="waiting">
+                <h1>Tic Tac Toe</h1>
+                <div class="sub">${d.name}</div>
+                <div style="font-size:0.8rem;margin-bottom:8px;">Room Created</div>
+                <div class="room-box">
+                    <div style="font-size:0.6rem;">Room Code</div>
+                    <div class="room-code">XKCD42</div>
+                    <div class="share-url">https://wsamuelw.github.io/tic-tac-toe/?room=XKCD42</div>
+                </div>
+                <div class="waiting">
+                    <div class="spinner"></div>
+                    <span>Waiting for Player 2…</span>
+                </div>
+                <div class="btn">Cancel</div>
+            </div>
+
+            <!-- GAME -->
+            <div class="screen-view" data-scr="game">
+                <h1>Tic Tac Toe</h1>
+                <div class="scores">
+                    <span>${e1}</span> <span class="v">2</span> ·
+                    <span>Draw</span> <span class="v">1</span> ·
+                    <span>${e2}</span> <span class="v">1</span>
+                </div>
+                <div class="board">
+                    <div class="cell">${e1}</div><div class="cell"></div><div class="cell">${e2}</div>
+                    <div class="cell"></div><div class="cell">${e1}</div><div class="cell"></div>
+                    <div class="cell">${e2}</div><div class="cell"></div><div class="cell"></div>
+                </div>
+                <div class="turn">${e1} Player 1's turn</div>
+                <div class="ctrls">
+                    <div class="btn">Restart</div>
+                    <div class="btn">Leave</div>
+                </div>
+            </div>
+
+            <!-- RESULT -->
+            <div class="screen-view" data-scr="result">
+                <div class="result">
+                    <div class="emoji-big">${e1}</div>
+                    <h2>Player 1 Wins!</h2>
+                    <div class="scores" style="justify-content:center;margin-bottom:10px;">
+                        <span>${e1}</span> <span class="v">3</span> ·
+                        <span>Draw</span> <span class="v">1</span> ·
+                        <span>${e2}</span> <span class="v">1</span>
+                    </div>
+                    <div class="btn-p">Leave</div>
+                </div>
+            </div>
+        `;
+
+        panelsEl.appendChild(panel);
+    });
+
+    // Screen tabs
+    document.querySelectorAll('.screen-tabs button').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tabs = btn.parentElement;
+            const panel = tabs.parentElement;
+            tabs.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const scr = btn.dataset.scr;
+            panel.querySelectorAll('.screen-view').forEach(v => v.classList.remove('active'));
+            panel.querySelector(`.screen-view[data-scr="${scr}"]`).classList.add('active');
+        });
+    });
+    </script>
+</body>
+</html>
