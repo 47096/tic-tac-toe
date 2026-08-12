@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Filter Mockup</title>
+    <style>
+        :root {
+            --bg: #ffffff;
+            --surface: #f9fafb;
+            --text: #111827;
+            --text-dim: #9ca3af;
+            --border: #f3f4f6;
+            --accent: #2563eb;
+            --accent-light: rgba(37,99,235,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        h1 { font-size: 1.3rem; font-weight: 700; }
+        p { font-size: 0.85rem; color: var(--text-dim); }
+
+        .preview-area {
+            width: 240px; height: 240px;
+            border-radius: 14px; overflow: hidden;
+            border: 3px solid var(--accent);
+        }
+
+        .preview-area canvas {
+            width: 100%; height: 100%;
+            display: block;
+        }
+
+        .filter-row {
+            display: flex; gap: 12px;
+            flex-wrap: wrap; justify-content: center;
+            max-width: 500px;
+        }
+
+        .filter-card {
+            display: flex; flex-direction: column;
+            align-items: center; gap: 6px;
+            cursor: pointer;
+            transition: transform 0.15s;
+        }
+
+        .filter-card:hover { transform: scale(1.05); }
+
+        .filter-thumb {
+            width: 72px; height: 72px;
+            border-radius: 10px; overflow: hidden;
+            border: 2px solid var(--border);
+            transition: border-color 0.15s;
+        }
+
+        .filter-card.selected .filter-thumb {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px var(--accent-light);
+        }
+
+        .filter-thumb canvas {
+            width: 100%; height: 100%;
+            display: block;
+        }
+
+        .filter-label {
+            font-size: 0.7rem; font-weight: 600;
+            color: var(--text-dim);
+            transition: color 0.15s;
+        }
+
+        .filter-card.selected .filter-label {
+            color: var(--accent);
+        }
+
+        .btn-row { display: flex; gap: 10px; }
+
+        .btn {
+            padding: 12px 28px; border: none; border-radius: 10px;
+            font-size: 0.9rem; font-weight: 600; cursor: pointer;
+            transition: transform 0.15s;
+        }
+        .btn:hover { transform: scale(1.03); }
+        .btn-primary { background: var(--text); color: var(--bg); }
+        .btn-secondary { background: var(--bg); color: var(--text-dim); border: 1px solid var(--border); }
+
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <h1>Choose a Filter</h1>
+    <p>Tap a filter to preview, then confirm</p>
+
+    <div class="preview-area">
+        <canvas id="preview-canvas" width="480" height="480"></canvas>
+    </div>
+
+    <div class="filter-row" id="filter-row"></div>
+
+    <div class="btn-row">
+        <button class="btn btn-secondary" id="retake-btn">↩ Retake</button>
+        <button class="btn btn-primary" id="confirm-btn">✓ Use This</button>
+    </div>
+
+    <canvas id="source-canvas" width="480" height="480" style="display:none;"></canvas>
+
+    <script>
+    // Generate a sample face-like image for demo
+    function drawSampleFace(ctx, w, h) {
+        // Background gradient
+        const grad = ctx.createLinearGradient(0, 0, 0, h);
+        grad.addColorStop(0, '#fde68a');
+        grad.addColorStop(1, '#f59e0b');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+
+        // Face circle
+        ctx.fillStyle = '#fbbf24';
+        ctx.beginPath();
+        ctx.arc(w/2, h/2 + 20, 140, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Eyes
+        ctx.fillStyle = '#1e293b';
+        ctx.beginPath();
+        ctx.ellipse(w/2 - 45, h/2 - 15, 18, 22, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(w/2 + 45, h/2 - 15, 18, 22, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Eye shine
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(w/2 - 38, h/2 - 22, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(w/2 + 52, h/2 - 22, 6, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Mouth
+        ctx.strokeStyle = '#1e293b';
+        ctx.lineWidth = 5;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.arc(w/2, h/2 + 40, 40, 0.1 * Math.PI, 0.9 * Math.PI);
+        ctx.stroke();
+
+        // Hair
+        ctx.fillStyle = '#78350f';
+        ctx.beginPath();
+        ctx.ellipse(w/2, h/2 - 110, 120, 70, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillRect(w/2 - 120, h/2 - 120, 240, 50);
+
+        // Cheeks
+        ctx.fillStyle = 'rgba(239,68,68,0.2)';
+        ctx.beginPath();
+        ctx.ellipse(w/2 - 70, h/2 + 25, 25, 18, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(w/2 + 70, h/2 + 25, 25, 18, 0, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    const sourceCanvas = document.getElementById('source-canvas');
+    const sourceCtx = sourceCanvas.getContext('2d');
+    drawSampleFace(sourceCtx, 480, 480);
+
+    const sourceData = sourceCtx.getImageData(0, 0, 480, 480);
+
+    // ===== FILTERS =====
+    const filters = [
+        { name: 'None', icon: '✨', apply: (ctx, w, h) => {
+            ctx.putImageData(sourceData, 0, 0);
+        }},
+        { name: 'Noir', icon: '🖤', apply: (ctx, w, h) => {
+            ctx.putImageData(sourceData, 0, 0);
+            const d = ctx.getImageData(0, 0, w, h);
+            for (let i = 0; i < d.data.length; i += 4) {
+                const avg = d.data[i] * 0.299 + d.data[i+1] * 0.587 + d.data[i+2] * 0.114;
+                // Boost contrast
+                const val = ((avg - 128) * 1.4) + 128;
+                const clamped = Math.max(0, Math.min(255, val));
+                d.data[i] = d.data[i+1] = d.data[i+2] = clamped;
+            }
+            ctx.putImageData(d, 0, 0);
+        }},
+        { name: 'Cartoon', icon: '🎨', apply: (ctx, w, h) => {
+            ctx.putImageData(sourceData, 0, 0);
+            const d = ctx.getImageData(0, 0, w, h);
+            const levels = 5;
+            const step = 255 / levels;
+
+            // Posterise
+            for (let i = 0; i < d.data.length; i += 4) {
+                d.data[i] = Math.round(d.data[i] / step) * step;
+                d.data[i+1] = Math.round(d.data[i+1] / step) * step;
+                d.data[i+2] = Math.round(d.data[i+2] / step) * step;
+            }
+
+            // Simple edge detection overlay
+            const edges = new Uint8ClampedArray(d.data.length);
+            for (let y = 1; y < h - 1; y++) {
+                for (let x = 1; x < w - 1; x++) {
+                    const idx = (y * w + x) * 4;
+                    const idxL = (y * w + (x-1)) * 4;
+                    const idxR = (y * w + (x+1)) * 4;
+                    const idxU = ((y-1) * w + x) * 4;
+                    const idxD = ((y+1) * w + x) * 4;
+
+                    const gx = Math.abs(d.data[idxL] - d.data[idxR]);
+                    const gy = Math.abs(d.data[idxU] - d.data[idxD]);
+                    const edge = gx + gy > 80 ? 0 : 255;
+
+                    edges[idx] = edges[idx+1] = edges[idx+2] = edge;
+                    edges[idx+3] = 255;
+                }
+            }
+
+            // Darken where edges detected
+            for (let i = 0; i < d.data.length; i += 4) {
+                if (edges[i] === 0) {
+                    d.data[i] = Math.max(0, d.data[i] - 80);
+                    d.data[i+1] = Math.max(0, d.data[i+1] - 80);
+                    d.data[i+2] = Math.max(0, d.data[i+2] - 80);
+                }
+            }
+
+            ctx.putImageData(d, 0, 0);
+        }},
+        { name: 'Warm', icon: '🌅', apply: (ctx, w, h) => {
+            ctx.putImageData(sourceData, 0, 0);
+            const d = ctx.getImageData(0, 0, w, h);
+            for (let i = 0; i < d.data.length; i += 4) {
+                d.data[i] = Math.min(255, d.data[i] + 25);     // R boost
+                d.data[i+1] = Math.min(255, d.data[i+1] + 10); // G slight boost
+                d.data[i+2] = Math.max(0, d.data[i+2] - 20);   // B reduce
+                // Saturate slightly
+                const avg = (d.data[i] + d.data[i+1] + d.data[i+2]) / 3;
+                d.data[i] = Math.min(255, avg + (d.data[i] - avg) * 1.3);
+                d.data[i+1] = Math.min(255, avg + (d.data[i+1] - avg) * 1.3);
+                d.data[i+2] = Math.min(255, avg + (d.data[i+2] - avg) * 1.3);
+            }
+            ctx.putImageData(d, 0, 0);
+        }},
+        { name: 'Cool', icon: '❄️', apply: (ctx, w, h) => {
+            ctx.putImageData(sourceData, 0, 0);
+            const d = ctx.getImageData(0, 0, w, h);
+            for (let i = 0; i < d.data.length; i += 4) {
+                d.data[i] = Math.max(0, d.data[i] - 15);       // R reduce
+                d.data[i+1] = Math.min(255, d.data[i+1] + 5);  // G slight
+                d.data[i+2] = Math.min(255, d.data[i+2] + 35); // B boost
+            }
+            ctx.putImageData(d, 0, 0);
+        }},
+        { name: 'Neon', icon: '💡', apply: (ctx, w, h) => {
+            ctx.putImageData(sourceData, 0, 0);
+            const d = ctx.getImageData(0, 0, w, h);
+            for (let i = 0; i < d.data.length; i += 4) {
+                const avg = (d.data[i] + d.data[i+1] + d.data[i+2]) / 3;
+                // Invert and boost
+                d.data[i] = Math.min(255, (255 - d.data[i]) * 0.4 + d.data[i] * 0.8);
+                d.data[i+1] = Math.min(255, (255 - d.data[i+1]) * 0.3 + d.data[i+1] * 0.7);
+                d.data[i+2] = Math.min(255, (255 - d.data[i+2]) * 0.5 + d.data[i+2] * 0.6);
+                // High saturation
+                const a = (d.data[i] + d.data[i+1] + d.data[i+2]) / 3;
+                d.data[i] = Math.min(255, a + (d.data[i] - a) * 2);
+                d.data[i+1] = Math.min(255, a + (d.data[i+1] - a) * 2);
+                d.data[i+2] = Math.min(255, a + (d.data[i+2] - a) * 2);
+            }
+            ctx.putImageData(d, 0, 0);
+        }},
+    ];
+
+    let selectedFilter = 0;
+
+    // Build filter row
+    const filterRow = document.getElementById('filter-row');
+    filters.forEach((f, i) => {
+        const card = document.createElement('div');
+        card.className = `filter-card${i === 0 ? ' selected' : ''}`;
+
+        const thumb = document.createElement('div');
+        thumb.className = 'filter-thumb';
+        const thumbCanvas = document.createElement('canvas');
+        thumbCanvas.width = 144; thumbCanvas.height = 144;
+        thumb.appendChild(thumbCanvas);
+
+        const label = document.createElement('div');
+        label.className = 'filter-label';
+        label.textContent = `${f.icon} ${f.name}`;
+
+        card.appendChild(thumb);
+        card.appendChild(label);
+        filterRow.appendChild(card);
+
+        // Render thumbnail
+        const tCtx = thumbCanvas.getContext('2d');
+        f.apply(tCtx, 144, 144);
+
+        card.addEventListener('click', () => {
+            selectedFilter = i;
+            document.querySelectorAll('.filter-card').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            applyFilter();
+        });
+    });
+
+    // Apply selected filter to preview
+    function applyFilter() {
+        const previewCanvas = document.getElementById('preview-canvas');
+        const ctx = previewCanvas.getContext('2d');
+        filters[selectedFilter].apply(ctx, 480, 480);
+    }
+
+    // Init preview
+    applyFilter();
+
+    // Buttons
+    document.getElementById('retake-btn').addEventListener('click', () => alert('Would go back to camera'));
+    document.getElementById('confirm-btn').addEventListener('click', () => alert(`Filter "${filters[selectedFilter].name}" applied! Starting game...`));
+    </script>
+</body>
+</html>
