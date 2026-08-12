@@ -364,27 +364,27 @@
             <!-- Create -->
             <div id="create-section" style="display:flex; flex-direction:column; align-items:center; gap:12px;">
                 <p style="font-size:0.8rem;">Snap a photo or pick an emoji</p>
-                <div class="mode-tabs" id="online-input-toggle" style="margin-bottom:4px;">
+                <div class="mode-tabs" id="create-input-toggle" style="margin-bottom:4px;">
                     <button class="active" data-input="camera">📸 Photo</button>
                     <button data-input="emoji">😀 Emoji</button>
                 </div>
-                <div id="online-camera-area">
-                    <div class="snap-box" id="online-snap-box" style="width:180px;height:180px;">
-                        <video id="online-camera-video" playsinline autoplay></video>
-                        <img class="captured" id="online-captured-img" alt="">
-                        <div class="countdown" id="online-countdown">3</div>
-                        <div class="flash" id="online-flash"></div>
+                <div id="create-camera-area">
+                    <div class="snap-box" id="create-snap-box" style="width:180px;height:180px;">
+                        <video id="create-camera-video" playsinline autoplay></video>
+                        <img class="captured" id="create-captured-img" alt="">
+                        <div class="countdown" id="create-countdown">3</div>
+                        <div class="flash" id="create-flash"></div>
                     </div>
                     <div style="display:flex;gap:8px;margin-top:8px;justify-content:center;">
-                        <button class="btn btn-primary btn-small" id="online-snap-btn">📸 Snap</button>
-                        <button class="btn btn-secondary btn-small hidden" id="online-retake-btn">Retake</button>
+                        <button class="btn btn-primary btn-small" id="create-snap-btn">📸 Snap</button>
+                        <button class="btn btn-secondary btn-small hidden" id="create-retake-btn">Retake</button>
                     </div>
                 </div>
-                <div id="online-emoji-area" style="display:none;">
-                    <div class="emoji-grid" id="online-emoji-grid"></div>
+                <div id="create-emoji-area" style="display:none;">
+                    <div class="emoji-grid" id="create-emoji-grid"></div>
                 </div>
-                <div id="online-preview" style="display:none; text-align:center;">
-                    <div id="online-preview-img" style="font-size:1.5rem;"></div>
+                <div id="create-preview" style="display:none; text-align:center;">
+                    <div id="create-preview-img" style="font-size:1.5rem;"></div>
                     <div style="font-size:0.7rem; color:var(--text-dim); margin-top:4px;">Ready!</div>
                 </div>
                 <button class="btn btn-primary" id="create-room-btn" disabled>Create Room</button>
@@ -619,7 +619,7 @@
                 });
             });
         }
-        setupOnlineInputToggle('online-input-toggle', 'create');
+        setupOnlineInputToggle('create-input-toggle', 'create');
         setupOnlineInputToggle('join-input-toggle', 'join');
 
         // Online camera streams
@@ -725,7 +725,7 @@
                 grid.appendChild(btn);
             });
         }
-        buildOnlineEmojiGrid('online-emoji-grid', 'create');
+        buildOnlineEmojiGrid('create-emoji-grid', 'create');
         buildOnlineEmojiGrid('join-emoji-grid', 'join');
 
         // ===== CAMERA =====
@@ -1224,7 +1224,7 @@
             resetLocalPicker();
             onlineCreateData = { emoji: null, photo: null };
             onlineJoinData = { emoji: null, photo: null };
-            buildOnlineEmojiGrid('online-emoji-grid', 'create');
+            buildOnlineEmojiGrid('create-emoji-grid', 'create');
             buildOnlineEmojiGrid('join-emoji-grid', 'join');
             setTimeout(() => startOnlineCamera('create'), 300);
         }
