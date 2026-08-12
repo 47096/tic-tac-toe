@@ -188,6 +188,13 @@
                 <div class="pick-header active">Pick your emoji</div>
                 <div class="emoji-grid" id="online-emoji-grid"></div>
             </div>
+            <button class="snap-btn" id="online-snap-btn">📸 Take photo instead</button>
+            <div class="camera-preview" id="online-camera-preview" style="position:relative; cursor:pointer; display:none;">
+                <video id="online-snap-video" playsinline autoplay></video>
+                <div class="cam-label">Tap to snap</div>
+            </div>
+            <div class="cam-instructions" id="online-cam-instructions" style="display:none;">Tap preview to snap · Tap background to cancel</div>
+            <canvas id="online-snap-canvas" class="snap-hidden"></canvas>
             <button class="btn" id="create-btn">Create Room</button>
         </div>
 
@@ -199,6 +206,13 @@
                 <div class="pick-header active">Pick your emoji</div>
                 <div class="emoji-grid" id="join-emoji-grid"></div>
             </div>
+            <button class="snap-btn" id="join-snap-btn">📸 Take photo instead</button>
+            <div class="camera-preview" id="join-camera-preview" style="position:relative; cursor:pointer; display:none;">
+                <video id="join-snap-video" playsinline autoplay></video>
+                <div class="cam-label">Tap to snap</div>
+            </div>
+            <div class="cam-instructions" id="join-cam-instructions" style="display:none;">Tap preview to snap · Tap background to cancel</div>
+            <canvas id="join-snap-canvas" class="snap-hidden"></canvas>
             <button class="btn" id="join-btn" disabled>Join Room</button>
         </div>
 
@@ -527,6 +541,94 @@
             buildOnlineGrids();
         });
 
+        // Online camera snap - Create Room
+        function setupOnlineCamera(snapBtnId, previewId, videoId, canvasId, instructionsId, target) {
+            let localStream = null;
+            let localActive = false;
+            let localResolve = null;
+
+            function stopLocalCamera() {
+                if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
+                localActive = false;
+                $(previewId).style.display = 'none';
+                $(instructionsId).style.display = 'none';
+                $(snapBtnId).textContent = '📸 Take photo instead';
+                $(snapBtnId).style.display = '';
+                $(snapBtnId).disabled = false;
+            }
+
+            $(previewId).addEventListener('click', () => {
+                if (localResolve) { localResolve('confirm'); localResolve = null; }
+            });
+
+            $(snapBtnId).addEventListener('click', async () => {
+                const btn = $(snapBtnId);
+                btn.textContent = 'Opening camera…';
+                btn.disabled = true;
+                const preview = $(previewId);
+                const video = $(videoId);
+
+                try {
+                    localStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 320 }, height: { ideal: 320 } } });
+                    video.srcObject = localStream;
+                    await new Promise((resolve, reject) => {
+                        video.onplaying = resolve;
+                        video.onerror = reject;
+                        setTimeout(reject, 5000);
+                    });
+                    localActive = true;
+                    preview.style.display = 'block';
+                    $(instructionsId).style.display = 'block';
+                    btn.style.display = 'none';
+
+                    const action = await new Promise(resolve => { localResolve = resolve; });
+                    if (action === 'cancel') return;
+
+                    btn.textContent = '📸 Capturing…';
+                    const vw = video.videoWidth, vh = video.videoHeight, s = Math.min(vw, vh);
+                    const canvas = $(canvasId);
+                    canvas.width = 64; canvas.height = 64;
+                    canvas.getContext('2d').drawImage(video, (vw-s)/2, (vh-s)/2, s, s, 0, 0, 64, 64);
+                    const photo = canvas.toDataURL('image/jpeg', 0.6);
+                    stopLocalCamera();
+
+                    onlinePickData = { emoji: null, photo: photo };
+                    if (target === 'create') {
+                        document.querySelectorAll('#online-emoji-grid .e').forEach(b=>b.classList.remove('sel'));
+                        $('create-btn').disabled = false;
+                    } else {
+                        document.querySelectorAll('#join-emoji-grid .e').forEach(b=>b.classList.remove('sel'));
+                        updateJoinBtn();
+                    }
+                } catch (e) {
+                    console.error('Camera error:', e);
+                    stopLocalCamera();
+                    if (e.name === 'NotAllowedError') {
+                        btn.textContent = '📸 Camera blocked — allow in Chrome settings';
+                    } else if (e.name === 'NotFoundError') {
+                        btn.textContent = '📸 No camera found';
+                    } else {
+                        btn.textContent = '📸 Camera error — try again';
+                    }
+                    setTimeout(() => { btn.textContent = '📸 Take photo instead'; btn.disabled = false; }, 3000);
+                }
+            });
+
+            // Cancel on background click
+            $(target === 'create' ? 'create-area' : 'join-area').addEventListener('click', (e) => {
+                if (localResolve && !e.target.closest('#' + previewId) && !e.target.closest('#' + snapBtnId)) {
+                    localResolve('cancel');
+                    localResolve = null;
+                    stopLocalCamera();
+                }
+            });
+
+            return stopLocalCamera;
+        }
+
+        const stopOnlineCamera = setupOnlineCamera('online-snap-btn', 'online-camera-preview', 'online-snap-video', 'online-snap-canvas', 'online-cam-instructions', 'create');
+        const stopJoinCamera = setupOnlineCamera('join-snap-btn', 'join-camera-preview', 'join-snap-video', 'join-snap-canvas', 'join-cam-instructions', 'join');
+
         $('go-local').addEventListener('click', () => {
             $('online-screen').classList.add('hidden');
             $('picker').classList.remove('hidden');
@@ -577,14 +679,19 @@
             isOnline=true; onlineStarted=false;
             roomCode = genCode(); playerIndex=0;
             const myEmoji = onlinePickData.emoji || EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
-            emojis=[myEmoji,null]; photos=[null,null];
+            const myPhoto = onlinePickData.photo;
+            if (myPhoto) {
+                emojis=[null,null]; photos=[myPhoto,null];
+            } else {
+                emojis=[myEmoji,null]; photos=[null,null];
+            }
             roomRef = db.ref('rooms/'+roomCode);
 
             // Set onDisconnect to mark player as disconnected, not delete room
             roomRef.child('players/0').onDisconnect().update({disconnected:true});
 
             roomRef.set({
-                players:{0:{emoji:myEmoji,photo:null,disconnected:false},1:null},
+                players:{0:{emoji:myPhoto ? null : myEmoji, photo:myPhoto, disconnected:false},1:null},
                 board:Array(9).fill(null),turn:0,scores:[0,0,0],gameOver:false,created:Date.now()
             }).then(() => {
                 // Listen for player 2 joining
@@ -663,8 +770,14 @@
                 roomCode = code;
                 playerIndex = 1;
                 roomRef = db.ref('rooms/' + roomCode);
-                emojis = [null, myEmoji];
-                photos = [null, null];
+                const myPhoto = onlinePickData.photo;
+                if (myPhoto) {
+                    emojis = [null, null];
+                    photos = [null, myPhoto];
+                } else {
+                    emojis = [null, myEmoji];
+                    photos = [null, null];
+                }
 
                 // Read host data
                 if (data.players[0].emoji) emojis[0] = data.players[0].emoji;
@@ -672,7 +785,7 @@
 
                 // Write player 2 data
                 return roomRef.child('players/1').set({
-                    emoji: myEmoji, photo: null
+                    emoji: myPhoto ? null : myEmoji, photo: myPhoto
                 }).then(() => {
                     roomRef.child('players/1').onDisconnect().remove();
                     startOnlineGame();
