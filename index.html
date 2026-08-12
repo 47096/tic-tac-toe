@@ -45,7 +45,7 @@
         .emoji-grid .e { width: 100%; aspect-ratio: 1; font-size: 1.3rem; border: 1px solid var(--border); background: var(--bg); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
         .emoji-grid .e:hover { border-color: var(--text-dim); }
         .emoji-grid .e.sel { border-color: var(--text); background: var(--surface); }
-        .emoji-grid .e.used { opacity: 0.2; pointer-events: none; }
+        .emoji-grid .e.used { opacity: 0.2; }
 
         .pick-preview { display: flex; gap: 16px; align-items: center; justify-content: center; margin-bottom: 8px; }
         .pick-card { text-align: center; }
@@ -322,7 +322,8 @@
             // Mark used emojis
             document.querySelectorAll('#emoji-grid .e').forEach(btn => {
                 btn.classList.toggle('sel', btn.textContent === picks[0] || btn.textContent === picks[1]);
-                btn.classList.toggle('used', (picks[0] && btn.textContent === picks[0] && pickStep === 1) || (picks[1] && btn.textContent === picks[1] && pickStep === 0));
+                // Only mark as "used" if selected by the OTHER player
+                btn.classList.toggle('used', (picks[1] && btn.textContent === picks[1] && pickStep === 0) || (picks[0] && btn.textContent === picks[0] && pickStep === 1));
             });
 
             if (pickStep === 0) {
@@ -339,9 +340,8 @@
 
         buildGrid('emoji-grid', (e, btn) => {
             // Toggle: if clicking same emoji, deselect it
-            // Check if this emoji is selected by either player
             if (picks[0] === e) {
-                // Player 1's emoji — deselect and go back to step 0
+                // Player 1 deselecting their emoji
                 picks[0] = null;
                 emojis[0] = null;
                 photos[0] = null;
@@ -351,12 +351,17 @@
                 return;
             }
             if (picks[1] === e) {
-                // Player 2's emoji — deselect, stay at step 1
+                // Player 2 deselecting their emoji
                 picks[1] = null;
                 emojis[1] = null;
                 photos[1] = null;
                 updatePickerUI();
                 $('start-btn').classList.add('hidden');
+                return;
+            }
+
+            // Prevent selecting an emoji already chosen by the other player
+            if ((pickStep === 0 && picks[1] === e) || (pickStep === 1 && picks[0] === e)) {
                 return;
             }
 
