@@ -286,6 +286,7 @@
         let onlinePickData = { emoji: null, photo: null };
         let autoRematchTimeout = null;
         let moveInProgress = false;
+        let firstTurn = 0; // Alternates who goes first each game
         const state = { board: Array(9).fill(null), turn: 0, gameOver: false, scores: [0,0,0] };
 
         const $ = id => document.getElementById(id);
@@ -724,8 +725,9 @@
                         resultText.textContent=`Player ${w+1} wins`;
                     }else{sndDraw();resultBig.textContent='🤝';resultText.textContent='Draw';}
                     launchConfetti();setTimeout(()=>resultOverlay.classList.add('show'),w!==null?600:300);
+                    firstTurn=1-firstTurn;
                     autoRematchTimeout=setTimeout(()=>{resultOverlay.classList.remove('show');clearWinLine();state.gameOver=false;
-                        if(roomRef)roomRef.update({board:Array(9).fill(null),turn:0,gameOver:false}).catch(()=>{});
+                        if(roomRef)roomRef.update({board:Array(9).fill(null),turn:firstTurn,gameOver:false}).catch(()=>{});
                         resetBoard();autoRematchTimeout=null;},4000);
                 }
             });
@@ -733,7 +735,7 @@
 
         // ===== BOARD =====
         function resetBoard() {
-            state.board=Array(9).fill(null);state.turn=0;state.gameOver=false;lastWinLine=null;
+            state.board=Array(9).fill(null);state.turn=firstTurn;state.gameOver=false;lastWinLine=null;
             boardEl.innerHTML='';cells.length=0;
             for(let i=0;i<9;i++){
                 const cell=document.createElement('div');cell.className='cell';
@@ -800,6 +802,7 @@
         let lastWinLine=null;
         function endGame(w,wl) {
             state.gameOver=true;lastWinLine=wl;
+            firstTurn=1-firstTurn; // Alternate who goes first next game
             if(w!==null&&wl){wl.forEach(i=>cells[i].classList.add('win'));drawWinLine(wl);sndWin();if(navigator.vibrate)navigator.vibrate([50,30,50]);
                 resultBig.innerHTML=hasPhoto(w)?`<img src="${photos[w]}" alt="">`:`<span style="font-size:3.5rem">${emojis[w]}</span>`;
                 resultText.textContent=`Player ${w+1} wins`;
