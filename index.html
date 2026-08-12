@@ -383,8 +383,11 @@
 
         // Start Game button
         $('start-btn').addEventListener('click', () => {
+            // Clean up any previous online session
+            if(gameListener&&roomRef){roomRef.off('value',gameListener);gameListener=null;}
+            if(joinListener&&roomRef){roomRef.child('players/1').off('value',joinListener);joinListener=null;}
+            roomRef=null; roomCode=null; playerIndex=null;
             isOnline = false;
-            playerIndex = null;
             $('picker').classList.add('hidden');
             $('game-screen').classList.remove('hidden');
             resetBoard();
@@ -759,7 +762,7 @@
             }else{sndDraw();resultBig.textContent='🤝';resultText.textContent='Draw';}
             updateScores();launchConfetti();
             setTimeout(()=>resultOverlay.classList.add('show'),w!==null?600:300);
-            if(!isOnline)setTimeout(()=>{resultOverlay.classList.remove('show');clearWinLine();state.gameOver=false;resetBoard();},4000);
+            if(!isOnline)autoRematchTimeout=setTimeout(()=>{resultOverlay.classList.remove('show');clearWinLine();state.gameOver=false;resetBoard();autoRematchTimeout=null;},4000);
         }
 
         // Win line
