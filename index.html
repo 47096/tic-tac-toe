@@ -363,14 +363,16 @@
             $('snap-btn').textContent = '📸 Take photo instead';
             $('snap-btn').style.display = '';
             $('snap-btn').disabled = false;
-            if (snapResolve) { snapResolve(); snapResolve = null; }
         }
 
         $('snap-confirm').addEventListener('click', () => {
-            if (snapResolve) { snapResolve(); snapResolve = null; }
+            // Signal the main handler to capture
+            if (snapResolve) { snapResolve('confirm'); snapResolve = null; }
         });
 
         $('snap-cancel').addEventListener('click', () => {
+            // Signal cancel — don't capture
+            if (snapResolve) { snapResolve('cancel'); snapResolve = null; }
             stopCamera();
         });
 
@@ -397,12 +399,12 @@
                 $('camera-controls').style.display = 'flex';
                 btn.style.display = 'none';
 
-                // Wait for Snap button click
-                await new Promise(resolve => { snapResolve = resolve; });
+                // Wait for Snap or Cancel
+                const action = await new Promise(resolve => { snapResolve = resolve; });
 
-                confirmBtn.classList.add('hidden');
-                btn.textContent = '📸 Capturing…';
-                btn.disabled = true;
+                if (action === 'cancel') return;
+
+                $('snap-btn').textContent = '📸 Capturing…';
 
                 // Capture
                 const vw = video.videoWidth, vh = video.videoHeight, s = Math.min(vw, vh);
