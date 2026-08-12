@@ -1100,7 +1100,6 @@
                 // Check for game over from Firebase (winner already wrote scores)
                 if (data.gameOver && !state.gameOver) {
                     state.gameOver = true;
-                    // Find the winning line
                     let winner = null;
                     let winLine = null;
                     for (const [a,b,c] of WIN_LINES) {
@@ -1124,6 +1123,8 @@
                         resultVisual.innerHTML = '<div class="draw-display">🤝</div>';
                         resultText.textContent = "It's a Draw!";
                     }
+                    // Online: only show Leave button (no Play Again)
+                    document.getElementById('play-again-btn').style.display = 'none';
                     launchConfetti();
                     setTimeout(() => resultOverlay.classList.add('show'), winner !== null ? 700 : 400);
                 }
@@ -1158,6 +1159,7 @@
             }
 
             resultOverlay.classList.remove('show');
+            document.getElementById('play-again-btn').style.display = '';
             clearWinLine();
             renderBoard();
             updateTurn();
