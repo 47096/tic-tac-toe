@@ -62,6 +62,11 @@
         .online-link { font-size: 0.65rem; color: var(--text-dim); cursor: pointer; letter-spacing: 0.05em; margin-top: 6px; }
         .online-link:hover { color: var(--text); }
 
+        .snap-btn { display: flex; align-items: center; gap: 4px; padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text-dim); font-size: 0.6rem; cursor: pointer; letter-spacing: 0.05em; margin-top: 2px; }
+        .snap-btn:hover { border-color: var(--text-dim); color: var(--text); }
+
+        .snap-hidden { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+
         /* Online */
         .online-tabs { display: flex; gap: 2px; padding: 2px; border-radius: 6px; background: var(--surface); margin-bottom: 10px; }
         .online-tabs button { padding: 6px 14px; border: none; border-radius: 5px; background: transparent; color: var(--text-dim); font-size: 0.65rem; font-weight: 600; cursor: pointer; }
@@ -126,6 +131,9 @@
             <div class="pick-header active" id="pick-header">Player 1 — pick your emoji</div>
             <div class="emoji-grid" id="emoji-grid"></div>
         </div>
+        <button class="snap-btn" id="snap-btn">📸 Take photo instead</button>
+        <video id="snap-video" class="snap-hidden" playsinline autoplay></video>
+        <canvas id="snap-canvas" class="snap-hidden"></canvas>
         <div class="pick-preview">
             <div class="pick-card">
                 <div class="label">P1</div>
@@ -275,10 +283,20 @@
         }
 
         function updatePickerUI() {
-            $('p1-box').textContent = picks[0] || '?';
-            $('p1-box').className = picks[0] ? 'box filled' : 'box empty';
-            $('p2-box').textContent = picks[1] || '?';
-            $('p2-box').className = picks[1] ? 'box filled' : 'box empty';
+            // Update preview boxes
+            [0,1].forEach(i => {
+                const box = $(i===0?'p1-box':'p2-box');
+                if (photos[i]) {
+                    box.innerHTML = `<img src="${photos[i]}" style="width:100%;height:100%;object-fit:cover;border-radius:2px;transform:scaleX(-1);" alt="">`;
+                    box.className = 'box filled';
+                } else if (picks[i]) {
+                    box.textContent = picks[i];
+                    box.className = 'box filled';
+                } else {
+                    box.textContent = '?';
+                    box.className = 'box empty';
+                }
+            });
 
             // Mark used emojis
             document.querySelectorAll('#emoji-grid .e').forEach(btn => {
@@ -320,6 +338,58 @@
         });
 
         updatePickerUI();
+
+        // Camera snap
+        let snapStream = null;
+        $('snap-btn').addEventListener('click', async () => {
+            const btn = $('snap-btn');
+            btn.textContent = 'Opening camera…';
+            btn.disabled = true;
+            try {
+                snapStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 320 }, height: { ideal: 320 } } });
+                const video = $('snap-video');
+                video.srcObject = snapStream;
+                video.style.display = 'block';
+                // Wait for camera to stabilize
+                await new Promise(r => setTimeout(r, 800));
+                // Capture
+                const vw = video.videoWidth, vh = video.videoHeight, s = Math.min(vw, vh);
+                const canvas = $('snap-canvas');
+                canvas.width = 64; canvas.height = 64;
+                canvas.getContext('2d').drawImage(video, (vw-s)/2, (vh-s)/2, s, s, 0, 0, 64, 64);
+                const photo = canvas.toDataURL('image/jpeg', 0.6);
+                // Stop camera
+                snapStream.getTracks().forEach(t => t.stop());
+                snapStream = null;
+                video.style.display = 'none';
+                // Set as player's photo
+                photos[pickStep] = photo;
+                emojis[pickStep] = null;
+                picks[pickStep] = '📸';
+                updatePickerUI();
+                // Show photo in preview
+                const box = $(pickStep === 0 ? 'p1-box' : 'p2-box');
+                box.innerHTML = `<img src="${photo}" style="width:100%;height:100%;object-fit:cover;border-radius:2px;transform:scaleX(-1);" alt="">`;
+                box.className = 'box filled';
+                // Advance
+                if (pickStep === 0) {
+                    pickStep = 1;
+                    btn.textContent = '📸 Take photo';
+                    btn.disabled = false;
+                    setTimeout(updatePickerUI, 300);
+                } else {
+                    setTimeout(() => {
+                        isOnline = false; playerIndex = null;
+                        $('picker').classList.add('hidden');
+                        $('game-screen').classList.remove('hidden');
+                        resetBoard(); resizeConfetti();
+                    }, 500);
+                }
+            } catch (e) {
+                btn.textContent = '📸 Camera denied';
+                setTimeout(() => { btn.textContent = '📸 Take photo instead'; btn.disabled = false; }, 1500);
+            }
+        });
 
         // Online link
         $('go-online').addEventListener('click', () => {
