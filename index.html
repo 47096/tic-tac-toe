@@ -339,10 +339,22 @@
 
         buildGrid('emoji-grid', (e, btn) => {
             // Toggle: if clicking same emoji, deselect it
-            if (picks[pickStep] === e) {
-                picks[pickStep] = null;
-                emojis[pickStep] = null;
-                photos[pickStep] = null;
+            // Check if this emoji is selected by either player
+            if (picks[0] === e) {
+                // Player 1's emoji — deselect and go back to step 0
+                picks[0] = null;
+                emojis[0] = null;
+                photos[0] = null;
+                pickStep = 0;
+                updatePickerUI();
+                $('start-btn').classList.add('hidden');
+                return;
+            }
+            if (picks[1] === e) {
+                // Player 2's emoji — deselect, stay at step 1
+                picks[1] = null;
+                emojis[1] = null;
+                photos[1] = null;
                 updatePickerUI();
                 $('start-btn').classList.add('hidden');
                 return;
