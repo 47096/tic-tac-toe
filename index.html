@@ -431,7 +431,15 @@
             });
         });
 
-        $('room-code-input').addEventListener('input', e => { e.target.value=e.target.value.toUpperCase(); $('join-btn').disabled = e.target.value.trim().length < 4; });
+        function updateJoinBtn() {
+            const codeOk = $('room-code-input').value.trim().length >= 4;
+            $('join-btn').disabled = !codeOk;
+        }
+
+        $('room-code-input').addEventListener('input', e => {
+            e.target.value = e.target.value.toUpperCase();
+            updateJoinBtn();
+        });
 
         // Create room
         $('create-btn').addEventListener('click', () => {
@@ -710,6 +718,7 @@
             $('join-area').style.display='flex';
             $('room-code-input').value=ajc.toUpperCase();
             buildOnlineGrids();
+            updateJoinBtn();
         }
     })();
     </script>
