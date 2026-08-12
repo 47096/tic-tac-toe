@@ -580,11 +580,11 @@
             emojis=[myEmoji,null]; photos=[null,null];
             roomRef = db.ref('rooms/'+roomCode);
 
-            // Set onDisconnect first, before write
-            roomRef.onDisconnect().remove();
+            // Set onDisconnect to mark player as disconnected, not delete room
+            roomRef.child('players/0').onDisconnect().update({disconnected:true});
 
             roomRef.set({
-                players:{0:{emoji:myEmoji,photo:null},1:null},
+                players:{0:{emoji:myEmoji,photo:null,disconnected:false},1:null},
                 board:Array(9).fill(null),turn:0,scores:[0,0,0],gameOver:false,created:Date.now()
             }).then(() => {
                 // Listen for player 2 joining
