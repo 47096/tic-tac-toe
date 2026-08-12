@@ -140,6 +140,7 @@
             <video id="snap-video" playsinline autoplay></video>
             <div class="cam-label">Camera</div>
         </div>
+        <button class="snap-btn hidden" id="snap-confirm" style="background:var(--text); color:var(--bg); border-color:var(--text);">📸 Snap</button>
         <canvas id="snap-canvas" class="snap-hidden"></canvas>
         <div class="pick-preview">
             <div class="pick-card">
@@ -348,12 +349,37 @@
 
         // Camera snap
         let snapStream = null;
+        let cameraActive = false;
+        let snapResolve = null;
+
+        function stopCamera() {
+            if (snapStream) { snapStream.getTracks().forEach(t => t.stop()); snapStream = null; }
+            cameraActive = false;
+            $('camera-preview').style.display = 'none';
+            $('snap-confirm').classList.add('hidden');
+            $('snap-btn').textContent = '📸 Take photo instead';
+            $('snap-btn').disabled = false;
+            if (snapResolve) { snapResolve(); snapResolve = null; }
+        }
+
+        $('snap-confirm').addEventListener('click', () => {
+            if (snapResolve) { snapResolve(); snapResolve = null; }
+        });
+
         $('snap-btn').addEventListener('click', async () => {
+            // If camera is active, cancel it
+            if (cameraActive) {
+                stopCamera();
+                return;
+            }
+
             const btn = $('snap-btn');
             btn.textContent = 'Opening camera…';
             btn.disabled = true;
             const preview = $('camera-preview');
             const video = $('snap-video');
+            const confirmBtn = $('snap-confirm');
+
             try {
                 snapStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 320 }, height: { ideal: 320 } } });
                 video.srcObject = snapStream;
@@ -361,13 +387,22 @@
                 await new Promise((resolve, reject) => {
                     video.onplaying = resolve;
                     video.onerror = reject;
-                    setTimeout(reject, 5000); // 5s timeout
+                    setTimeout(reject, 5000);
                 });
-                // Camera is ready — show preview
+                // Camera is ready
+                cameraActive = true;
                 preview.style.display = 'block';
+                btn.textContent = 'Cancel';
+                btn.disabled = false;
+                confirmBtn.classList.remove('hidden');
+
+                // Wait for Snap or Cancel
+                await new Promise(resolve => { snapResolve = resolve; });
+
+                confirmBtn.classList.add('hidden');
                 btn.textContent = '📸 Capturing…';
-                // Wait a bit for camera to stabilise
-                await new Promise(r => setTimeout(r, 1000));
+                btn.disabled = true;
+
                 // Capture
                 const vw = video.videoWidth, vh = video.videoHeight, s = Math.min(vw, vh);
                 const canvas = $('snap-canvas');
@@ -375,9 +410,8 @@
                 canvas.getContext('2d').drawImage(video, (vw-s)/2, (vh-s)/2, s, s, 0, 0, 64, 64);
                 const photo = canvas.toDataURL('image/jpeg', 0.6);
                 // Stop camera
-                snapStream.getTracks().forEach(t => t.stop());
-                snapStream = null;
-                preview.style.display = 'none';
+                stopCamera();
+
                 // Set as player's photo
                 photos[pickStep] = photo;
                 emojis[pickStep] = null;
@@ -390,8 +424,6 @@
                 // Advance
                 if (pickStep === 0) {
                     pickStep = 1;
-                    btn.textContent = '📸 Take photo';
-                    btn.disabled = false;
                     setTimeout(updatePickerUI, 300);
                 } else {
                     setTimeout(() => {
@@ -403,8 +435,7 @@
                 }
             } catch (e) {
                 console.error('Camera error:', e);
-                preview.style.display = 'none';
-                if (snapStream) { snapStream.getTracks().forEach(t => t.stop()); snapStream = null; }
+                stopCamera();
                 if (e.name === 'NotAllowedError') {
                     btn.textContent = '📸 Camera blocked — allow in Chrome settings';
                 } else if (e.name === 'NotFoundError') {
