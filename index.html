@@ -898,38 +898,45 @@
             do {
                 code = genRoomCode();
                 attempts++;
-                const snap = await db.ref('rooms/' + code).once('value');
-                if (!snap.exists()) return code;
-            } while (attempts < 10);
-            return code; // fallback
+                try {
+                    const snap = await db.ref('rooms/' + code).once('value');
+                    if (!snap.exists()) return code;
+                } catch (e) {
+                    console.warn('Room check failed, using code anyway:', code);
+                    return code; // fallback — use the code even if we can't check
+                }
+            } while (attempts < 5);
+            return code;
         }
 
         document.getElementById('create-room-btn').addEventListener('click', async () => {
+            const btn = document.getElementById('create-room-btn');
+            btn.disabled = true;
             stopOnlineCamera('create');
             onlineStarted = false;
 
-            roomCode = await generateUniqueRoomCode(); // [FIX 9]
-            playerIndex = 0;
-            photos = [null, null];
-            emojis = [null, null];
+            try {
+                roomCode = await generateUniqueRoomCode();
+                playerIndex = 0;
+                photos = [null, null];
+                emojis = [null, null];
 
-            const p0 = onlineCreateData;
-            if (p0.photo) photos[0] = p0.photo;
-            else emojis[0] = p0.emoji;
+                const p0 = onlineCreateData;
+                if (p0.photo) photos[0] = p0.photo;
+                else emojis[0] = p0.emoji;
 
-            roomRef = db.ref('rooms/' + roomCode);
+                roomRef = db.ref('rooms/' + roomCode);
 
-            // [FIX 8] catch + [FIX 6] onDisconnect
-            await fbCatch(roomRef.set({
-                players: { 0: { emoji: p0.emoji, photo: p0.photo }, 1: null },
-                board: Array(9).fill(null),
-                turn: 0,
-                scores: [0, 0, 0],
-                created: Date.now()
-            }), 'Failed to create room. Check your connection.');
+                await roomRef.set({
+                    players: { 0: { emoji: p0.emoji, photo: p0.photo }, 1: null },
+                    board: Array(9).fill(null),
+                    turn: 0,
+                    scores: [0, 0, 0],
+                    created: Date.now()
+                });
 
-            // [FIX 6] Auto-cleanup if host disconnects
-            roomRef.onDisconnect().remove();
+                // [FIX 6] Auto-cleanup if host disconnects
+                roomRef.onDisconnect().remove();
 
             // [FIX 4] Listen for Player 2 joining (once)
             playerJoinListener = roomRef.child('players/1').on('value', snap => {
@@ -950,6 +957,12 @@
             document.getElementById('room-code-display').textContent = roomCode;
             const url = window.location.origin + window.location.pathname + '?room=' + roomCode;
             document.getElementById('share-url').textContent = url;
+
+            } catch (err) {
+                console.error('Create room failed:', err);
+                showErr('Failed to create room. Check your connection and try again.');
+                btn.disabled = false;
+            }
         });
 
         document.getElementById('share-url').addEventListener('click', () => {
@@ -986,37 +999,46 @@
         });
 
         document.getElementById('join-room-btn').addEventListener('click', async () => {
+            const btn = document.getElementById('join-room-btn');
+            btn.disabled = true;
             stopOnlineCamera('join');
             const code = document.getElementById('room-code-input').value.trim();
             document.getElementById('online-error').classList.add('hidden');
 
-            const snapshot = await db.ref('rooms/' + code).once('value').catch(() => null);
-            if (!snapshot || !snapshot.exists()) {
-                showErr('Room not found. Check the code.');
-                return;
+            try {
+                const snapshot = await db.ref('rooms/' + code).once('value').catch(() => null);
+                if (!snapshot || !snapshot.exists()) {
+                    showErr('Room not found. Check the code.');
+                    btn.disabled = false;
+                    return;
+                }
+
+                roomCode = code;
+                playerIndex = 1;
+                roomRef = db.ref('rooms/' + roomCode);
+
+                const p1 = onlineJoinData;
+                emojis = [null, null];
+                photos = [null, null];
+                if (p1.photo) photos[1] = p1.photo;
+                else emojis[1] = p1.emoji;
+
+                await roomRef.child('players/1').set({ emoji: p1.emoji, photo: p1.photo });
+
+                // [FIX 6] Auto-cleanup if this player disconnects
+                roomRef.child('players/1').onDisconnect().remove();
+
+                const data = snapshot.val();
+                if (data.players[0].photo) photos[0] = data.players[0].photo;
+                else emojis[0] = data.players[0].emoji;
+
+                startOnlineGame();
+
+            } catch (err) {
+                console.error('Join room failed:', err);
+                showErr('Failed to join room. Check your connection.');
+                btn.disabled = false;
             }
-
-            roomCode = code;
-            playerIndex = 1;
-            roomRef = db.ref('rooms/' + roomCode);
-
-            const p1 = onlineJoinData;
-            emojis = [null, null];
-            photos = [null, null];
-            if (p1.photo) photos[1] = p1.photo;
-            else emojis[1] = p1.emoji;
-
-            // [FIX 8] catch
-            await fbCatch(roomRef.child('players/1').set({ emoji: p1.emoji, photo: p1.photo }), 'Failed to join room.');
-
-            // [FIX 6] Auto-cleanup if this player disconnects
-            roomRef.child('players/1').onDisconnect().remove();
-
-            const data = snapshot.val();
-            if (data.players[0].photo) photos[0] = data.players[0].photo;
-            else emojis[0] = data.players[0].emoji;
-
-            startOnlineGame();
         });
 
         // ===== START ONLINE GAME =====
