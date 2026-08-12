@@ -1011,9 +1011,14 @@
                 return roomRef.child('players/1').set({ emoji: p1.emoji, photo: p1.photo }).then(() => {
                     roomRef.child('players/1').onDisconnect().remove();
 
-                    const data = snapshot.val();
-                    if (data.players[0].photo) photos[0] = data.players[0].photo;
-                    else emojis[0] = data.players[0].emoji;
+                    // [FIX] Re-read fresh data instead of using stale snapshot
+                    return roomRef.once('value');
+                }).then(freshSnap => {
+                    const data = freshSnap.val();
+                    if (data && data.players && data.players[0]) {
+                        if (data.players[0].photo) photos[0] = data.players[0].photo;
+                        else if (data.players[0].emoji) emojis[0] = data.players[0].emoji;
+                    }
 
                     startOnlineGame();
                 });
@@ -1043,14 +1048,14 @@
                 roomRef.off('value', gameListener);
             }
 
-            // [FIX 7] Track opponent presence
+            // [FIX] Track opponent presence
             const opponentIdx = 1 - playerIndex;
             roomRef.child(`players/${opponentIdx}`).on('value', snap => {
                 if (!snap.exists() && !state.gameOver && onlineStarted) {
-                    // Opponent left
-                    notYourTurn.textContent = 'Opponent left the game';
-                    notYourTurn.classList.add('show');
                     state.gameOver = true;
+                    resultVisual.innerHTML = '<div class="draw-display">👋</div>';
+                    resultText.textContent = 'Opponent left the game';
+                    resultOverlay.classList.add('show');
                 }
             });
 
@@ -1065,14 +1070,25 @@
                     return;
                 }
 
-                // Sync board
+                // [FIX] Sync board — handle Firebase null-stripping (returns object, not array)
                 const rawBoard = data.board;
-                const newBoard = Array.isArray(rawBoard) ? [...rawBoard] : Array(9).fill(null);
-                for (let i = 0; i < 9; i++) { if (newBoard[i] === undefined) newBoard[i] = null; }
+                const newBoard = Array(9).fill(null);
+                if (rawBoard && typeof rawBoard === 'object') {
+                    for (let i = 0; i < 9; i++) {
+                        if (rawBoard[i] !== undefined && rawBoard[i] !== null) newBoard[i] = rawBoard[i];
+                    }
+                }
 
                 state.board = newBoard;
                 state.turn = data.turn != null ? data.turn : 0;
-                state.scores = Array.isArray(data.scores) ? [...data.scores] : [0,0,0];
+                // [FIX] Same null-stripping handling for scores
+                const rawScores = data.scores;
+                state.scores = [0, 0, 0];
+                if (rawScores && typeof rawScores === 'object') {
+                    if (rawScores[0] != null) state.scores[0] = rawScores[0];
+                    if (rawScores[1] != null) state.scores[1] = rawScores[1];
+                    if (rawScores[2] != null) state.scores[2] = rawScores[2];
+                }
 
                 // Sync player data
                 if (data.players && data.players[0]) {
@@ -1210,7 +1226,10 @@
 
         function handleCellClick(i) {
             if (state.gameOver || state.board[i] !== null) return;
+            // [FIX] Extra guard for online: double-check it's actually our turn
             if (playerIndex !== null && state.turn !== playerIndex) return;
+            // [FIX] Prevent move if game is already over in Firebase (race condition)
+            if (playerIndex !== null && state.gameOver) return;
 
             const currentPlayer = state.turn;
             state.board[i] = currentPlayer;
@@ -1330,10 +1349,17 @@
         document.getElementById('btn-restart').addEventListener('click', () => {
             if (roomRef) {
                 state.scores = [0,0,0];
-                fbCatch(roomRef.update({ board: Array(9).fill(null), turn: 0, scores: [0,0,0] }), 'Failed to restart.');
+                // [FIX] Include gameOver: false so the game doesn't re-trigger
+                roomRef.update({
+                    board: Array(9).fill(null),
+                    turn: 0,
+                    scores: [0,0,0],
+                    gameOver: false
+                }).catch(err => console.error('Restart failed:', err));
             }
             lastWinLine = null;
             state.gameOver = false;
+            resultOverlay.classList.remove('show');
             resetBoard();
         });
 
@@ -1352,14 +1378,14 @@
             if (roomRef && playerIndex !== null) {
                 roomRef.child(`players/${1 - playerIndex}`).off();
             }
-            // [FIX 6] Cancel onDisconnect and remove player data
+            // [FIX] Let onDisconnect handle cleanup for reliability
+            // Only manually remove if we're the host (room owner)
             if (roomRef) {
-                roomRef.onDisconnect().cancel();
-                if (playerIndex === 1) {
-                    roomRef.child('players/1').remove().catch(()=>{});
-                } else if (playerIndex === 0) {
+                if (playerIndex === 0) {
+                    roomRef.onDisconnect().cancel();
                     roomRef.remove().catch(()=>{});
                 }
+                // Player 1: onDisconnect().remove() set during join handles it
             }
             roomRef = null; roomCode = null; playerIndex = null;
             onlineStarted = false;
@@ -1382,13 +1408,10 @@
         document.getElementById('leave-btn').addEventListener('click', leaveGame);
         document.getElementById('btn-leave').addEventListener('click', leaveGame);
 
-        // [FIX 13] Cleanup on tab close
+        // [FIX] Let onDisconnect handle cleanup — don't cancel it
+        // onDisconnect is set when creating/joining a room and is the reliable path
         window.addEventListener('beforeunload', () => {
-            if (roomRef) {
-                roomRef.onDisconnect().cancel();
-                if (playerIndex === 0) roomRef.remove();
-                else if (playerIndex === 1) roomRef.child('players/1').remove();
-            }
+            // No-op: onDisconnect() set earlier handles cleanup
         });
 
         // ===== CONFETTI =====
