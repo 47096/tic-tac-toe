@@ -499,8 +499,8 @@
         // ===== STATE =====
         const EMOJIS = ['😀','😂','😎','🥳','🤩','😏','🐱','🐶','🦊','🐸','🐻','🐼','🌟','🔥','⚡','❄️','🌈','💎','🍎','🍕','🌮','🍔','⚽','🏀','🎮','🎲','🚀','💀','👻','🤖'];
 
-        let gameMode = 'local'; // 'local' | 'online'
-        let inputMode = 'camera'; // 'camera' | 'emoji'
+        let gameMode = 'local';
+        let inputMode = 'camera';
         let step = 0;
         let photos = [null, null];
         let emojis = [null, null];
@@ -508,9 +508,11 @@
 
         // Online
         let roomCode = null;
-        let playerIndex = null; // 0 or 1
+        let playerIndex = null;
         let roomRef = null;
-        let roomListener = null;
+        let gameListener = null;       // [FIX 4] renamed for clarity
+        let playerJoinListener = null; // [FIX 4] track separately
+        let onlineStarted = false;     // [FIX 4] guard against double-fire
 
         const WIN_LINES = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
         const state = { board: Array(9).fill(null), turn: 0, gameOver: false, scores: [0,0,0] };
@@ -539,17 +541,65 @@
         // ===== SOUNDS =====
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playSound(freq, dur, type='sine', vol=0.12) {
-            const o = audioCtx.createOscillator(), g = audioCtx.createGain();
-            o.type = type; o.frequency.value = freq;
-            g.gain.setValueAtTime(vol, audioCtx.currentTime);
-            g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
-            o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime + dur);
+            try {
+                const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+                o.type = type; o.frequency.value = freq;
+                g.gain.setValueAtTime(vol, audioCtx.currentTime);
+                g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+                o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime + dur);
+            } catch(e) {}
         }
         function sndPlace() { playSound(600, 0.1); }
         function sndWin() { playSound(523,0.15); setTimeout(()=>playSound(659,0.15),100); setTimeout(()=>playSound(784,0.3),200); }
         function sndDraw() { playSound(300, 0.3, 'triangle', 0.08); }
         function sndSnap() { playSound(800, 0.05, 'square', 0.06); }
         function sndTick() { playSound(500, 0.08); }
+
+        // ===== HELPERS =====
+        function getPlayerVisual(i) {
+            if (photos[i]) return `<img class="turn-img" src="${photos[i]}" alt="">`;
+            if (emojis[i]) return `<span class="turn-emoji">${emojis[i]}</span>`;
+            return '?';
+        }
+        function getPlayerScoreHTML(i) {
+            if (photos[i]) return `<img class="score-img" src="${photos[i]}" alt=""> <span>${state.scores[i]}</span>`;
+            if (emojis[i]) return `<span class="score-emoji">${emojis[i]}</span> <span>${state.scores[i]}</span>`;
+            return '?';
+        }
+        // [FIX 3] Per-player type check instead of global isPhotoMode
+        function playerHasPhoto(i) { return photos[i] !== null; }
+        function playerHasEmoji(i) { return emojis[i] !== null; }
+        function genRoomCode() { return Math.random().toString(36).substring(2, 8).toUpperCase(); }
+
+        function resizePhoto(dataUrl, size = 64) {
+            return new Promise(resolve => {
+                const img = new Image();
+                img.onload = () => {
+                    const c = document.createElement('canvas');
+                    c.width = size; c.height = size;
+                    c.getContext('2d').drawImage(img, 0, 0, size, size);
+                    resolve(c.toDataURL('image/jpeg', 0.6));
+                };
+                img.src = dataUrl;
+            });
+        }
+
+        function showErr(msg) {
+            const el = document.getElementById('online-error');
+            el.textContent = msg; el.classList.remove('hidden');
+        }
+
+        // [FIX 8] Generic Firebase error wrapper
+        function fbCatch(promise, fallbackMsg) {
+            return promise.catch(e => {
+                console.error('Firebase error:', e);
+                showErr(fallbackMsg || 'Connection error. Please try again.');
+            });
+        }
+
+        // Online input state
+        let onlineCreateData = { emoji: null, photo: null };
+        let onlineJoinData = { emoji: null, photo: null };
 
         // ===== MODE TABS =====
         document.querySelectorAll('#screen-mode .mode-tabs button[data-mode]').forEach(btn => {
@@ -591,7 +641,6 @@
                 btn.classList.add('active');
                 document.getElementById('create-section').style.display = btn.dataset.role === 'create' ? 'flex' : 'none';
                 document.getElementById('join-section').style.display = btn.dataset.role === 'join' ? 'flex' : 'none';
-                // Start camera for whichever section is visible
                 if (btn.dataset.role === 'create') startOnlineCamera('create');
                 else startOnlineCamera('join');
             });
@@ -622,7 +671,7 @@
         setupOnlineInputToggle('create-input-toggle', 'create');
         setupOnlineInputToggle('join-input-toggle', 'join');
 
-        // Online camera streams
+        // Online cameras
         const onlineCameras = { create: null, join: null };
 
         async function startOnlineCamera(role) {
@@ -645,7 +694,7 @@
             }
         }
 
-        // Online snap handlers
+        // Online snap
         function setupOnlineSnap(role) {
             document.getElementById(`${role}-snap-btn`).addEventListener('click', async () => {
                 const btn = document.getElementById(`${role}-snap-btn`);
@@ -668,7 +717,7 @@
                     document.getElementById('create-room-btn').disabled = false;
                 } else {
                     onlineJoinData = { emoji: null, photo: smallPhoto };
-                    document.getElementById('join-room-btn').disabled = false;
+                    updateJoinBtnState();
                 }
 
                 v.style.display='none';
@@ -693,7 +742,7 @@
                 document.getElementById(`${role}-retake-btn`).classList.add('hidden');
                 document.getElementById(`${role}-preview`).style.display='none';
                 if (role === 'create') document.getElementById('create-room-btn').disabled=true;
-                else document.getElementById('join-room-btn').disabled=true;
+                else updateJoinBtnState();
                 startOnlineCamera(role);
             });
         }
@@ -717,7 +766,7 @@
                         document.getElementById('create-preview-img').textContent = e;
                     } else {
                         onlineJoinData = { emoji: e, photo: null };
-                        document.getElementById('join-room-btn').disabled = false;
+                        updateJoinBtnState();
                         document.getElementById('join-preview').style.display = 'block';
                         document.getElementById('join-preview-img').textContent = e;
                     }
@@ -743,7 +792,7 @@
         }
         function stopCamera() { if (cameraStream) { cameraStream.getTracks().forEach(t => t.stop()); cameraStream = null; } }
 
-        // ===== SNAP =====
+        // ===== SNAP (LOCAL) =====
         document.getElementById('snap-btn').addEventListener('click', async () => {
             const btn = document.getElementById('snap-btn');
             btn.disabled = true; sndTick();
@@ -759,7 +808,7 @@
             tmp.getContext('2d').drawImage(v,(vw-s)/2,(vh-s)/2,s,s,0,0,256,256);
             photos[step]=tmp.toDataURL('image/jpeg',0.85); emojis[step]=null;
             v.style.display='none';
-            const ci=document.getElementById('captured-img'); ci.src=photos[step]; ci.style.display='block';
+            document.getElementById('captured-img').src=photos[step]; document.getElementById('captured-img').style.display='block';
             document.getElementById('snap-box').classList.add('done');
             btn.classList.add('hidden');
             document.getElementById('retake-btn').classList.remove('hidden');
@@ -807,8 +856,6 @@
             });
         }
 
-        // (Online emoji grids built by buildOnlineEmojiGrid above)
-
         function updateLocalPicks() {
             ['p1-preview','p2-preview'].forEach((id,i) => {
                 const el = document.getElementById(id);
@@ -832,39 +879,6 @@
             if(inputMode==='emoji') buildLocalEmojiGrid();
         }
 
-        // ===== HELPERS =====
-        function getPlayerVisual(i) {
-            if (photos[i]) return `<img class="turn-img" src="${photos[i]}" alt="">`;
-            if (emojis[i]) return `<span class="turn-emoji">${emojis[i]}</span>`;
-            return '?';
-        }
-        function getPlayerScoreHTML(i) {
-            if (photos[i]) return `<img class="score-img" src="${photos[i]}" alt=""> <span>${state.scores[i]}</span>`;
-            if (emojis[i]) return `<span class="score-emoji">${emojis[i]}</span> <span>${state.scores[i]}</span>`;
-            return '?';
-        }
-        function isPhotoMode() { return photos[0] !== null && photos[1] !== null; }
-        function genRoomCode() { return Math.random().toString(36).substring(2, 8).toUpperCase(); }
-
-        // Resize photo to 64x64 for online storage (~3-5KB)
-        function resizePhoto(dataUrl, size = 64) {
-            return new Promise(resolve => {
-                const img = new Image();
-                img.onload = () => {
-                    const c = document.createElement('canvas');
-                    c.width = size; c.height = size;
-                    const ctx = c.getContext('2d');
-                    ctx.drawImage(img, 0, 0, size, size);
-                    resolve(c.toDataURL('image/jpeg', 0.6));
-                };
-                img.src = dataUrl;
-            });
-        }
-
-        // Online input state
-        let onlineCreateData = { emoji: null, photo: null };
-        let onlineJoinData = { emoji: null, photo: null };
-
         // ===== LOCAL GAME =====
         document.getElementById('start-local-btn').addEventListener('click', () => {
             stopCamera();
@@ -878,9 +892,23 @@
         });
 
         // ===== ONLINE: CREATE =====
+        // [FIX 9] Check room code uniqueness before creating
+        async function generateUniqueRoomCode() {
+            let code, attempts = 0;
+            do {
+                code = genRoomCode();
+                attempts++;
+                const snap = await db.ref('rooms/' + code).once('value');
+                if (!snap.exists()) return code;
+            } while (attempts < 10);
+            return code; // fallback
+        }
+
         document.getElementById('create-room-btn').addEventListener('click', async () => {
             stopOnlineCamera('create');
-            roomCode = genRoomCode();
+            onlineStarted = false;
+
+            roomCode = await generateUniqueRoomCode(); // [FIX 9]
             playerIndex = 0;
             photos = [null, null];
             emojis = [null, null];
@@ -890,25 +918,33 @@
             else emojis[0] = p0.emoji;
 
             roomRef = db.ref('rooms/' + roomCode);
-            await roomRef.set({
+
+            // [FIX 8] catch + [FIX 6] onDisconnect
+            await fbCatch(roomRef.set({
                 players: { 0: { emoji: p0.emoji, photo: p0.photo }, 1: null },
                 board: Array(9).fill(null),
                 turn: 0,
                 scores: [0, 0, 0],
                 created: Date.now()
-            });
+            }), 'Failed to create room. Check your connection.');
 
-            // Listen for Player 2 joining
-            roomRef.child('players/1').on('value', snap => {
+            // [FIX 6] Auto-cleanup if host disconnects
+            roomRef.onDisconnect().remove();
+
+            // [FIX 4] Listen for Player 2 joining (once)
+            playerJoinListener = roomRef.child('players/1').on('value', snap => {
                 const p2 = snap.val();
-                if (p2) {
+                if (p2 && !onlineStarted) {
+                    onlineStarted = true; // [FIX 4] guard
                     if (p2.photo) { photos[1] = p2.photo; emojis[1] = null; }
                     else { emojis[1] = p2.emoji; photos[1] = null; }
+                    // [FIX 4] Detach join listener before starting game
+                    roomRef.child('players/1').off('value', playerJoinListener);
+                    playerJoinListener = null;
                     startOnlineGame();
                 }
             });
 
-            // Show waiting room
             screenMode.classList.add('hidden');
             screenWaiting.classList.remove('hidden');
             document.getElementById('room-code-display').textContent = roomCode;
@@ -923,8 +959,13 @@
             setTimeout(() => { document.getElementById('share-url').textContent = url; }, 1500);
         });
 
+        // [FIX 11] Cancel wait — clean up child listener
         document.getElementById('cancel-wait-btn').addEventListener('click', () => {
-            if (roomRef) roomRef.remove();
+            if (playerJoinListener && roomRef) {
+                roomRef.child('players/1').off('value', playerJoinListener);
+                playerJoinListener = null;
+            }
+            if (roomRef) { roomRef.onDisconnect().cancel(); roomRef.remove().catch(()=>{}); }
             roomRef = null; roomCode = null;
             screenWaiting.classList.add('hidden');
             screenMode.classList.remove('hidden');
@@ -932,21 +973,26 @@
         });
 
         // ===== ONLINE: JOIN =====
+        // [FIX 5] Join button checks BOTH conditions
+        function updateJoinBtnState() {
+            const codeOk = document.getElementById('room-code-input').value.trim().length >= 4;
+            const avatarOk = onlineJoinData.emoji !== null || onlineJoinData.photo !== null;
+            document.getElementById('join-room-btn').disabled = !(codeOk && avatarOk);
+        }
+
         document.getElementById('room-code-input').addEventListener('input', e => {
             e.target.value = e.target.value.toUpperCase();
-            document.getElementById('join-room-btn').disabled = e.target.value.length < 4;
+            updateJoinBtnState(); // [FIX 5]
         });
 
         document.getElementById('join-room-btn').addEventListener('click', async () => {
             stopOnlineCamera('join');
             const code = document.getElementById('room-code-input').value.trim();
-            const errEl = document.getElementById('online-error');
-            errEl.classList.add('hidden');
+            document.getElementById('online-error').classList.add('hidden');
 
-            const snapshot = await db.ref('rooms/' + code).once('value');
-            if (!snapshot.exists()) {
-                errEl.textContent = 'Room not found. Check the code.';
-                errEl.classList.remove('hidden');
+            const snapshot = await db.ref('rooms/' + code).once('value').catch(() => null);
+            if (!snapshot || !snapshot.exists()) {
+                showErr('Room not found. Check the code.');
                 return;
             }
 
@@ -960,9 +1006,12 @@
             if (p1.photo) photos[1] = p1.photo;
             else emojis[1] = p1.emoji;
 
-            await roomRef.child('players/1').set({ emoji: p1.emoji, photo: p1.photo });
+            // [FIX 8] catch
+            await fbCatch(roomRef.child('players/1').set({ emoji: p1.emoji, photo: p1.photo }), 'Failed to join room.');
 
-            // Load Player 1 data
+            // [FIX 6] Auto-cleanup if this player disconnects
+            roomRef.child('players/1').onDisconnect().remove();
+
             const data = snapshot.val();
             if (data.players[0].photo) photos[0] = data.players[0].photo;
             else emojis[0] = data.players[0].emoji;
@@ -982,15 +1031,42 @@
             resetBoard();
             resizeConfetti();
 
-            // Listen for game updates
-            roomListener = roomRef.on('value', snap => {
-                const data = snap.val();
-                if (!data) return;
+            // [FIX 4] Detach old listener before attaching new one
+            if (gameListener && roomRef) {
+                roomRef.off('value', gameListener);
+            }
 
-                // Sync board
-                const newBoard = data.board || Array(9).fill(null);
-                const newTurn = data.turn || 0;
-                const newScores = data.scores || [0,0,0];
+            // [FIX 7] Track opponent presence
+            const opponentIdx = 1 - playerIndex;
+            roomRef.child(`players/${opponentIdx}`).on('value', snap => {
+                if (!snap.exists() && !state.gameOver && onlineStarted) {
+                    // Opponent left
+                    notYourTurn.textContent = 'Opponent left the game';
+                    notYourTurn.classList.add('show');
+                    state.gameOver = true;
+                }
+            });
+
+            // Listen for game updates
+            gameListener = roomRef.on('value', snap => {
+                const data = snap.val();
+                if (!data) {
+                    // [FIX 7] Room was deleted (host left)
+                    if (!state.gameOver) {
+                        showErr('Game ended — host left.');
+                        setTimeout(() => leaveGame(), 2000);
+                    }
+                    return;
+                }
+
+                // Sync board — [FIX 2] handle sparse arrays from Firebase
+                const rawBoard = data.board;
+                const newBoard = Array.isArray(rawBoard) ? rawBoard : Array(9).fill(null);
+                // Fill any holes Firebase may have created
+                for (let i = 0; i < 9; i++) { if (newBoard[i] === undefined) newBoard[i] = null; }
+
+                const newTurn = data.turn != null ? data.turn : 0;
+                const newScores = Array.isArray(data.scores) ? data.scores : [0,0,0];
 
                 state.board = newBoard;
                 state.turn = newTurn;
@@ -998,31 +1074,36 @@
 
                 // Sync player data
                 if (data.players && data.players[0]) {
-                    emojis[0] = data.players[0].emoji;
-                    photos[0] = data.players[0].photo;
+                    if (data.players[0].emoji != null) emojis[0] = data.players[0].emoji;
+                    if (data.players[0].photo != null) photos[0] = data.players[0].photo;
                 }
                 if (data.players && data.players[1]) {
-                    emojis[1] = data.players[1].emoji;
-                    photos[1] = data.players[1].photo;
+                    if (data.players[1].emoji != null) emojis[1] = data.players[1].emoji;
+                    if (data.players[1].photo != null) photos[1] = data.players[1].photo;
                 }
 
                 renderBoard();
                 updateTurn();
                 updateScores();
 
-                // Show/hide "not your turn" overlay
+                // "Not your turn" overlay
                 if (playerIndex !== null && state.turn !== playerIndex && !state.gameOver) {
+                    notYourTurn.textContent = 'Not your turn';
                     notYourTurn.classList.add('show');
                 } else {
                     notYourTurn.classList.remove('show');
                 }
 
-                // Check win from synced state
-                checkWinFromState();
+                // [FIX 1] Only check win if it was YOUR turn (the mover detects win)
+                // This prevents double-counting
+                if (playerIndex === null || state.turn !== playerIndex) {
+                    checkWinFromState();
+                }
             });
         }
 
         // ===== BOARD =====
+        // [FIX 3] Create both img and span per cell for mixed mode
         function resetBoard() {
             state.board = Array(9).fill(null);
             state.turn = 0;
@@ -1035,11 +1116,11 @@
             for (let i = 0; i < 9; i++) {
                 const cell = document.createElement('div');
                 cell.className = 'cell';
-                if (isPhotoMode()) {
-                    const img = document.createElement('img'); img.alt = ''; cell.appendChild(img);
-                } else {
-                    const span = document.createElement('span'); span.className = 'cell-emoji'; cell.appendChild(span);
-                }
+                // [FIX 3] Always create both elements
+                const img = document.createElement('img'); img.alt = ''; img.style.display = 'none';
+                const span = document.createElement('span'); span.className = 'cell-emoji'; span.style.display = 'none';
+                cell.appendChild(img);
+                cell.appendChild(span);
                 const ph = document.createElement('span');
                 ph.className = 'cell-placeholder'; ph.textContent = phs[i];
                 cell.appendChild(ph);
@@ -1055,22 +1136,37 @@
             updateScores();
         }
 
+        // [FIX 3] Render per-cell based on which player placed
         function renderBoard() {
             cells.forEach((cell, i) => {
                 const val = state.board[i];
                 const ph = cell.querySelector('.cell-placeholder');
+                const img = cell.querySelector('img');
+                const span = cell.querySelector('.cell-emoji');
 
                 if (val !== null) {
                     cell.classList.add('marked');
                     if (ph) ph.style.display = 'none';
-                    if (isPhotoMode()) {
-                        cell.querySelector('img').src = photos[val];
-                    } else {
-                        cell.querySelector('.cell-emoji').textContent = emojis[val];
+
+                    // [FIX 3] Show the correct element per player
+                    if (playerHasPhoto(val)) {
+                        img.src = photos[val];
+                        img.style.display = '';
+                        img.style.opacity = '1';
+                        img.style.transform = 'scale(1) scaleX(-1)';
+                        span.style.display = 'none';
+                    } else if (playerHasEmoji(val)) {
+                        span.textContent = emojis[val];
+                        span.style.display = '';
+                        span.style.opacity = '1';
+                        span.style.transform = 'scale(1)';
+                        img.style.display = 'none';
                     }
                 } else {
                     cell.classList.remove('marked', 'win-cell');
                     if (ph) ph.style.display = '';
+                    img.style.display = 'none';
+                    span.style.display = 'none';
                 }
             });
         }
@@ -1088,21 +1184,24 @@
 
         function handleCellClick(i) {
             if (state.gameOver || state.board[i] !== null) return;
-
-            // Online: only your turn
             if (playerIndex !== null && state.turn !== playerIndex) return;
 
             state.board[i] = state.turn;
             sndPlace();
             if (navigator.vibrate) navigator.vibrate(10);
 
-            // Online: write to Firebase
+            // [FIX 2] Atomic write — single update instead of two .set() calls
             if (roomRef) {
-                roomRef.child('board').set(state.board);
-                roomRef.child('turn').set(1 - state.turn);
+                fbCatch(roomRef.update({
+                    board: state.board,
+                    turn: 1 - state.turn
+                }), 'Move failed. Check connection.');
+                // [FIX 1] After writing, check if this move won (only the mover checks)
+                renderBoard();
+                checkWin();
+                if (!state.gameOver) { state.turn = 1 - state.turn; updateTurn(); }
             }
 
-            // Local: update directly
             if (playerIndex === null) {
                 renderBoard();
                 checkWin();
@@ -1119,6 +1218,7 @@
             if (state.board.every(c => c !== null)) endGame(null);
         }
 
+        // [FIX 1] checkWinFromState — only for opponent's moves (read from Firebase)
         function checkWinFromState() {
             for (const [a,b,c] of WIN_LINES) {
                 if (state.board[a] !== null && state.board[a] === state.board[b] && state.board[a] === state.board[c]) {
@@ -1131,6 +1231,7 @@
 
         let lastWinLine = null;
 
+        // [FIX 1] Only the mover writes scores
         function endGame(winner, winLine) {
             state.gameOver = true;
             lastWinLine = winLine;
@@ -1141,7 +1242,7 @@
                 drawWinLine(winLine);
                 sndWin();
                 if (navigator.vibrate) navigator.vibrate([50,30,50]);
-                if (isPhotoMode()) {
+                if (playerHasPhoto(winner)) {
                     resultVisual.innerHTML = `<img class="winner-img" src="${photos[winner]}" alt="">`;
                 } else {
                     resultVisual.innerHTML = `<div class="winner-emoji">${emojis[winner]}</div>`;
@@ -1155,7 +1256,20 @@
             }
 
             updateScores();
-            if (roomRef) roomRef.child('scores').set(state.scores);
+
+            // [FIX 1] Only the player who made the move writes scores to Firebase
+            // In online mode: the mover already called checkWin() after handleCellClick
+            // In online mode from checkWinFromState: we're the opponent, don't write
+            // Only write if this endGame was triggered by our own move (local or our handleCellClick)
+            if (roomRef && playerIndex !== null && state.turn === playerIndex) {
+                // We made the winning move — write scores
+                fbCatch(roomRef.update({ scores: state.scores, board: state.board }), 'Failed to update scores.');
+            } else if (roomRef && playerIndex === null) {
+                // Local game
+                fbCatch(roomRef.child('scores').set(state.scores), 'Failed to update scores.');
+            }
+            // If we're online and it wasn't our turn, the opponent will write scores
+
             launchConfetti();
             setTimeout(() => resultOverlay.classList.add('show'), winner !== null ? 700 : 400);
         }
@@ -1194,27 +1308,50 @@
         // ===== PLAY AGAIN / LEAVE =====
         document.getElementById('play-again-btn').addEventListener('click', () => {
             if (roomRef) {
-                roomRef.update({ board: Array(9).fill(null), turn: 0, scores: state.scores });
+                // [FIX 1] Reset game state atomically
+                fbCatch(roomRef.update({ board: Array(9).fill(null), turn: 0 }), 'Failed to reset.');
             }
             lastWinLine = null;
+            state.gameOver = false;
             resetBoard();
         });
 
         document.getElementById('btn-restart').addEventListener('click', () => {
             if (roomRef) {
                 state.scores = [0,0,0];
-                roomRef.update({ board: Array(9).fill(null), turn: 0, scores: [0,0,0] });
+                fbCatch(roomRef.update({ board: Array(9).fill(null), turn: 0, scores: [0,0,0] }), 'Failed to restart.');
             }
             lastWinLine = null;
+            state.gameOver = false;
             resetBoard();
         });
 
+        // [FIX 1,4,11,12] Clean leave function
         function leaveGame() {
-            if (roomRef) {
-                roomRef.off();
-                if (playerIndex === 0) roomRef.remove();
-                roomRef = null; roomCode = null; playerIndex = null;
+            // [FIX 4] Detach all listeners
+            if (playerJoinListener && roomRef) {
+                roomRef.child('players/1').off('value', playerJoinListener);
+                playerJoinListener = null;
             }
+            if (gameListener && roomRef) {
+                roomRef.off('value', gameListener);
+                gameListener = null;
+            }
+            // Detach opponent presence listener
+            if (roomRef && playerIndex !== null) {
+                roomRef.child(`players/${1 - playerIndex}`).off();
+            }
+            // [FIX 6] Cancel onDisconnect and remove player data
+            if (roomRef) {
+                roomRef.onDisconnect().cancel();
+                if (playerIndex === 1) {
+                    roomRef.child('players/1').remove().catch(()=>{});
+                } else if (playerIndex === 0) {
+                    roomRef.remove().catch(()=>{});
+                }
+            }
+            roomRef = null; roomCode = null; playerIndex = null;
+            onlineStarted = false;
             stopOnlineCamera('create');
             stopOnlineCamera('join');
             screenGame.classList.add('hidden');
@@ -1226,11 +1363,22 @@
             onlineJoinData = { emoji: null, photo: null };
             buildOnlineEmojiGrid('create-emoji-grid', 'create');
             buildOnlineEmojiGrid('join-emoji-grid', 'join');
+            // [FIX 12] Restart local camera
+            if (inputMode === 'camera') setTimeout(() => startCamera(), 200);
             setTimeout(() => startOnlineCamera('create'), 300);
         }
 
         document.getElementById('leave-btn').addEventListener('click', leaveGame);
         document.getElementById('btn-leave').addEventListener('click', leaveGame);
+
+        // [FIX 13] Cleanup on tab close
+        window.addEventListener('beforeunload', () => {
+            if (roomRef) {
+                roomRef.onDisconnect().cancel();
+                if (playerIndex === 0) roomRef.remove();
+                else if (playerIndex === 1) roomRef.child('players/1').remove();
+            }
+        });
 
         // ===== CONFETTI =====
         function resizeConfetti() { confettiCanvas.width=innerWidth; confettiCanvas.height=innerHeight; }
@@ -1263,14 +1411,17 @@
             document.getElementById('create-section').style.display = 'none';
             document.getElementById('join-section').style.display = 'flex';
             document.getElementById('room-code-input').value = autoJoinCode.toUpperCase();
-            document.getElementById('join-room-btn').disabled = autoJoinCode.length < 4;
+            // [FIX 10] Start the JOIN camera, not create
+            setTimeout(() => startOnlineCamera('join'), 500);
+            updateJoinBtnState();
         }
 
         // Init
         buildLocalEmojiGrid();
-        startCamera();
-        // Start online camera for create section (default visible)
-        setTimeout(() => startOnlineCamera('create'), 500);
+        if (!autoJoinCode) {
+            startCamera();
+            setTimeout(() => startOnlineCamera('create'), 500);
+        }
     })();
     </script>
 </body>
