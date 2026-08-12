@@ -438,15 +438,18 @@
             const btn=$('create-btn'); btn.textContent='Creating…'; btn.disabled=true;
             isOnline=true; onlineStarted=false;
             roomCode = genCode(); playerIndex=0;
-            // Auto-pick random emoji if none selected
             const myEmoji = onlinePickData.emoji || EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
             emojis=[myEmoji,null]; photos=[null,null];
             roomRef = db.ref('rooms/'+roomCode);
+
+            // Set onDisconnect first, before write
+            roomRef.onDisconnect().remove();
+
             roomRef.set({
                 players:{0:{emoji:myEmoji,photo:null},1:null},
                 board:Array(9).fill(null),turn:0,scores:[0,0,0],gameOver:false,created:Date.now()
             }).then(() => {
-                roomRef.onDisconnect().remove();
+                // Listen for player 2 joining
                 joinListener = roomRef.child('players/1').on('value', snap => {
                     const p2=snap.val();
                     if(p2 && !onlineStarted) {
@@ -456,14 +459,17 @@
                         startOnlineGame();
                     }
                 });
+
                 $('online-screen').classList.add('hidden');
                 $('waiting-screen').classList.remove('hidden');
                 $('room-code-display').textContent=roomCode;
                 $('share-url').textContent=location.origin+location.pathname+'?room='+roomCode;
             }).catch(err => {
+                console.error('Create failed:', err);
                 $('online-error').textContent='Failed: '+err.message;
                 $('online-error').classList.remove('hidden');
                 btn.textContent='Create Room'; btn.disabled=false;
+                isOnline = false;
             });
         });
 
@@ -488,28 +494,48 @@
             const btn=$('join-btn'); btn.textContent='Joining…'; btn.disabled=true;
             const code=$('room-code-input').value.trim();
             $('online-error').classList.add('hidden');
-            isOnline=true;
             const myEmoji = onlinePickData.emoji || EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
+
             db.ref('rooms/'+code).once('value').then(snap => {
-                if(!snap.exists()){$('online-error').textContent='Room not found.';$('online-error').classList.remove('hidden');btn.textContent='Join Room';btn.disabled=false;return;}
-                roomCode=code; playerIndex=1; roomRef=db.ref('rooms/'+roomCode);
-                emojis=[null,myEmoji]; photos=[null,null];
-                return roomRef.child('players/1').set({emoji:myEmoji,photo:null}).then(()=>{
-                    roomRef.child('players/1').onDisconnect().remove();
-                    return roomRef.once('value');
-                });
-            }).then(fresh => {
-                if(!fresh)return;
-                const d=fresh.val();
-                if(d&&d.players&&d.players[0]){
-                    if(d.players[0].emoji)emojis[0]=d.players[0].emoji;
-                    if(d.players[0].photo)photos[0]=d.players[0].photo;
+                if (!snap.exists()) {
+                    $('online-error').textContent='Room not found. Check the code.';
+                    $('online-error').classList.remove('hidden');
+                    btn.textContent='Join Room'; btn.disabled=false;
+                    return null;
                 }
-                startOnlineGame();
+
+                const data = snap.val();
+                if (!data || !data.players || !data.players[0]) {
+                    $('online-error').textContent='Invalid room.';
+                    $('online-error').classList.remove('hidden');
+                    btn.textContent='Join Room'; btn.disabled=false;
+                    return null;
+                }
+
+                isOnline = true;
+                roomCode = code;
+                playerIndex = 1;
+                roomRef = db.ref('rooms/' + roomCode);
+                emojis = [null, myEmoji];
+                photos = [null, null];
+
+                // Read host data
+                if (data.players[0].emoji) emojis[0] = data.players[0].emoji;
+                if (data.players[0].photo) photos[0] = data.players[0].photo;
+
+                // Write player 2 data
+                return roomRef.child('players/1').set({
+                    emoji: myEmoji, photo: null
+                }).then(() => {
+                    roomRef.child('players/1').onDisconnect().remove();
+                    startOnlineGame();
+                });
             }).catch(err => {
-                $('online-error').textContent='Failed: '+err.message;
+                console.error('Join failed:', err);
+                $('online-error').textContent='Failed: ' + err.message;
                 $('online-error').classList.remove('hidden');
                 btn.textContent='Join Room'; btn.disabled=false;
+                isOnline = false;
             });
         });
 
