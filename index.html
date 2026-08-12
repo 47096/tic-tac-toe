@@ -251,7 +251,6 @@
         .cell.win-cell { animation: winPulse 0.6s ease-in-out infinite alternate; background: var(--win-light); }
         @keyframes winPulse { from { transform: scale(1); } to { transform: scale(1.03); } }
 
-        .cell .cell-placeholder { font-size: 1.1rem; color: var(--border); pointer-events: none; }
         .cell img {
             width: 85%; height: 85%; object-fit: cover; border-radius: 8px;
             opacity: 0; transform: scale(0.5) scaleX(-1);
@@ -1170,18 +1169,13 @@
             boardEl.innerHTML = '';
             cells.length = 0;
 
-            const phs = ['1','2','3','4','5','6','7','8','9'];
             for (let i = 0; i < 9; i++) {
                 const cell = document.createElement('div');
                 cell.className = 'cell';
-                // [FIX 3] Always create both elements
                 const img = document.createElement('img'); img.alt = ''; img.style.display = 'none';
                 const span = document.createElement('span'); span.className = 'cell-emoji'; span.style.display = 'none';
                 cell.appendChild(img);
                 cell.appendChild(span);
-                const ph = document.createElement('span');
-                ph.className = 'cell-placeholder'; ph.textContent = phs[i];
-                cell.appendChild(ph);
                 cell.addEventListener('click', () => handleCellClick(i));
                 boardEl.appendChild(cell);
                 cells.push(cell);
@@ -1198,15 +1192,11 @@
         function renderBoard() {
             cells.forEach((cell, i) => {
                 const val = state.board[i];
-                const ph = cell.querySelector('.cell-placeholder');
                 const img = cell.querySelector('img');
                 const span = cell.querySelector('.cell-emoji');
 
                 if (val !== null) {
                     cell.classList.add('marked');
-                    if (ph) ph.style.display = 'none';
-
-                    // [FIX 3] Show the correct element per player
                     if (playerHasPhoto(val)) {
                         img.src = photos[val];
                         img.style.display = '';
@@ -1222,7 +1212,6 @@
                     }
                 } else {
                     cell.classList.remove('marked', 'win-cell');
-                    if (ph) ph.style.display = '';
                     img.style.display = 'none';
                     span.style.display = 'none';
                 }
