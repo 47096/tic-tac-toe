@@ -65,9 +65,11 @@
         .snap-btn { display: flex; align-items: center; gap: 4px; padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text-dim); font-size: 0.6rem; cursor: pointer; letter-spacing: 0.05em; margin-top: 2px; }
         .snap-btn:hover { border-color: var(--text-dim); color: var(--text); }
 
-        .camera-preview { width: 160px; height: 160px; border-radius: 8px; border: 1px solid var(--border); overflow: hidden; display: none; margin-bottom: 6px; }
-        .camera-preview video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
-        .camera-preview .cam-label { position: absolute; top: 4px; left: 4px; font-size: 0.5rem; padding: 2px 6px; background: rgba(0,0,0,0.5); color: #fff; border-radius: 3px; }
+        .camera-preview { width: 160px; height: 160px; border-radius: 8px; border: 1px solid var(--border); overflow: hidden; display: none; margin-bottom: 6px; cursor: pointer; transition: border-color 0.15s; }
+        .camera-preview:hover { border-color: var(--text-dim); }
+        .camera-preview video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); pointer-events: none; }
+        .camera-preview .cam-label { position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); font-size: 0.5rem; padding: 2px 8px; background: rgba(0,0,0,0.6); color: #fff; border-radius: 3px; pointer-events: none; }
+        .cam-instructions { font-size: 0.55rem; color: var(--text-dim); text-align: center; margin-top: 4px; }
 
         .snap-hidden { position: absolute; left: -9999px; top: -9999px; width: 320px; height: 320px; opacity: 0; pointer-events: none; }
 
@@ -136,13 +138,12 @@
             <div class="emoji-grid" id="emoji-grid"></div>
         </div>
         <button class="snap-btn" id="snap-btn">📸 Take photo instead</button>
-        <div class="camera-preview" id="camera-preview" style="position:relative;">
+        <div class="camera-preview" id="camera-preview" style="position:relative; cursor:pointer;">
             <video id="snap-video" playsinline autoplay></video>
-            <div class="cam-label">Camera</div>
+            <div class="cam-label">Tap to snap</div>
         </div>
-        <div style="display:none; gap:6px;" id="camera-controls">
-            <button class="snap-btn" id="snap-confirm" style="background:var(--text); color:var(--bg); border-color:var(--text);">📸 Snap</button>
-            <button class="snap-btn" id="snap-cancel">Cancel</button>
+        <div class="cam-instructions" id="cam-instructions" style="display:none;">
+            Tap preview to snap · Tap background to cancel
         </div>
         <canvas id="snap-canvas" class="snap-hidden"></canvas>
         <div class="pick-preview">
@@ -216,7 +217,7 @@
         </div>
         <div class="ctrls">
             <button class="btn btn-sm" id="btn-restart">Restart</button>
-            <button class="btn btn-sm" id="btn-leave">Leave</button>
+            <button class="btn btn-sm" id="btn-leave">Continue</button>
         </div>
     </div>
 
@@ -359,21 +360,24 @@
             if (snapStream) { snapStream.getTracks().forEach(t => t.stop()); snapStream = null; }
             cameraActive = false;
             $('camera-preview').style.display = 'none';
-            $('camera-controls').style.display = 'none';
+            $('cam-instructions').style.display = 'none';
             $('snap-btn').textContent = '📸 Take photo instead';
             $('snap-btn').style.display = '';
             $('snap-btn').disabled = false;
         }
 
-        $('snap-confirm').addEventListener('click', () => {
-            // Signal the main handler to capture
+        // Click on camera preview to snap
+        $('camera-preview').addEventListener('click', () => {
             if (snapResolve) { snapResolve('confirm'); snapResolve = null; }
         });
 
-        $('snap-cancel').addEventListener('click', () => {
-            // Signal cancel — don't capture
-            if (snapResolve) { snapResolve('cancel'); snapResolve = null; }
-            stopCamera();
+        // Click on picker background to cancel
+        $('picker').addEventListener('click', (e) => {
+            if (snapResolve && !e.target.closest('#camera-preview') && !e.target.closest('.snap-btn')) {
+                snapResolve('cancel');
+                snapResolve = null;
+                stopCamera();
+            }
         });
 
         $('snap-btn').addEventListener('click', async () => {
@@ -382,7 +386,6 @@
             btn.disabled = true;
             const preview = $('camera-preview');
             const video = $('snap-video');
-            const confirmBtn = $('snap-confirm');
 
             try {
                 snapStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 320 }, height: { ideal: 320 } } });
@@ -396,7 +399,7 @@
                 // Camera is ready
                 cameraActive = true;
                 preview.style.display = 'block';
-                $('camera-controls').style.display = 'flex';
+                $('cam-instructions').style.display = 'block';
                 btn.style.display = 'none';
 
                 // Wait for Snap or Cancel
