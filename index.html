@@ -140,7 +140,10 @@
             <video id="snap-video" playsinline autoplay></video>
             <div class="cam-label">Camera</div>
         </div>
-        <button class="snap-btn hidden" id="snap-confirm" style="background:var(--text); color:var(--bg); border-color:var(--text);">📸 Snap</button>
+        <div style="display:none; gap:6px;" id="camera-controls">
+            <button class="snap-btn" id="snap-confirm" style="background:var(--text); color:var(--bg); border-color:var(--text);">📸 Snap</button>
+            <button class="snap-btn" id="snap-cancel">Cancel</button>
+        </div>
         <canvas id="snap-canvas" class="snap-hidden"></canvas>
         <div class="pick-preview">
             <div class="pick-card">
@@ -356,8 +359,9 @@
             if (snapStream) { snapStream.getTracks().forEach(t => t.stop()); snapStream = null; }
             cameraActive = false;
             $('camera-preview').style.display = 'none';
-            $('snap-confirm').classList.add('hidden');
+            $('camera-controls').style.display = 'none';
             $('snap-btn').textContent = '📸 Take photo instead';
+            $('snap-btn').style.display = '';
             $('snap-btn').disabled = false;
             if (snapResolve) { snapResolve(); snapResolve = null; }
         }
@@ -366,13 +370,11 @@
             if (snapResolve) { snapResolve(); snapResolve = null; }
         });
 
-        $('snap-btn').addEventListener('click', async () => {
-            // If camera is active, cancel it
-            if (cameraActive) {
-                stopCamera();
-                return;
-            }
+        $('snap-cancel').addEventListener('click', () => {
+            stopCamera();
+        });
 
+        $('snap-btn').addEventListener('click', async () => {
             const btn = $('snap-btn');
             btn.textContent = 'Opening camera…';
             btn.disabled = true;
@@ -392,11 +394,10 @@
                 // Camera is ready
                 cameraActive = true;
                 preview.style.display = 'block';
-                btn.textContent = 'Cancel';
-                btn.disabled = false;
-                confirmBtn.classList.remove('hidden');
+                $('camera-controls').style.display = 'flex';
+                btn.style.display = 'none';
 
-                // Wait for Snap or Cancel
+                // Wait for Snap button click
                 await new Promise(resolve => { snapResolve = resolve; });
 
                 confirmBtn.classList.add('hidden');
