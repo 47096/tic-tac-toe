@@ -477,7 +477,6 @@
         <div id="result-visual"></div>
         <h2 id="result-text"></h2>
         <div class="btn-group">
-            <button class="btn btn-primary" id="play-again-btn">Play Again</button>
             <button class="btn btn-secondary" id="leave-btn">Leave</button>
         </div>
     </div>
@@ -1123,8 +1122,6 @@
                         resultVisual.innerHTML = '<div class="draw-display">🤝</div>';
                         resultText.textContent = "It's a Draw!";
                     }
-                    // Online: only show Leave button (no Play Again)
-                    document.getElementById('play-again-btn').style.display = 'none';
                     launchConfetti();
                     setTimeout(() => resultOverlay.classList.add('show'), winner !== null ? 700 : 400);
                 }
@@ -1159,7 +1156,6 @@
             }
 
             resultOverlay.classList.remove('show');
-            document.getElementById('play-again-btn').style.display = '';
             clearWinLine();
             renderBoard();
             updateTurn();
@@ -1331,16 +1327,6 @@
         window.addEventListener('resize', () => { if(lastWinLine && state.gameOver) drawWinLine(lastWinLine); });
 
         // ===== PLAY AGAIN / LEAVE =====
-        document.getElementById('play-again-btn').addEventListener('click', () => {
-            if (roomRef) {
-                // [FIX 1] Reset game state atomically
-                fbCatch(roomRef.update({ board: Array(9).fill(null), turn: 0 }), 'Failed to reset.');
-            }
-            lastWinLine = null;
-            state.gameOver = false;
-            resetBoard();
-        });
-
         document.getElementById('btn-restart').addEventListener('click', () => {
             if (roomRef) {
                 state.scores = [0,0,0];
