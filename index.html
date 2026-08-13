@@ -59,6 +59,10 @@
         .emoji-grid .e { width: 100%; aspect-ratio: 1; min-height: 44px; font-size: 1.4rem; border: 1px solid var(--border); background: var(--bg); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; border-radius: 6px; }
         .emoji-grid .e:hover { border-color: var(--text-dim); }
         .emoji-grid .e.sel { border-color: var(--text); background: var(--surface); }
+        .camera-area { width: 100%; max-width: 300px; aspect-ratio: 1; border: 2px dashed var(--border); border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; background: var(--surface); cursor: pointer; transition: all 0.15s; }
+        .camera-area:hover { border-color: var(--text-dim); }
+        .camera-area .camera-icon { font-size: 3rem; }
+        .camera-area .camera-text { font-size: 0.7rem; color: var(--text-dim); }
         .emoji-grid .e.used { opacity: 0.2; }
 
         .pick-preview { display: flex; gap: 20px; align-items: center; justify-content: center; margin-top: 4px; }
@@ -169,7 +173,10 @@
             <div class="emoji-grid" id="emoji-grid"></div>
         </div>
         <div class="pick-tab-content" id="photo-tab">
-            <button class="snap-btn" id="snap-btn">📸 Take photo</button>
+            <div class="camera-area" id="camera-area">
+                <div class="camera-icon">📸</div>
+                <div class="camera-text">Tap to take photo</div>
+            </div>
             <div class="camera-preview" id="camera-preview" style="position:relative; cursor:pointer;">
                 <video id="snap-video" playsinline autoplay></video>
                 <div class="cam-label">Tap to snap</div>
@@ -473,9 +480,8 @@
             cameraActive = false;
             $('camera-preview').style.display = 'none';
             $('cam-instructions').style.display = 'none';
-            $('snap-btn').textContent = '📸 Take photo instead';
-            $('snap-btn').style.display = '';
-            $('snap-btn').disabled = false;
+            $('camera-area').style.display = '';
+            $('camera-area').innerHTML = '<div class="camera-icon">📸</div><div class="camera-text">Tap to take photo</div>';
         }
 
         // Click on camera preview to snap
@@ -485,21 +491,21 @@
 
         // Click on picker background to cancel
         $('picker').addEventListener('click', (e) => {
-            if (snapResolve && !e.target.closest('#camera-preview') && !e.target.closest('.snap-btn')) {
+            if (snapResolve && !e.target.closest('#camera-preview') && !e.target.closest('.camera-area')) {
                 snapResolve('cancel');
                 snapResolve = null;
                 stopCamera();
             }
         });
 
-        $('snap-btn').addEventListener('click', async () => {
-            const btn = $('snap-btn');
-            btn.textContent = 'Opening camera…';
-            btn.disabled = true;
+        // Click on camera area to open camera
+        $('camera-area').addEventListener('click', async () => {
+            const area = $('camera-area');
             const preview = $('camera-preview');
             const video = $('snap-video');
 
             try {
+                area.innerHTML = '<div class="camera-icon" style="font-size:1.5rem;">⏳</div><div class="camera-text">Opening camera…</div>';
                 snapStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 320 }, height: { ideal: 320 } } });
                 video.srcObject = snapStream;
                 // Wait until camera is actually playing
@@ -512,14 +518,14 @@
                 cameraActive = true;
                 preview.style.display = 'block';
                 $('cam-instructions').style.display = 'block';
-                btn.style.display = 'none';
+                area.style.display = 'none';
 
                 // Wait for Snap or Cancel
                 const action = await new Promise(resolve => { snapResolve = resolve; });
 
                 if (action === 'cancel') return;
 
-                $('snap-btn').textContent = '📸 Capturing…';
+                area.innerHTML = '<div class="camera-icon" style="font-size:1.5rem;">📸</div><div class="camera-text">Capturing…</div>';
 
                 // Capture
                 const vw = video.videoWidth, vh = video.videoHeight, s = Math.min(vw, vh);
@@ -554,14 +560,13 @@
             } catch (e) {
                 console.error('Camera error:', e);
                 stopCamera();
-                if (e.name === 'NotAllowedError') {
-                    btn.textContent = '📸 Camera blocked — allow in Chrome settings';
-                } else if (e.name === 'NotFoundError') {
-                    btn.textContent = '📸 No camera found';
-                } else {
-                    btn.textContent = '📸 Camera error — try again';
-                }
-                setTimeout(() => { btn.textContent = '📸 Take photo instead'; btn.disabled = false; }, 3000);
+                let errorMsg = 'Camera error — try again';
+                if (e.name === 'NotAllowedError') errorMsg = 'Camera blocked — allow in settings';
+                else if (e.name === 'NotFoundError') errorMsg = 'No camera found';
+                area.innerHTML = `<div class="camera-icon" style="font-size:1.5rem;">⚠️</div><div class="camera-text">${errorMsg}</div>`;
+                setTimeout(() => {
+                    area.innerHTML = '<div class="camera-icon">📸</div><div class="camera-text">Tap to take photo</div>';
+                }, 3000);
             }
         });
 
