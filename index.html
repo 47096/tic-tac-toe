@@ -850,9 +850,6 @@
                     }else{sndDraw();resultBig.textContent='🤝';resultText.textContent='Draw';}
                     launchConfetti();setTimeout(()=>resultOverlay.classList.add('show'),w!==null?600:300);
                     firstTurn=1-firstTurn;
-                    autoRematchTimeout=setTimeout(()=>{resultOverlay.classList.remove('show');clearWinLine();state.gameOver=false;
-                        if(roomRef)roomRef.update({board:Array(9).fill(null),turn:firstTurn,gameOver:false}).catch(()=>{});
-                        resetBoard();autoRematchTimeout=null;},8000);
                 }
             });
         }
