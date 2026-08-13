@@ -48,6 +48,13 @@
         .pick-section { width: 100%; display: flex; flex-direction: column; align-items: center; }
         .pick-header { font-size: 0.7rem; color: var(--text-dim); letter-spacing: 0.1em; margin-bottom: 8px; text-align: center; }
         .pick-header.active { color: var(--text); font-weight: 600; }
+        .pick-tabs { display: flex; width: 100%; max-width: 300px; margin-bottom: 10px; }
+        .pick-tab { flex: 1; padding: 8px; text-align: center; font-size: 0.65rem; background: var(--surface); border: 1px solid var(--border); cursor: pointer; letter-spacing: 0.05em; transition: all 0.15s; }
+        .pick-tab.active { background: var(--bg); border-color: var(--text); font-weight: 600; }
+        .pick-tab:first-child { border-radius: 6px 0 0 6px; }
+        .pick-tab:last-child { border-radius: 0 6px 6px 0; }
+        .pick-tab-content { display: none; width: 100%; flex-direction: column; align-items: center; gap: 8px; }
+        .pick-tab-content.active { display: flex; }
         .emoji-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; width: 100%; max-width: 300px; }
         .emoji-grid .e { width: 100%; aspect-ratio: 1; min-height: 44px; font-size: 1.4rem; border: 1px solid var(--border); background: var(--bg); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; border-radius: 6px; }
         .emoji-grid .e:hover { border-color: var(--text-dim); }
@@ -153,19 +160,25 @@
     <div class="screen no-select" id="picker">
         <h1>過三關</h1>
         <div class="subtitle">tic tac toe</div>
-        <div class="pick-section">
-            <div class="pick-header active" id="pick-header">Player 1 — pick your emoji</div>
+        <div class="pick-header active" id="pick-header">Player 1 — pick your symbol</div>
+        <div class="pick-tabs">
+            <div class="pick-tab active" data-tab="emoji">😀 Emoji</div>
+            <div class="pick-tab" data-tab="photo">📸 Photo</div>
+        </div>
+        <div class="pick-tab-content active" id="emoji-tab">
             <div class="emoji-grid" id="emoji-grid"></div>
         </div>
-        <button class="snap-btn" id="snap-btn">📸 Take photo instead</button>
-        <div class="camera-preview" id="camera-preview" style="position:relative; cursor:pointer;">
-            <video id="snap-video" playsinline autoplay></video>
-            <div class="cam-label">Tap to snap</div>
+        <div class="pick-tab-content" id="photo-tab">
+            <button class="snap-btn" id="snap-btn">📸 Take photo</button>
+            <div class="camera-preview" id="camera-preview" style="position:relative; cursor:pointer;">
+                <video id="snap-video" playsinline autoplay></video>
+                <div class="cam-label">Tap to snap</div>
+            </div>
+            <div class="cam-instructions" id="cam-instructions" style="display:none;">
+                Tap preview to snap · Tap background to cancel
+            </div>
+            <canvas id="snap-canvas" class="snap-hidden"></canvas>
         </div>
-        <div class="cam-instructions" id="cam-instructions" style="display:none;">
-            Tap preview to snap · Tap background to cancel
-        </div>
-        <canvas id="snap-canvas" class="snap-hidden"></canvas>
         <div class="pick-preview">
             <div class="pick-card">
                 <div class="label">P1</div>
@@ -439,6 +452,16 @@
         });
 
         updatePickerUI();
+
+        // Tab switching
+        document.querySelectorAll('.pick-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.pick-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.pick-tab-content').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab + '-tab').classList.add('active');
+            });
+        });
 
         // Camera snap
         let snapStream = null;
