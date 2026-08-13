@@ -943,7 +943,8 @@
         // ===== BOARD =====
         function resetBoard() {
             state.board=Array(9).fill(null);state.turn=firstTurn;state.gameOver=false;lastWinLine=null;
-            boardEl.innerHTML='';cells.length=0;
+            boardEl.innerHTML='<div class="board-lines"><div class="v"></div><div class="v"></div><div class="h"></div><div class="h"></div></div>';
+            cells.length=0;
             for(let i=0;i<9;i++){
                 const cell=document.createElement('button');cell.className='cell';cell.setAttribute('aria-label','Row '+Math.floor(i/3+1)+' Column '+(i%3+1)+', empty');
                 const img=document.createElement('img');img.alt='';img.style.display='none';
