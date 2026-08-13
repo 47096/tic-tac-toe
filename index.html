@@ -104,9 +104,11 @@
         .snap-hidden { position: absolute; left: -9999px; top: -9999px; width: 320px; height: 320px; opacity: 0; pointer-events: none; }
 
         /* Online */
-        .online-tabs { display: flex; gap: 2px; padding: 2px; border-radius: 6px; background: var(--surface); margin-bottom: 10px; }
-        .online-tabs button { padding: 6px 14px; border: none; border-radius: 5px; background: transparent; color: var(--text-dim); font-size: 0.65rem; font-weight: 600; cursor: pointer; }
-        .online-tabs button.active { background: var(--bg); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .online-tabs { display: flex; width: 100%; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 10px; }
+        .online-tab { flex: 1; padding: 10px; background: var(--surface); color: var(--text-dim); cursor: pointer; font-size: 0.6rem; letter-spacing: 0.05em; text-align: center; transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 6px; border: none; }
+        .online-tab.active { background: var(--bg); color: var(--text); font-weight: 600; }
+        .online-tab:first-child { border-right: 1px solid var(--border); }
+        .online-tab .ot-icon { font-size: 0.9rem; }
 
         .room-box { padding: 14px; border: 1px solid var(--border); border-radius: 8px; text-align: center; width: 100%; max-width: 260px; }
         .room-code { font-size: 1.6rem; font-weight: 300; letter-spacing: 0.3em; margin: 4px 0; }
@@ -115,9 +117,10 @@
         .spinner { width: 12px; height: 12px; border: 1.5px solid var(--border); border-top-color: var(--text); border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        .join-input { display: flex; gap: 6px; width: 100%; max-width: 220px; }
-        .join-input input { flex: 1; padding: 8px 12px; border: 1px solid var(--border); border-radius: 5px; font-size: 0.9rem; font-weight: 300; text-align: center; letter-spacing: 0.15em; text-transform: uppercase; outline: none; background: var(--bg); color: var(--text); }
-        .join-input input:focus { border-color: var(--text); }
+        .join-input { width: 100%; margin-bottom: 10px; }
+        .join-input input { width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); font-size: 0.75rem; letter-spacing: 0.1em; text-align: center; text-transform: uppercase; }
+        .join-input input:focus { outline: none; border-color: var(--text); }
+        .join-input input::placeholder { text-transform: none; letter-spacing: 0.05em; }
 
         .error-msg { color: #c00; font-size: 0.65rem; text-align: center; }
 
@@ -227,42 +230,59 @@
     <div class="screen hidden" id="online-screen">
         <h1>過三關</h1>
         <div class="subtitle">tic tac toe</div>
+        <div class="pick-header active" id="online-header">Create a room to play online</div>
         <div class="online-tabs">
-            <button class="active" data-role="create">Create Room</button>
-            <button data-role="join">Join Room</button>
+            <button class="online-tab active" data-role="create"><span class="ot-icon">➕</span>Create Room</button>
+            <button class="online-tab" data-role="join"><span class="ot-icon">🔗</span>Join Room</button>
         </div>
 
-        <div id="create-area" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
-            <div class="pick-section">
-                <div class="pick-header active">Pick your emoji</div>
+        <div id="create-area" style="width:100%;">
+            <div class="pick-tabs">
+                <div class="pick-tab active" data-tab="online-emoji">😀 Emoji</div>
+                <div class="pick-tab" data-tab="online-photo">📸 Photo</div>
+            </div>
+            <div class="pick-tab-content active" id="online-emoji-tab">
                 <div class="emoji-grid" id="online-emoji-grid"></div>
             </div>
-            <button class="snap-btn" id="online-snap-btn">📸 Take photo instead</button>
-            <div class="camera-preview" id="online-camera-preview" style="position:relative; cursor:pointer; display:none;">
-                <video id="online-snap-video" playsinline autoplay></video>
-                <div class="cam-label">Tap to snap</div>
+            <div class="pick-tab-content" id="online-photo-tab">
+                <div class="camera-area" id="online-camera-area">
+                    <div class="camera-icon">📸</div>
+                    <div class="camera-text">Tap to take photo</div>
+                </div>
+                <div class="camera-preview" id="online-camera-preview" style="position:relative; cursor:pointer;">
+                    <video id="online-snap-video" playsinline autoplay></video>
+                    <div class="cam-label">Tap to snap</div>
+                </div>
+                <div class="cam-instructions" id="online-cam-instructions" style="display:none;">Tap preview to snap · Tap background to cancel</div>
+                <canvas id="online-snap-canvas" class="snap-hidden"></canvas>
             </div>
-            <div class="cam-instructions" id="online-cam-instructions" style="display:none;">Tap preview to snap · Tap background to cancel</div>
-            <canvas id="online-snap-canvas" class="snap-hidden"></canvas>
-            <button class="btn" id="create-btn">Create Room</button>
+            <button class="btn primary" id="create-btn" style="width:100%;margin-top:8px;">Create Room</button>
         </div>
 
-        <div id="join-area" style="display:none; flex-direction:column; align-items:center; gap:10px; width:100%;">
+        <div id="join-area" style="display:none; width:100%;">
             <div class="join-input">
-                <input type="text" id="room-code-input" maxlength="6" placeholder="ABC123" autocomplete="off">
+                <input type="text" id="room-code-input" maxlength="6" placeholder="Enter room code" autocomplete="off">
             </div>
-            <div class="pick-section">
-                <div class="pick-header active">Pick your emoji</div>
+            <div class="pick-tabs">
+                <div class="pick-tab active" data-tab="join-emoji">😀 Emoji</div>
+                <div class="pick-tab" data-tab="join-photo">📸 Photo</div>
+            </div>
+            <div class="pick-tab-content active" id="join-emoji-tab">
                 <div class="emoji-grid" id="join-emoji-grid"></div>
             </div>
-            <button class="snap-btn" id="join-snap-btn">📸 Take photo instead</button>
-            <div class="camera-preview" id="join-camera-preview" style="position:relative; cursor:pointer; display:none;">
-                <video id="join-snap-video" playsinline autoplay></video>
-                <div class="cam-label">Tap to snap</div>
+            <div class="pick-tab-content" id="join-photo-tab">
+                <div class="camera-area" id="join-camera-area">
+                    <div class="camera-icon">📸</div>
+                    <div class="camera-text">Tap to take photo</div>
+                </div>
+                <div class="camera-preview" id="join-camera-preview" style="position:relative; cursor:pointer;">
+                    <video id="join-snap-video" playsinline autoplay></video>
+                    <div class="cam-label">Tap to snap</div>
+                </div>
+                <div class="cam-instructions" id="join-cam-instructions" style="display:none;">Tap preview to snap · Tap background to cancel</div>
+                <canvas id="join-snap-canvas" class="snap-hidden"></canvas>
             </div>
-            <div class="cam-instructions" id="join-cam-instructions" style="display:none;">Tap preview to snap · Tap background to cancel</div>
-            <canvas id="join-snap-canvas" class="snap-hidden"></canvas>
-            <button class="btn" id="join-btn" disabled>Join Room</button>
+            <button class="btn primary" id="join-btn" disabled style="width:100%;margin-top:8px;">Join Room</button>
         </div>
 
         <div class="error-msg hidden" id="online-error"></div>
@@ -615,33 +635,31 @@
 
         // Online link
         // Online camera snap - Create Room
-        function setupOnlineCamera(snapBtnId, previewId, videoId, canvasId, instructionsId, target) {
+        function setupOnlineCamera(areaId, previewId, videoId, canvasId, instructionsId, target) {
             let localStream = null;
             let localActive = false;
             let localResolve = null;
+            const area = $(areaId);
 
             function stopLocalCamera() {
                 if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
                 localActive = false;
                 $(previewId).style.display = 'none';
                 $(instructionsId).style.display = 'none';
-                $(snapBtnId).textContent = '📸 Take photo instead';
-                $(snapBtnId).style.display = '';
-                $(snapBtnId).disabled = false;
+                area.style.display = '';
+                area.innerHTML = '<div class="camera-icon">📸</div><div class="camera-text">Tap to take photo</div>';
             }
 
             $(previewId).addEventListener('click', () => {
                 if (localResolve) { localResolve('confirm'); localResolve = null; }
             });
 
-            $(snapBtnId).addEventListener('click', async () => {
-                const btn = $(snapBtnId);
-                btn.textContent = 'Opening camera…';
-                btn.disabled = true;
+            area.addEventListener('click', async () => {
                 const preview = $(previewId);
                 const video = $(videoId);
 
                 try {
+                    area.innerHTML = '<div class="camera-icon" style="font-size:1.5rem;">⏳</div><div class="camera-text">Opening camera…</div>';
                     localStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 320 }, height: { ideal: 320 } } });
                     video.srcObject = localStream;
                     await new Promise((resolve, reject) => {
@@ -652,12 +670,12 @@
                     localActive = true;
                     preview.style.display = 'block';
                     $(instructionsId).style.display = 'block';
-                    btn.style.display = 'none';
+                    area.style.display = 'none';
 
                     const action = await new Promise(resolve => { localResolve = resolve; });
                     if (action === 'cancel') return;
 
-                    btn.textContent = '📸 Capturing…';
+                    area.innerHTML = '<div class="camera-icon" style="font-size:1.5rem;">📸</div><div class="camera-text">Capturing…</div>';
                     const vw = video.videoWidth, vh = video.videoHeight, s = Math.min(vw, vh);
                     const canvas = $(canvasId);
                     canvas.width = 64; canvas.height = 64;
@@ -676,20 +694,19 @@
                 } catch (e) {
                     console.error('Camera error:', e);
                     stopLocalCamera();
-                    if (e.name === 'NotAllowedError') {
-                        btn.textContent = '📸 Camera blocked — allow in Chrome settings';
-                    } else if (e.name === 'NotFoundError') {
-                        btn.textContent = '📸 No camera found';
-                    } else {
-                        btn.textContent = '📸 Camera error — try again';
-                    }
-                    setTimeout(() => { btn.textContent = '📸 Take photo instead'; btn.disabled = false; }, 3000);
+                    let errorMsg = 'Camera error — try again';
+                    if (e.name === 'NotAllowedError') errorMsg = 'Camera blocked — allow in settings';
+                    else if (e.name === 'NotFoundError') errorMsg = 'No camera found';
+                    area.innerHTML = `<div class="camera-icon" style="font-size:1.5rem;">⚠️</div><div class="camera-text">${errorMsg}</div>`;
+                    setTimeout(() => {
+                        area.innerHTML = '<div class="camera-icon">📸</div><div class="camera-text">Tap to take photo</div>';
+                    }, 3000);
                 }
             });
 
             // Cancel on background click
             $(target === 'create' ? 'create-area' : 'join-area').addEventListener('click', (e) => {
-                if (localResolve && !e.target.closest('#' + previewId) && !e.target.closest('#' + snapBtnId)) {
+                if (localResolve && !e.target.closest('#' + previewId) && !e.target.closest('#' + areaId)) {
                     localResolve('cancel');
                     localResolve = null;
                     stopLocalCamera();
@@ -699,8 +716,8 @@
             return stopLocalCamera;
         }
 
-        const stopOnlineCamera = setupOnlineCamera('online-snap-btn', 'online-camera-preview', 'online-snap-video', 'online-snap-canvas', 'online-cam-instructions', 'create');
-        const stopJoinCamera = setupOnlineCamera('join-snap-btn', 'join-camera-preview', 'join-snap-video', 'join-snap-canvas', 'join-cam-instructions', 'join');
+        const stopOnlineCamera = setupOnlineCamera('online-camera-area', 'online-camera-preview', 'online-snap-video', 'online-snap-canvas', 'online-cam-instructions', 'create');
+        const stopJoinCamera = setupOnlineCamera('join-camera-area', 'join-camera-preview', 'join-snap-video', 'join-snap-canvas', 'join-cam-instructions', 'join');
 
         $('go-local').addEventListener('click', () => {
             $('online-screen').classList.add('hidden');
