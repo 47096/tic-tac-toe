@@ -125,16 +125,20 @@
         .error-msg { color: #c00; font-size: 0.65rem; text-align: center; }
 
         /* Game */
-        .info-bar { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 4px 0; }
-        .turn-badge { font-size: 0.75rem; padding: 4px 10px; border: 1px solid var(--border); border-radius: 12px; display: flex; align-items: center; gap: 5px; }
-        .turn-badge .emoji { font-size: 1rem; }
-        .turn-badge .img { width: 22px; height: 22px; border-radius: 3px; object-fit: cover; transform: scaleX(-1); }
-        .scores { font-size: 0.7rem; color: var(--text-dim); display: flex; gap: 8px; align-items: center; }
+                .scores { font-size: 0.7rem; color: var(--text-dim); display: flex; gap: 8px; align-items: center; }
         .scores .v { font-weight: 600; color: var(--text); }
         .scores .emoji { font-size: 0.85rem; }
         .scores .img { width: 18px; height: 18px; border-radius: 3px; object-fit: cover; transform: scaleX(-1); }
 
         .player-row { display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 8px; }
+        .game-players { width: 100%; display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+        .game-player-row { display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: var(--surface); border-radius: 6px; border: 1px solid transparent; transition: all 0.15s; }
+        .game-player-row.active { background: var(--bg); border-color: var(--text); }
+        .game-player-row .gp-icon { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 1rem; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); }
+        .game-player-row .gp-icon img { width: 100%; height: 100%; object-fit: cover; border-radius: 3px; transform: scaleX(-1); }
+        .game-player-row .gp-label { font-size: 0.5rem; color: var(--text-dim); letter-spacing: 0.1em; flex: 1; }
+        .game-player-row .gp-score { font-size: 0.55rem; color: var(--text-dim); }
+        .game-player-row .gp-score .v { font-weight: 600; color: var(--text); }
         .player-box { display: flex; flex-direction: column; align-items: center; gap: 3px; }
         .player-box .p-label { font-size: 0.55rem; color: var(--text-dim); letter-spacing: 0.1em; }
         .player-box .p-icon { width: 44px; height: 44px; border: 2px solid var(--border); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; background: var(--surface); transition: all 0.3s; }
@@ -306,22 +310,17 @@
     <div class="screen hidden no-select" id="game-screen">
         <h1>過三關</h1>
         <div class="subtitle">tic tac toe</div>
-        <div class="player-row">
-            <div class="player-box" id="p1-game-box">
-                <div class="p-label">P1</div>
-                <div class="p-icon" id="p1-icon"></div>
-                <div class="p-score"><span class="v" id="p1-score">0</span></div>
+        <div class="game-players">
+            <div class="game-player-row active" id="p1-game-box">
+                <div class="gp-icon" id="p1-icon"></div>
+                <div class="gp-label">Player 1</div>
+                <div class="gp-score"><span class="v" id="p1-score">0</span> wins</div>
             </div>
-            <div class="player-vs">vs</div>
-            <div class="player-box" id="p2-game-box">
-                <div class="p-label">P2</div>
-                <div class="p-icon" id="p2-icon"></div>
-                <div class="p-score"><span class="v" id="p2-score">0</span></div>
+            <div class="game-player-row" id="p2-game-box">
+                <div class="gp-icon" id="p2-icon"></div>
+                <div class="gp-label">Player 2</div>
+                <div class="gp-score"><span class="v" id="p2-score">0</span> wins</div>
             </div>
-        </div>
-        <div class="info-bar">
-            <div class="turn-badge" id="turn-badge"><span id="turn-vis"></span><span id="turn-txt"></span></div>
-            <div class="scores" id="scores-bar"></div>
         </div>
         <div class="board-wrap" id="board-wrap">
             <div class="board no-select" id="board" role="grid" aria-label="Tic tac toe board">
@@ -377,8 +376,7 @@
 
         const $ = id => document.getElementById(id);
         const boardEl = $('board'), boardWrap = $('board-wrap');
-        const turnVis = $('turn-vis'), turnTxt = $('turn-txt'), scoresBar = $('scores-bar');
-                const resultOverlay = $('result-overlay'), resultBig = $('result-big'), resultText = $('result-text');
+                        const resultOverlay = $('result-overlay'), resultBig = $('result-big'), resultText = $('result-text');
         const confettiCanvas = $('confetti-canvas'), confettiCtx = confettiCanvas.getContext('2d');
         const winCanvas = $('win-canvas'), winCtx = winCanvas.getContext('2d');
         const cells = [];
@@ -970,17 +968,17 @@
                 const box = $(i===0 ? 'p1-game-box' : 'p2-game-box');
                 if (photos[i]) {
                     icon.innerHTML = `<img src="${photos[i]}" alt="">`;
-                    icon.className = 'p-icon img-icon';
+                    icon.className = 'gp-icon';
                 } else if (emojis[i]) {
                     icon.textContent = emojis[i];
-                    icon.className = 'p-icon';
+                    icon.className = 'gp-icon';
                 }
                 score.textContent = state.scores[i];
-                box.className = 'player-box' + (state.turn === i ? ' active' : ' waiting');
+                box.className = 'game-player-row' + (state.turn === i ? ' active' : '');
             });
         }
-        function updateTurn(){turnVis.innerHTML=visFor(state.turn);turnTxt.textContent=`P${state.turn+1}`;scoresBar.innerHTML=`${scoreFor(0)} · Draw <span class="v">${state.scores[2]}</span> · ${scoreFor(1)}`;updatePlayerBoxes();$('aria-announcer').textContent='Player '+(state.turn+1)+' turn';}
-        function updateScores(){scoresBar.innerHTML=`${scoreFor(0)} · Draw <span class="v">${state.scores[2]}</span> · ${scoreFor(1)}`;updatePlayerBoxes();}
+        function updateTurn(){updatePlayerBoxes();$('aria-announcer').textContent='Player '+(state.turn+1)+' turn';}
+        function updateScores(){updatePlayerBoxes();}
 
         function handleClick(i) {
             if(state.gameOver||state.board[i]!==null)return;
