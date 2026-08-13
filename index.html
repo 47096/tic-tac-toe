@@ -155,10 +155,10 @@
         .board-wrap { position: relative; width: min(88vw, 55vh); height: min(88vw, 55vh); }
         .board { display: grid; grid-template-columns: repeat(3,1fr); grid-template-rows: repeat(3,1fr); gap: 0; width: 100%; height: 100%; position: relative; overflow: hidden; }
         .board-lines { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
-        .board-lines .v { position: absolute; width: 3px; height: 100%; background: #888; border-radius: 3px; }
+        .board-lines .v { position: absolute; width: 3px; background: #888; border-radius: 3px; top: 4px; bottom: 4px; }
         .board-lines .v:nth-child(1) { left: 33.33%; transform: translateX(-50%); }
         .board-lines .v:nth-child(2) { left: 66.66%; transform: translateX(-50%); }
-        .board-lines .h { position: absolute; height: 3px; width: 100%; background: #888; border-radius: 3px; }
+        .board-lines .h { position: absolute; height: 3px; background: #888; border-radius: 3px; left: 4px; right: 4px; }
         .board-lines .h:nth-child(3) { top: 33.33%; transform: translateY(-50%); }
         .board-lines .h:nth-child(4) { top: 66.66%; transform: translateY(-50%); }
         .cell { background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.12s; -webkit-tap-highlight-color: transparent; overflow: hidden; z-index: 1; border-radius: 4px; }
