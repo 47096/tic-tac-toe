@@ -377,6 +377,7 @@
         let onlinePickData = { emoji: null, photo: null };
         let autoRematchTimeout = null;
         let moveInProgress = false;
+        let opponentLeft = false;
         let firstTurn = 0; // Alternates who goes first each game
         const state = { board: Array(9).fill(null), turn: 0, gameOver: false, scores: [0,0,0] };
 
@@ -906,6 +907,7 @@
                 const gone=!p||p.disconnected===true;
                 if(gone&&!state.gameOver&&onlineStarted){
                     state.gameOver=true;
+                    opponentLeft=true;
                     resultBig.textContent='👋';
                     resultText.textContent='Opponent left';
                     resultOverlay.classList.add('show');
@@ -1050,6 +1052,7 @@
 
         function continueGame() {
             if (autoRematchTimeout) { clearTimeout(autoRematchTimeout); autoRematchTimeout = null; }
+            if (opponentLeft) { opponentLeft=false; leaveGame(); return; }
             resultOverlay.classList.remove('show');
             clearWinLine();
             state.gameOver = false;
@@ -1064,7 +1067,7 @@
             if(gameListener&&roomRef){roomRef.off('value',gameListener);gameListener=null;}
             if(roomRef&&playerIndex!==null)roomRef.child(`players/${1-playerIndex}`).off();
             if(roomRef){if(playerIndex===0){roomRef.onDisconnect().cancel();roomRef.remove().catch(()=>{});}}
-            roomRef=null;roomCode=null;playerIndex=null;onlineStarted=false;isOnline=false;
+            roomRef=null;roomCode=null;playerIndex=null;onlineStarted=false;isOnline=false;opponentLeft=false;
             $('game-screen').classList.add('hidden');$('waiting-screen').classList.add('hidden');
             $('online-screen').classList.add('hidden');
             resultOverlay.classList.remove('show');$('picker').classList.remove('hidden');
