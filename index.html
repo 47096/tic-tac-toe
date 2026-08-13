@@ -48,12 +48,11 @@
         .pick-section { width: 100%; display: flex; flex-direction: column; align-items: center; }
         .pick-header { font-size: 0.7rem; color: var(--text-dim); letter-spacing: 0.1em; margin-bottom: 8px; text-align: center; }
         .pick-header.active { color: var(--text); font-weight: 600; }
-        .emoji-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; width: 100%; max-width: 320px; }
+        .emoji-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; width: 100%; max-width: 300px; }
         .emoji-grid .e { width: 100%; aspect-ratio: 1; min-height: 44px; font-size: 1.4rem; border: 1px solid var(--border); background: var(--bg); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; border-radius: 6px; }
         .emoji-grid .e:hover { border-color: var(--text-dim); }
         .emoji-grid .e.sel { border-color: var(--text); background: var(--surface); }
         .emoji-grid .e.used { opacity: 0.2; }
-        @media (max-width: 360px) { .emoji-grid { grid-template-columns: repeat(5, 1fr); } }
 
         .pick-preview { display: flex; gap: 20px; align-items: center; justify-content: center; margin-top: 4px; }
         .pick-card { text-align: center; }
@@ -296,7 +295,7 @@
         });
         const db = firebase.database();
 
-        const EMOJIS = ['😀','😂','😎','🥳','🤩','😏','🐱','🐶','🦊','🐸','🐻','🐼','🌟','🔥','⚡','❄️','🌈','💎','🍕','🌮','🚀','🎮','🎲','💀'];
+        const EMOJIS = ['😀','😂','😎','🥳','🤩','🐱','🐶','🦊','🐸','🐻','🐼','🐰','🌟','🌈','⭐','🍕','🍩','🚀','🎮','🎲'];
         const WIN_LINES = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
 
         let picks = [null, null]; // [p1, p2]
