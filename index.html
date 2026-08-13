@@ -5,30 +5,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>過三關 — Tic Tac Toe</title>
 
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+    <link rel="preconnect" href="https://www.gstatic.com">
+    <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 
     <style>
         :root {
             --bg: #fafafa;
             --surface: #f0f0f0;
             --text: #1a1a1a;
-            --text-dim: #bbb;
+            --text-dim: #767676;
             --border: #e0e0e0;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
+        :focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+
         body {
             font-family: 'Helvetica Neue', 'Arial', sans-serif;
             background: var(--bg);
             color: var(--text);
-            height: 100vh; width: 100vw;
+            height: 100dvh; height: 100vh;
+            width: 100vw;
             display: flex; flex-direction: column;
             align-items: center; justify-content: center;
-            overflow: hidden;
-            -webkit-user-select: none; user-select: none;
+            overflow-x: hidden; overflow-y: auto;
+            overscroll-behavior: none;
         }
+
+        .no-select { -webkit-user-select: none; user-select: none; }
+        .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 
         .screen { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; max-width: 400px; padding: 20px 16px; }
         .screen.hidden { display: none; }
@@ -41,11 +48,12 @@
         .pick-section { width: 100%; display: flex; flex-direction: column; align-items: center; }
         .pick-header { font-size: 0.7rem; color: var(--text-dim); letter-spacing: 0.1em; margin-bottom: 8px; text-align: center; }
         .pick-header.active { color: var(--text); font-weight: 600; }
-        .emoji-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 5px; width: 100%; max-width: 320px; }
-        .emoji-grid .e { width: 100%; aspect-ratio: 1; font-size: 1.3rem; border: 1px solid var(--border); background: var(--bg); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; border-radius: 4px; }
+        .emoji-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; width: 100%; max-width: 320px; }
+        .emoji-grid .e { width: 100%; aspect-ratio: 1; min-height: 44px; font-size: 1.4rem; border: 1px solid var(--border); background: var(--bg); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; border-radius: 6px; }
         .emoji-grid .e:hover { border-color: var(--text-dim); }
         .emoji-grid .e.sel { border-color: var(--text); background: var(--surface); }
         .emoji-grid .e.used { opacity: 0.2; }
+        @media (max-width: 360px) { .emoji-grid { grid-template-columns: repeat(5, 1fr); } }
 
         .pick-preview { display: flex; gap: 20px; align-items: center; justify-content: center; margin-top: 4px; }
         .pick-card { text-align: center; }
@@ -55,13 +63,13 @@
         .pick-card .box.empty { border-style: dashed; color: var(--text-dim); font-size: 1rem; }
 
         .btn-row { display: flex; gap: 8px; margin-top: 4px; }
-        .btn { padding: 10px 24px; border: 1px solid var(--text); background: transparent; color: var(--text); font-size: 0.8rem; font-weight: 600; cursor: pointer; letter-spacing: 0.1em; transition: all 0.15s; }
+        .btn { padding: 10px 24px; border: 1px solid var(--text); border-radius: 6px; background: transparent; color: var(--text); font-size: 0.8rem; font-weight: 600; cursor: pointer; letter-spacing: 0.1em; transition: all 0.15s; }
         .btn:hover { background: var(--text); color: var(--bg); }
         .btn:disabled { opacity: 0.25; cursor: default; background: transparent; color: var(--text-dim); border-color: var(--border); }
         .btn-sm { padding: 6px 14px; font-size: 0.65rem; }
         .start-btn { margin-top: 8px; padding: 10px 28px; font-size: 0.75rem; letter-spacing: 0.08em; }
 
-        .online-link { font-size: 0.65rem; color: var(--text-dim); cursor: pointer; letter-spacing: 0.05em; margin-top: 4px; }
+        .online-link { font-size: 0.65rem; color: var(--text-dim); cursor: pointer; letter-spacing: 0.05em; margin-top: 4px; background: none; border: none; padding: 8px 16px; min-height: 44px; display: flex; align-items: center; }
         .online-link:hover { color: var(--text); }
 
         .snap-btn { display: flex; align-items: center; gap: 4px; padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text-dim); font-size: 0.6rem; cursor: pointer; letter-spacing: 0.05em; margin-top: 2px; }
@@ -111,7 +119,7 @@
         .player-box .p-icon.img-icon img { width: 100%; height: 100%; border-radius: 4px; object-fit: cover; transform: scaleX(-1); }
         .player-box .p-score { font-size: 0.65rem; color: var(--text-dim); }
         .player-box .p-score .v { font-weight: 600; color: var(--text); }
-        .player-box.active .p-icon { border-color: var(--text); box-shadow: 0 0 12px rgba(255,255,255,0.4); }
+        .player-box.active .p-icon { border-color: var(--text); box-shadow: 0 0 12px rgba(0,0,0,0.15), 0 0 0 2px var(--text); }
         .player-box.waiting .p-icon { opacity: 0.4; }
         .player-vs { font-size: 0.6rem; color: var(--text-dim); }
 
@@ -143,7 +151,7 @@
 <body>
 
     <!-- PICKER -->
-    <div class="screen" id="picker">
+    <div class="screen no-select" id="picker">
         <h1>過三關</h1>
         <div class="subtitle">tic tac toe</div>
         <div class="pick-section">
@@ -171,7 +179,7 @@
             </div>
         </div>
         <button class="btn start-btn hidden" id="start-btn">Start Game</button>
-        <div class="online-link" id="go-online">Play with a friend online →</div>
+        <button class="online-link" id="go-online">Play with a friend online →</button>
     </div>
 
     <!-- ONLINE -->
@@ -217,7 +225,7 @@
         </div>
 
         <div class="error-msg hidden" id="online-error"></div>
-        <div class="online-link" id="go-local">← Back to local play</div>
+        <button class="online-link" id="go-local">← Back to local play</button>
     </div>
 
     <!-- WAITING -->
@@ -234,7 +242,7 @@
     </div>
 
     <!-- GAME -->
-    <div class="screen hidden" id="game-screen">
+    <div class="screen hidden no-select" id="game-screen">
         <h1>過三關</h1>
         <div class="subtitle">tic tac toe</div>
         <div class="player-row">
@@ -255,13 +263,14 @@
             <div class="scores" id="scores-bar"></div>
         </div>
         <div class="board-wrap" id="board-wrap">
-            <div class="board" id="board"></div>
+            <div class="board no-select" id="board" role="grid" aria-label="Tic tac toe board"></div>
             <canvas id="win-canvas"></canvas>
         </div>
         <div class="ctrls">
             <button class="btn btn-sm" id="btn-restart">Restart</button>
             <button class="btn btn-sm" id="btn-leave">Back</button>
         </div>
+        <div id="aria-announcer" aria-live="polite" class="sr-only"></div>
     </div>
 
     <canvas id="confetti-canvas"></canvas>
@@ -323,7 +332,7 @@
         function scoreFor(i) { if(photos[i]) return `<img class="img" src="${photos[i]}" alt=""> <span class="v">${state.scores[i]}</span>`; if(emojis[i]) return `<span class="emoji">${emojis[i]}</span> <span class="v">${state.scores[i]}</span>`; return '?'; }
         function hasPhoto(i) { return photos[i]!==null; }
         function hasEmoji(i) { return emojis[i]!==null; }
-        function genCode() { return Math.random().toString(36).substring(2,8).toUpperCase(); }
+        function genCode() { let c=Math.random().toString(36).substring(2,8).toUpperCase(); while(c.length<6)c+='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'[Math.floor(Math.random()*36)]; return c; }
 
         function resizeConfetti() { confettiCanvas.width=innerWidth; confettiCanvas.height=innerHeight; }
         addEventListener('resize',resizeConfetti); resizeConfetti();
@@ -669,7 +678,7 @@
         }
 
         $('room-code-input').addEventListener('input', e => {
-            e.target.value = e.target.value.toUpperCase();
+            e.target.value = e.target.value.replace(/[^A-Z0-9]/gi,'').toUpperCase();
             updateJoinBtn();
         });
 
@@ -809,7 +818,9 @@
             if(gameListener && roomRef) roomRef.off('value',gameListener);
 
             roomRef.child(`players/${1-playerIndex}`).on('value', snap => {
-                if(!snap.exists()&&!state.gameOver&&onlineStarted){
+                const p=snap.val();
+                const gone=!p||p.disconnected===true;
+                if(gone&&!state.gameOver&&onlineStarted){
                     state.gameOver=true;
                     resultBig.textContent='👋';
                     resultText.textContent='Opponent left';
@@ -841,7 +852,7 @@
                     firstTurn=1-firstTurn;
                     autoRematchTimeout=setTimeout(()=>{resultOverlay.classList.remove('show');clearWinLine();state.gameOver=false;
                         if(roomRef)roomRef.update({board:Array(9).fill(null),turn:firstTurn,gameOver:false}).catch(()=>{});
-                        resetBoard();autoRematchTimeout=null;},4000);
+                        resetBoard();autoRematchTimeout=null;},8000);
                 }
             });
         }
@@ -851,7 +862,7 @@
             state.board=Array(9).fill(null);state.turn=firstTurn;state.gameOver=false;lastWinLine=null;
             boardEl.innerHTML='';cells.length=0;
             for(let i=0;i<9;i++){
-                const cell=document.createElement('div');cell.className='cell';
+                const cell=document.createElement('button');cell.className='cell';cell.setAttribute('aria-label','Row '+Math.floor(i/3+1)+' Column '+(i%3+1)+', empty');
                 const img=document.createElement('img');img.alt='';img.style.display='none';
                 const ce=document.createElement('span');ce.className='ce';ce.style.display='none';
                 cell.appendChild(img);cell.appendChild(ce);
@@ -864,11 +875,14 @@
         function renderBoard() {
             cells.forEach((cell,i)=>{
                 const v=state.board[i],img=cell.querySelector('img'),ce=cell.querySelector('.ce');
+                const row=Math.floor(i/3)+1,col=i%3+1;
                 if(v!==null){
                     cell.classList.add('m');
-                    if(hasPhoto(v)){img.src=photos[v];img.style.display='';img.style.opacity='1';img.style.transform='scale(1) scaleX(-1)';ce.style.display='none';}
+                    const label='Player '+(v+1)+' ('+(emojis[v]||'photo')+')';
+                    cell.setAttribute('aria-label','Row '+row+' Column '+col+', '+label);
+                    if(hasPhoto(v)){img.src=photos[v];img.style.display='';img.style.opacity='1';img.style.transform='scale(1) scaleX(-1)';ce.style.display='none';img.alt=label;}
                     else if(hasEmoji(v)){ce.textContent=emojis[v];ce.style.display='';ce.style.opacity='1';ce.style.transform='scale(1)';img.style.display='none';}
-                }else{cell.classList.remove('m','win');img.style.display='none';ce.style.display='none';}
+                }else{cell.classList.remove('m','win');img.style.display='none';ce.style.display='none';cell.setAttribute('aria-label','Row '+row+' Column '+col+', empty');}
             });
         }
 
@@ -888,7 +902,7 @@
                 box.className = 'player-box' + (state.turn === i ? ' active' : ' waiting');
             });
         }
-        function updateTurn(){turnVis.innerHTML=visFor(state.turn);turnTxt.textContent=`P${state.turn+1}`;scoresBar.innerHTML=`${scoreFor(0)} · Draw <span class="v">${state.scores[2]}</span> · ${scoreFor(1)}`;updatePlayerBoxes();}
+        function updateTurn(){turnVis.innerHTML=visFor(state.turn);turnTxt.textContent=`P${state.turn+1}`;scoresBar.innerHTML=`${scoreFor(0)} · Draw <span class="v">${state.scores[2]}</span> · ${scoreFor(1)}`;updatePlayerBoxes();$('aria-announcer').textContent='Player '+(state.turn+1)+' turn';}
         function updateScores(){scoresBar.innerHTML=`${scoreFor(0)} · Draw <span class="v">${state.scores[2]}</span> · ${scoreFor(1)}`;updatePlayerBoxes();}
 
         function handleClick(i) {
@@ -922,7 +936,7 @@
             }else{sndDraw();resultBig.textContent='🤝';resultText.textContent='Draw';}
             updateScores();launchConfetti();
             setTimeout(()=>resultOverlay.classList.add('show'),w!==null?600:300);
-            if(!isOnline)autoRematchTimeout=setTimeout(()=>{resultOverlay.classList.remove('show');clearWinLine();state.gameOver=false;resetBoard();autoRematchTimeout=null;},4000);
+            if(!isOnline)autoRematchTimeout=setTimeout(()=>{resultOverlay.classList.remove('show');clearWinLine();state.gameOver=false;resetBoard();autoRematchTimeout=null;},8000);
         }
 
         // Win line
@@ -930,7 +944,7 @@
             const rect=boardWrap.getBoundingClientRect(),dpr=devicePixelRatio||1;
             winCanvas.width=rect.width*dpr;winCanvas.height=rect.height*dpr;
             winCanvas.style.width=rect.width+'px';winCanvas.style.height=rect.height+'px';
-            winCtx.scale(dpr,dpr);
+            winCtx.setTransform(dpr,0,0,dpr,0,0);
             const cw=rect.width/3,ch=rect.height/3;
             const[a,,c]=wl;
             const x1=(a%3)*cw+cw/2,y1=Math.floor(a/3)*ch+ch/2,x2=(c%3)*cw+cw/2,y2=Math.floor(c/3)*ch+ch/2;
@@ -947,6 +961,7 @@
 
         // Restart / Leave
         $('btn-restart').addEventListener('click',()=>{
+            firstTurn=0;
             if(roomRef){state.scores=[0,0,0];roomRef.update({board:Array(9).fill(null),turn:0,scores:[0,0,0],gameOver:false}).catch(()=>{});}
             lastWinLine=null;state.gameOver=false;resultOverlay.classList.remove('show');resetBoard();
         });
@@ -957,7 +972,7 @@
             clearWinLine();
             state.gameOver = false;
             if (roomRef) {
-                roomRef.update({ board: Array(9).fill(null), turn: 0, gameOver: false }).catch(() => {});
+                roomRef.update({ board: Array(9).fill(null), turn: firstTurn, gameOver: false }).catch(() => {});
             }
             resetBoard();
         }
