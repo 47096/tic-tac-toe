@@ -16,6 +16,32 @@
             --text: #1a1a1a;
             --text-dim: #767676;
             --border: #e0e0e0;
+            --overlay-bg: rgba(240,240,240,0.95);
+            --error-bg: rgba(204,0,0,0.08);
+            --radius-sm: 6px;
+            --radius-md: 10px;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme="light"]) {
+                --bg: #1a1a1a;
+                --surface: #2a2a2a;
+                --text: #f0f0f0;
+                --text-dim: #999;
+                --border: #444;
+                --overlay-bg: rgba(20,20,20,0.95);
+                --error-bg: rgba(255,60,60,0.12);
+            }
+        }
+
+        [data-theme="dark"] {
+            --bg: #1a1a1a;
+            --surface: #2a2a2a;
+            --text: #f0f0f0;
+            --text-dim: #999;
+            --border: #444;
+            --overlay-bg: rgba(20,20,20,0.95);
+            --error-bg: rgba(255,60,60,0.12);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -40,89 +66,92 @@
         .screen { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; max-width: 400px; padding: 20px 16px; }
         .screen.hidden { display: none; }
 
-        h1 { font-size: 1.1rem; font-weight: 300; letter-spacing: 0.3em; text-transform: uppercase; }
-        .subtitle { font-size: 0.6rem; color: var(--text-dim); letter-spacing: 0.15em; text-transform: uppercase; margin-top: -4px; margin-bottom: 6px; }
-        .sub { font-size: 0.6rem; color: var(--text-dim); letter-spacing: 0.15em; }
+        h1 { font-size: 1.5rem; font-weight: 400; letter-spacing: 0.3em; text-transform: uppercase; }
+        .subtitle { font-size: 0.7rem; color: var(--text-dim); letter-spacing: 0.15em; text-transform: uppercase; margin-top: -4px; margin-bottom: 6px; }
+        .sub { font-size: 0.7rem; color: var(--text-dim); letter-spacing: 0.15em; }
 
         /* Picker */
         .pick-section { width: 100%; display: flex; flex-direction: column; align-items: center; }
-        .pick-header { font-size: 0.7rem; color: var(--text-dim); letter-spacing: 0.1em; margin-bottom: 8px; text-align: center; }
+        .pick-header { font-size: 0.8rem; color: var(--text-dim); letter-spacing: 0.1em; margin-bottom: 8px; text-align: center; }
         .pick-header.active { color: var(--text); font-weight: 600; }
         .pick-tabs { display: flex; width: 100%; max-width: 300px; margin-bottom: 10px; }
-        .pick-tab { flex: 1; padding: 8px; text-align: center; font-size: 0.65rem; background: var(--surface); border: 1px solid var(--border); cursor: pointer; letter-spacing: 0.05em; transition: all 0.15s; }
+        .pick-tab { flex: 1; padding: 10px; text-align: center; font-size: 0.75rem; background: var(--surface); border: 1px solid var(--border); cursor: pointer; letter-spacing: 0.05em; transition: all 0.15s; min-height: 44px; display: flex; align-items: center; justify-content: center; }
         .pick-tab.active { background: var(--bg); border-color: var(--text); font-weight: 600; }
-        .pick-tab:first-child { border-radius: 6px 0 0 6px; }
-        .pick-tab:last-child { border-radius: 0 6px 6px 0; }
+        .pick-tab:first-child { border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
+        .pick-tab:last-child { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
         .pick-tab-content { display: none; width: 100%; flex-direction: column; align-items: center; gap: 8px; }
         .pick-tab-content.active { display: flex; }
         .emoji-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; width: 100%; max-width: 300px; }
-        .emoji-grid .e { width: 100%; aspect-ratio: 1; min-height: 44px; font-size: 1.4rem; border: 1px solid var(--border); background: var(--bg); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; border-radius: 6px; }
+        .emoji-grid .e { width: 100%; aspect-ratio: 1; min-height: 44px; font-size: 1.4rem; border: 1px solid var(--border); background: var(--bg); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; border-radius: var(--radius-sm); color: var(--text); }
+        .emoji-grid .e:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
         .emoji-grid .e:hover { border-color: var(--text-dim); }
         .emoji-grid .e.sel { border-color: var(--text); background: var(--surface); }
-        .camera-area { width: 100%; max-width: 300px; aspect-ratio: 1; border: 2px dashed var(--border); border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; background: var(--surface); cursor: pointer; transition: all 0.15s; }
+        .camera-area { width: 100%; max-width: 300px; aspect-ratio: 1; border: 2px dashed var(--border); border-radius: var(--radius-md); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; background: var(--surface); cursor: pointer; transition: all 0.15s; }
         .camera-area:hover { border-color: var(--text-dim); }
         .camera-area .camera-icon { font-size: 3rem; }
-        .camera-area .camera-text { font-size: 0.7rem; color: var(--text-dim); }
+        .camera-area .camera-text { font-size: 0.8rem; color: var(--text-dim); }
         .emoji-grid .e.used { opacity: 0.2; }
 
         .pick-preview { display: flex; gap: 20px; align-items: center; justify-content: center; margin-top: 4px; }
         .ready-area { width: 100%; max-width: 300px; }
         .ready-row { display: flex; gap: 8px; }
-        .ready-player { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px; background: var(--surface); border-radius: 8px; border: 2px solid transparent; transition: all 0.15s; }
+        .ready-player { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px; background: var(--surface); border-radius: var(--radius-md); border: 2px solid transparent; transition: all 0.15s; }
         .ready-player.active { border-color: var(--text); }
         .ready-player.ready { border-color: #4ecdc4; background: rgba(78,205,196,0.1); }
-        .ready-player .rp-icon { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); }
-        .ready-player .rp-icon img { width: 100%; height: 100%; object-fit: cover; border-radius: 5px; transform: scaleX(-1); }
-        .ready-player .rp-label { font-size: 0.5rem; color: var(--text-dim); letter-spacing: 0.1em; }
-        .ready-player .rp-status { font-size: 0.45rem; color: var(--text-dim); }
+        .ready-player .rp-icon { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); }
+        .ready-player .rp-icon img { width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius-sm); transform: scaleX(-1); }
+        .ready-player .rp-label { font-size: 0.75rem; color: var(--text-dim); letter-spacing: 0.1em; }
+        .ready-player .rp-status { font-size: 0.75rem; color: var(--text-dim); }
         .ready-player .rp-status.ready { color: #4ecdc4; }
 
         .btn-row { display: flex; gap: 8px; margin-top: 4px; }
-        .btn { padding: 10px 24px; border: 1px solid var(--text); border-radius: 6px; background: transparent; color: var(--text); font-size: 0.8rem; font-weight: 600; cursor: pointer; letter-spacing: 0.1em; transition: all 0.15s; }
+        .btn { padding: 10px 24px; border: 1px solid var(--text); border-radius: var(--radius-sm); background: transparent; color: var(--text); font-size: 0.8rem; font-weight: 600; cursor: pointer; letter-spacing: 0.1em; transition: all 0.15s; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
         .btn:hover { background: var(--text); color: var(--bg); }
         .btn:disabled { opacity: 0.25; cursor: default; background: transparent; color: var(--text-dim); border-color: var(--border); }
-        .btn-sm { padding: 6px 14px; font-size: 0.65rem; }
+        .btn-sm { padding: 8px 16px; font-size: 0.75rem; }
+        .btn .spinner { width: 12px; height: 12px; border: 1.5px solid var(--border); border-top-color: var(--text); border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 6px; }
 
-        .online-link { font-size: 0.65rem; color: var(--text-dim); cursor: pointer; letter-spacing: 0.05em; margin-top: 4px; background: none; border: none; padding: 8px 16px; min-height: 44px; display: flex; align-items: center; }
+        .online-link { font-size: 0.75rem; color: var(--text-dim); cursor: pointer; letter-spacing: 0.05em; margin-top: 4px; background: none; border: none; padding: 8px 16px; min-height: 44px; display: flex; align-items: center; }
         .online-link:hover { color: var(--text); }
 
-        .play-tabs { display: flex; width: 100%; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-top: 4px; }
-        .play-tab { flex: 1; padding: 10px; background: var(--surface); color: var(--text-dim); cursor: pointer; font-size: 0.65rem; letter-spacing: 0.05em; text-align: center; transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .play-tabs { display: flex; width: 100%; border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; margin-top: 4px; }
+        .play-tab { flex: 1; padding: 10px; background: var(--surface); color: var(--text-dim); cursor: pointer; font-size: 0.75rem; letter-spacing: 0.05em; text-align: center; transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; }
         .play-tab.active { background: var(--bg); color: var(--text); font-weight: 600; }
         .play-tab:first-child { border-right: 1px solid var(--border); }
         .play-tab .pt-icon { font-size: 0.9rem; }
 
-        .snap-btn { display: flex; align-items: center; gap: 4px; padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text-dim); font-size: 0.6rem; cursor: pointer; letter-spacing: 0.05em; margin-top: 2px; }
+        .snap-btn { display: flex; align-items: center; gap: 4px; padding: 8px 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text-dim); font-size: 0.75rem; cursor: pointer; letter-spacing: 0.05em; margin-top: 2px; min-height: 44px; }
         .snap-btn:hover { border-color: var(--text-dim); color: var(--text); }
 
-        .camera-preview { width: 160px; height: 160px; border-radius: 8px; border: 1px solid var(--border); overflow: hidden; display: none; margin-bottom: 6px; cursor: pointer; transition: border-color 0.15s; }
+        .camera-preview { width: 160px; height: 160px; border-radius: var(--radius-md); border: 1px solid var(--border); overflow: hidden; display: none; margin-bottom: 6px; cursor: pointer; transition: border-color 0.15s; }
         .camera-preview:hover { border-color: var(--text-dim); }
         .camera-preview video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); pointer-events: none; }
-        .camera-preview .cam-label { position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); font-size: 0.5rem; padding: 2px 8px; background: rgba(0,0,0,0.6); color: #fff; border-radius: 3px; pointer-events: none; }
-        .cam-instructions { font-size: 0.55rem; color: var(--text-dim); text-align: center; margin-top: 4px; }
+        .camera-preview .cam-label { position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); font-size: 0.7rem; padding: 4px 10px; background: rgba(0,0,0,0.6); color: #fff; border-radius: var(--radius-sm); pointer-events: none; }
+        .cam-instructions { font-size: 0.75rem; color: var(--text-dim); text-align: center; margin-top: 4px; }
 
         .snap-hidden { position: absolute; left: -9999px; top: -9999px; width: 320px; height: 320px; opacity: 0; pointer-events: none; }
 
         /* Online */
-        .online-tabs { display: flex; width: 100%; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 10px; }
-        .online-tab { flex: 1; padding: 10px; background: var(--surface); color: var(--text-dim); cursor: pointer; font-size: 0.6rem; letter-spacing: 0.05em; text-align: center; transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 6px; border: none; }
+        .online-tabs { display: flex; width: 100%; border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; margin-bottom: 10px; }
+        .online-tab { flex: 1; padding: 10px; background: var(--surface); color: var(--text-dim); cursor: pointer; font-size: 0.75rem; letter-spacing: 0.05em; text-align: center; transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 6px; border: none; min-height: 44px; }
         .online-tab.active { background: var(--bg); color: var(--text); font-weight: 600; }
         .online-tab:first-child { border-right: 1px solid var(--border); }
         .online-tab .ot-icon { font-size: 0.9rem; }
 
-        .room-box { padding: 14px; border: 1px solid var(--border); border-radius: 8px; text-align: center; width: 100%; max-width: 260px; }
+        .room-box { padding: 14px; border: 1px solid var(--border); border-radius: var(--radius-md); text-align: center; width: 100%; max-width: 260px; }
         .room-code { font-size: 1.6rem; font-weight: 300; letter-spacing: 0.3em; margin: 4px 0; }
-        .share-url { padding: 5px 8px; border: 1px solid var(--border); border-radius: 5px; font-size: 0.6rem; color: var(--text-dim); word-break: break-all; background: var(--surface); cursor: pointer; display: block; }
-        .waiting { display: flex; align-items: center; gap: 6px; font-size: 0.7rem; color: var(--text-dim); margin-top: 8px; }
+        .share-url { padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.75rem; color: var(--text-dim); word-break: break-all; background: var(--surface); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .share-url .copy-icon { font-size: 0.85rem; }
+        .waiting { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--text-dim); margin-top: 8px; }
         .spinner { width: 12px; height: 12px; border: 1.5px solid var(--border); border-top-color: var(--text); border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
         .join-input { width: 100%; margin-bottom: 10px; }
-        .join-input input { width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); font-size: 0.75rem; letter-spacing: 0.1em; text-align: center; text-transform: uppercase; }
+        .join-input input { width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font-size: 0.8rem; letter-spacing: 0.1em; text-align: center; text-transform: uppercase; min-height: 44px; }
         .join-input input:focus { outline: none; border-color: var(--text); }
         .join-input input::placeholder { text-transform: none; letter-spacing: 0.05em; }
 
-        .error-msg { color: #c00; font-size: 0.65rem; text-align: center; }
+        .error-msg { color: #c00; font-size: 0.75rem; text-align: center; background: var(--error-bg); padding: 8px 12px; border-radius: var(--radius-sm); }
 
         /* Game */
                 .scores { font-size: 0.7rem; color: var(--text-dim); display: flex; gap: 8px; align-items: center; }
@@ -131,34 +160,34 @@
         .scores .img { width: 18px; height: 18px; border-radius: 3px; object-fit: cover; transform: scaleX(-1); }
 
         .player-row { display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 8px; }
-        .game-players { width: 100%; display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
-        .game-player-row { display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: var(--surface); border-radius: 6px; border: 1px solid transparent; transition: all 0.15s; }
+        .game-players { width: 100%; display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+        .game-player-row { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: var(--surface); border-radius: var(--radius-sm); border: 1px solid transparent; transition: all 0.15s; }
         .game-player-row.active { background: var(--bg); border-color: var(--text); }
         .game-player-row .gp-icon { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 1rem; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); }
         .game-player-row .gp-icon img { width: 100%; height: 100%; object-fit: cover; border-radius: 3px; transform: scaleX(-1); }
-        .game-player-row .gp-label { font-size: 0.5rem; color: var(--text-dim); letter-spacing: 0.1em; flex: 1; }
-        .game-player-row .gp-score { font-size: 0.55rem; color: var(--text-dim); }
+        .game-player-row .gp-label { font-size: 0.75rem; color: var(--text-dim); letter-spacing: 0.1em; flex: 1; }
+        .game-player-row .gp-score { font-size: 0.75rem; color: var(--text-dim); }
         .game-player-row .gp-score .v { font-weight: 600; color: var(--text); }
-        .game-draw-row { display: flex; align-items: center; justify-content: space-between; padding: 4px 10px; font-size: 0.5rem; color: var(--text-dim); }
+        .game-draw-row { display: flex; align-items: center; justify-content: space-between; padding: 4px 10px; font-size: 0.75rem; color: var(--text-dim); }
         .game-draw-row .gd-score .v { font-weight: 600; color: var(--text); }
-        .player-box { display: flex; flex-direction: column; align-items: center; gap: 3px; }
-        .player-box .p-label { font-size: 0.55rem; color: var(--text-dim); letter-spacing: 0.1em; }
-        .player-box .p-icon { width: 44px; height: 44px; border: 2px solid var(--border); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; background: var(--surface); transition: all 0.3s; }
+        .player-box { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .player-box .p-label { font-size: 0.75rem; color: var(--text-dim); letter-spacing: 0.1em; }
+        .player-box .p-icon { width: 44px; height: 44px; border: 2px solid var(--border); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; background: var(--surface); transition: all 0.3s; }
         .player-box .p-icon.img-icon { padding: 2px; }
         .player-box .p-icon.img-icon img { width: 100%; height: 100%; border-radius: 4px; object-fit: cover; transform: scaleX(-1); }
-        .player-box .p-score { font-size: 0.65rem; color: var(--text-dim); }
+        .player-box .p-score { font-size: 0.75rem; color: var(--text-dim); }
         .player-box .p-score .v { font-weight: 600; color: var(--text); }
         .player-box.active .p-icon { border-color: var(--text); box-shadow: 0 0 12px rgba(0,0,0,0.15), 0 0 0 2px var(--text); }
         .player-box.waiting .p-icon { opacity: 0.4; }
-        .player-vs { font-size: 0.6rem; color: var(--text-dim); }
+        .player-vs { font-size: 0.7rem; color: var(--text-dim); }
 
-        .board-wrap { position: relative; width: min(88vw, 55vh); height: min(88vw, 55vh); }
+        .board-wrap { position: relative; width: min(88vw, 55vh, 400px); height: min(88vw, 55vh, 400px); }
         .board { display: grid; grid-template-columns: repeat(3,1fr); grid-template-rows: repeat(3,1fr); gap: 0; width: 100%; height: 100%; position: relative; overflow: visible; }
         .board-lines { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
-        .board-lines .v { position: absolute; width: 2px; background: var(--text); top: -10px; bottom: -10px; }
+        .board-lines .v { position: absolute; width: 2px; background: var(--border); top: -10px; bottom: -10px; }
         .board-lines .v:nth-child(1) { left: 33.33%; transform: translateX(-50%); }
         .board-lines .v:nth-child(2) { left: 66.66%; transform: translateX(-50%); }
-        .board-lines .h { position: absolute; height: 2px; background: var(--text); left: -10px; right: -10px; }
+        .board-lines .h { position: absolute; height: 2px; background: var(--border); left: -10px; right: -10px; }
         .board-lines .h:nth-child(3) { top: 33.33%; transform: translateY(-50%); }
         .board-lines .h:nth-child(4) { top: 66.66%; transform: translateY(-50%); }
         .cell { background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.12s; -webkit-tap-highlight-color: transparent; overflow: hidden; z-index: 1; border-radius: 4px; border: none; outline: none; font-family: inherit; color: inherit; padding: 0; }
@@ -173,11 +202,14 @@
 
         #win-canvas { position: absolute; top:0; left:0; width:100%; height:100%; pointer-events: none; z-index: 5; }
         
-        .ctrls { display: flex; gap: 6px; margin-top: 8px; }
+        .ctrls { display: flex; gap: 6px; margin-top: 8px; align-items: center; }
 
-        .result-overlay { position: fixed; inset:0; background: rgba(250,250,250,0.92); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.2s; backdrop-filter: blur(6px); }
+        .theme-toggle { background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 4px; min-height: 44px; min-width: 44px; display: flex; align-items: center; justify-content: center; }
+
+        .result-overlay { position: fixed; inset:0; background: var(--overlay-bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.2s; backdrop-filter: blur(6px); }
         .result-overlay.show { opacity: 1; pointer-events: all; }
-        .result-overlay h2 { font-size: 1.3rem; font-weight: 300; letter-spacing: 0.15em; margin-bottom: 8px; }
+        .result-overlay .result-content { background: var(--bg); padding: 24px; border-radius: var(--radius-md); border: 1px solid var(--border); box-shadow: 0 4px 24px rgba(0,0,0,0.12); text-align: center; }
+        .result-overlay h2 { font-size: 1.3rem; font-weight: 400; letter-spacing: 0.15em; margin-bottom: 8px; }
         .result-overlay .big { font-size: 3.5rem; margin-bottom: 10px; }
         .result-overlay .big img { width: 90px; height: 90px; border-radius: 8px; object-fit: cover; transform: scaleX(-1); }
 
@@ -191,9 +223,9 @@
         <h1>過三關</h1>
         <div class="subtitle">tic tac toe</div>
         <div class="pick-header active" id="pick-header">Player 1 — pick your symbol</div>
-        <div class="pick-tabs">
-            <div class="pick-tab active" data-tab="emoji">😀 Emoji</div>
-            <div class="pick-tab" data-tab="photo">📸 Photo</div>
+        <div class="pick-tabs" role="tablist">
+            <button class="pick-tab active" data-tab="emoji" role="tab" aria-selected="true">😀 Emoji</button>
+            <button class="pick-tab" data-tab="photo" role="tab" aria-selected="false">📸 Photo</button>
         </div>
         <div class="pick-tab-content active" id="emoji-tab">
             <div class="emoji-grid" id="emoji-grid"></div>
@@ -208,8 +240,9 @@
                 <div class="cam-label">Tap to snap</div>
             </div>
             <div class="cam-instructions" id="cam-instructions" style="display:none;">
-                Tap preview to snap · Tap background to cancel
+                Tap preview to snap
             </div>
+            <button class="btn btn-sm" id="cam-cancel" style="display:none; margin-top:4px;">Cancel</button>
             <canvas id="snap-canvas" class="snap-hidden"></canvas>
         </div>
         <div class="ready-area">
@@ -226,10 +259,11 @@
                 </div>
             </div>
         </div>
-        <div class="play-tabs">
-            <div class="play-tab active" id="play-local-tab"><span class="pt-icon">🎮</span>Play Here</div>
-            <div class="play-tab" id="play-online-tab"><span class="pt-icon">🌐</span>Play Online</div>
+        <div class="play-tabs" role="tablist">
+            <button class="play-tab active" id="play-local-tab" role="tab" aria-selected="true"><span class="pt-icon">🎮</span>Play Here</button>
+            <button class="play-tab" id="play-online-tab" role="tab" aria-selected="false"><span class="pt-icon">🌐</span>Play Online</button>
         </div>
+        <button class="theme-toggle" id="theme-toggle-picker" title="Toggle dark mode">🌙</button>
     </div>
 
     <!-- ONLINE -->
@@ -243,9 +277,9 @@
         </div>
 
         <div id="create-area" style="width:100%; display:flex; flex-direction:column; align-items:center; gap:10px;">
-            <div class="pick-tabs">
-                <div class="pick-tab active" data-tab="online-emoji">😀 Emoji</div>
-                <div class="pick-tab" data-tab="online-photo">📸 Photo</div>
+            <div class="pick-tabs" role="tablist">
+                <button class="pick-tab active" data-tab="online-emoji" role="tab" aria-selected="true">😀 Emoji</button>
+                <button class="pick-tab" data-tab="online-photo" role="tab" aria-selected="false">📸 Photo</button>
             </div>
             <div class="pick-tab-content active" id="online-emoji-tab">
                 <div class="emoji-grid" id="online-emoji-grid"></div>
@@ -259,7 +293,8 @@
                     <video id="online-snap-video" playsinline autoplay></video>
                     <div class="cam-label">Tap to snap</div>
                 </div>
-                <div class="cam-instructions" id="online-cam-instructions" style="display:none;">Tap preview to snap · Tap background to cancel</div>
+                <div class="cam-instructions" id="online-cam-instructions" style="display:none;">Tap preview to snap</div>
+                <button class="btn btn-sm online-cam-cancel" data-target="create" style="display:none; margin-top:4px;">Cancel</button>
                 <canvas id="online-snap-canvas" class="snap-hidden"></canvas>
             </div>
             <button class="btn primary" id="create-btn" style="width:100%;margin-top:8px;">Create Room</button>
@@ -269,9 +304,9 @@
             <div class="join-input">
                 <input type="text" id="room-code-input" maxlength="6" placeholder="Enter room code" autocomplete="off">
             </div>
-            <div class="pick-tabs">
-                <div class="pick-tab active" data-tab="join-emoji">😀 Emoji</div>
-                <div class="pick-tab" data-tab="join-photo">📸 Photo</div>
+            <div class="pick-tabs" role="tablist">
+                <button class="pick-tab active" data-tab="join-emoji" role="tab" aria-selected="true">😀 Emoji</button>
+                <button class="pick-tab" data-tab="join-photo" role="tab" aria-selected="false">📸 Photo</button>
             </div>
             <div class="pick-tab-content active" id="join-emoji-tab">
                 <div class="emoji-grid" id="join-emoji-grid"></div>
@@ -285,7 +320,8 @@
                     <video id="join-snap-video" playsinline autoplay></video>
                     <div class="cam-label">Tap to snap</div>
                 </div>
-                <div class="cam-instructions" id="join-cam-instructions" style="display:none;">Tap preview to snap · Tap background to cancel</div>
+                <div class="cam-instructions" id="join-cam-instructions" style="display:none;">Tap preview to snap</div>
+                <button class="btn btn-sm online-cam-cancel" data-target="join" style="display:none; margin-top:4px;">Cancel</button>
                 <canvas id="join-snap-canvas" class="snap-hidden"></canvas>
             </div>
             <button class="btn primary" id="join-btn" disabled style="width:100%;margin-top:8px;">Join Room</button>
@@ -302,7 +338,7 @@
         <div class="room-box">
             <div style="font-size:0.55rem; color:var(--text-dim); letter-spacing:0.1em;">Room Code</div>
             <div class="room-code" id="room-code-display">------</div>
-            <div class="share-url" id="share-url" title="Click to copy"></div>
+            <div class="share-url" id="share-url" title="Click to copy"><span class="copy-icon">📋</span><span id="share-url-text">Click to copy</span></div>
         </div>
         <div class="waiting"><div class="spinner"></div><span>Waiting for Player 2…</span></div>
         <button class="btn btn-sm" id="cancel-btn">Cancel</button>
@@ -337,6 +373,7 @@
         <div class="ctrls">
             <button class="btn btn-sm" id="btn-restart">Restart</button>
             <button class="btn btn-sm" id="btn-leave">Back</button>
+            <button class="theme-toggle" id="theme-toggle" title="Toggle dark mode">🌙</button>
         </div>
         <div id="aria-announcer" aria-live="polite" class="sr-only"></div>
     </div>
@@ -344,10 +381,13 @@
     <canvas id="confetti-canvas"></canvas>
 
     <div class="result-overlay" id="result-overlay">
-        <div class="big" id="result-big"></div>
-        <h2 id="result-text"></h2>
-        <div style="margin-top:12px;">
-            <button class="btn btn-sm" id="leave-btn">Continue</button>
+        <div class="result-content">
+            <div class="big" id="result-big"></div>
+            <h2 id="result-text"></h2>
+            <div class="countdown" id="result-countdown" style="font-size:0.75rem; color:var(--text-dim); margin-top:4px;"></div>
+            <div style="margin-top:12px;">
+                <button class="btn btn-sm" id="leave-btn">Continue</button>
+            </div>
         </div>
     </div>
 
@@ -404,6 +444,10 @@
 
         function resizeConfetti() { confettiCanvas.width=innerWidth; confettiCanvas.height=innerHeight; }
         addEventListener('resize',resizeConfetti); resizeConfetti();
+
+        // Countdown timer for auto-rematch
+        let countdownInterval = null;
+        let countdownSeconds = 8;
 
         // ===== LOCAL PICKER =====
         function buildGrid(gridId, onPick) {
@@ -548,6 +592,7 @@
             cameraActive = false;
             $('camera-preview').style.display = 'none';
             $('cam-instructions').style.display = 'none';
+            $('cam-cancel').style.display = 'none';
             $('camera-area').style.display = '';
             $('camera-area').innerHTML = '<div class="camera-icon">📸</div><div class="camera-text">Tap to take photo</div>';
         }
@@ -559,7 +604,16 @@
 
         // Click on picker background to cancel
         $('picker').addEventListener('click', (e) => {
-            if (snapResolve && !e.target.closest('#camera-preview') && !e.target.closest('.camera-area')) {
+            if (snapResolve && !e.target.closest('#camera-preview') && !e.target.closest('.camera-area') && !e.target.closest('#cam-cancel')) {
+                snapResolve('cancel');
+                snapResolve = null;
+                stopCamera();
+            }
+        });
+
+        // Cancel button for camera
+        $('cam-cancel').addEventListener('click', () => {
+            if (snapResolve) {
                 snapResolve('cancel');
                 snapResolve = null;
                 stopCamera();
@@ -586,6 +640,7 @@
                 cameraActive = true;
                 preview.style.display = 'block';
                 $('cam-instructions').style.display = 'block';
+                $('cam-cancel').style.display = 'block';
                 area.style.display = 'none';
 
                 // Wait for Snap or Cancel
@@ -598,8 +653,8 @@
                 // Capture
                 const vw = video.videoWidth, vh = video.videoHeight, s = Math.min(vw, vh);
                 const canvas = $('snap-canvas');
-                canvas.width = 64; canvas.height = 64;
-                canvas.getContext('2d').drawImage(video, (vw-s)/2, (vh-s)/2, s, s, 0, 0, 64, 64);
+                canvas.width = 128; canvas.height = 128;
+                canvas.getContext('2d').drawImage(video, (vw-s)/2, (vh-s)/2, s, s, 0, 0, 128, 128);
                 const photo = canvas.toDataURL('image/jpeg', 0.6);
                 // Stop camera
                 stopCamera();
@@ -645,14 +700,26 @@
             let localActive = false;
             let localResolve = null;
             const area = $(areaId);
+            const cancelBtn = document.querySelector(`.online-cam-cancel[data-target="${target}"]`);
 
             function stopLocalCamera() {
                 if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
                 localActive = false;
                 $(previewId).style.display = 'none';
                 $(instructionsId).style.display = 'none';
+                if (cancelBtn) cancelBtn.style.display = 'none';
                 area.style.display = '';
                 area.innerHTML = '<div class="camera-icon">📸</div><div class="camera-text">Tap to take photo</div>';
+            }
+
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', () => {
+                    if (localResolve) {
+                        localResolve('cancel');
+                        localResolve = null;
+                        stopLocalCamera();
+                    }
+                });
             }
 
             $(previewId).addEventListener('click', () => {
@@ -675,6 +742,7 @@
                     localActive = true;
                     preview.style.display = 'block';
                     $(instructionsId).style.display = 'block';
+                    if (cancelBtn) cancelBtn.style.display = 'block';
                     area.style.display = 'none';
 
                     const action = await new Promise(resolve => { localResolve = resolve; });
@@ -683,8 +751,8 @@
                     area.innerHTML = '<div class="camera-icon" style="font-size:1.5rem;">📸</div><div class="camera-text">Capturing…</div>';
                     const vw = video.videoWidth, vh = video.videoHeight, s = Math.min(vw, vh);
                     const canvas = $(canvasId);
-                    canvas.width = 64; canvas.height = 64;
-                    canvas.getContext('2d').drawImage(video, (vw-s)/2, (vh-s)/2, s, s, 0, 0, 64, 64);
+                    canvas.width = 128; canvas.height = 128;
+                    canvas.getContext('2d').drawImage(video, (vw-s)/2, (vh-s)/2, s, s, 0, 0, 128, 128);
                     const photo = canvas.toDataURL('image/jpeg', 0.6);
                     stopLocalCamera();
 
@@ -769,7 +837,7 @@
 
         // Create room
         $('create-btn').addEventListener('click', () => {
-            const btn=$('create-btn'); btn.textContent='Creating…'; btn.disabled=true;
+            const btn=$('create-btn'); btn.innerHTML='<span class="spinner"></span>Creating…'; btn.disabled=true;
             isOnline=true; onlineStarted=false;
             roomCode = genCode(); playerIndex=0;
             const myEmoji = onlinePickData.emoji || EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
@@ -802,21 +870,21 @@
                 $('online-screen').classList.add('hidden');
                 $('waiting-screen').classList.remove('hidden');
                 $('room-code-display').textContent=roomCode;
-                $('share-url').textContent=location.origin+location.pathname+'?room='+roomCode;
+                $('share-url-text').textContent=location.origin+location.pathname+'?room='+roomCode;
             }).catch(err => {
                 console.error('Create failed:', err);
                 $('online-error').textContent='Failed: '+err.message;
                 $('online-error').classList.remove('hidden');
-                btn.textContent='Create Room'; btn.disabled=false;
+                btn.innerHTML='Create Room'; btn.disabled=false;
                 isOnline = false;
             });
         });
 
         $('share-url').addEventListener('click', () => {
-            const url=$('share-url').textContent;
+            const url=$('share-url-text').textContent;
             navigator.clipboard.writeText(url);
-            $('share-url').textContent='✓ Copied!';
-            setTimeout(()=>{ $('share-url').textContent=url; },1200);
+            $('share-url-text').textContent='✓ Copied!';
+            setTimeout(()=>{ $('share-url-text').textContent=url; },1200);
         });
 
         $('cancel-btn').addEventListener('click', () => {
@@ -825,12 +893,12 @@
             roomRef=null; roomCode=null;
             $('waiting-screen').classList.add('hidden');
             $('online-screen').classList.remove('hidden');
-            $('create-btn').textContent='Create Room'; $('create-btn').disabled=true;
+            $('create-btn').innerHTML='Create Room'; $('create-btn').disabled=true;
         });
 
         // Join room
         $('join-btn').addEventListener('click', () => {
-            const btn=$('join-btn'); btn.textContent='Joining…'; btn.disabled=true;
+            const btn=$('join-btn'); btn.innerHTML='<span class="spinner"></span>Joining…'; btn.disabled=true;
             const code=$('room-code-input').value.trim();
             $('online-error').classList.add('hidden');
             const myEmoji = onlinePickData.emoji || EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
@@ -839,7 +907,7 @@
                 if (!snap.exists()) {
                     $('online-error').textContent='Room not found. Check the code.';
                     $('online-error').classList.remove('hidden');
-                    btn.textContent='Join Room'; btn.disabled=false;
+                    btn.innerHTML='Join Room'; btn.disabled=false;
                     return null;
                 }
 
@@ -847,7 +915,7 @@
                 if (!data || !data.players || !data.players[0]) {
                     $('online-error').textContent='Invalid room.';
                     $('online-error').classList.remove('hidden');
-                    btn.textContent='Join Room'; btn.disabled=false;
+                    btn.innerHTML='Join Room'; btn.disabled=false;
                     return null;
                 }
 
@@ -856,7 +924,7 @@
                 if (hostEmoji && myEmoji === hostEmoji) {
                     $('online-error').textContent='That emoji is already taken. Pick another one.';
                     $('online-error').classList.remove('hidden');
-                    btn.textContent='Join Room'; btn.disabled=false;
+                    btn.innerHTML='Join Room'; btn.disabled=false;
                     return null;
                 }
 
@@ -888,7 +956,7 @@
                 console.error('Join failed:', err);
                 $('online-error').textContent='Failed: ' + err.message;
                 $('online-error').classList.remove('hidden');
-                btn.textContent='Join Room'; btn.disabled=false;
+                btn.innerHTML='Join Room'; btn.disabled=false;
                 isOnline = false;
             });
         });
@@ -1021,7 +1089,26 @@
             }else{sndDraw();resultBig.textContent='🤝';resultText.textContent='Draw';}
             updateScores();launchConfetti();
             setTimeout(()=>resultOverlay.classList.add('show'),w!==null?600:300);
-            if(!isOnline)autoRematchTimeout=setTimeout(()=>{resultOverlay.classList.remove('show');clearWinLine();state.gameOver=false;resetBoard();autoRematchTimeout=null;},8000);
+
+            // Auto-rematch with countdown for local games
+            if(!isOnline) {
+                countdownSeconds = 8;
+                $('result-countdown').textContent = `Next round in ${countdownSeconds}s…`;
+                countdownInterval = setInterval(() => {
+                    countdownSeconds--;
+                    if(countdownSeconds <= 0) {
+                        clearInterval(countdownInterval);
+                        countdownInterval = null;
+                        $('result-countdown').textContent = '';
+                        resultOverlay.classList.remove('show');
+                        clearWinLine();
+                        state.gameOver=false;
+                        resetBoard();
+                    } else {
+                        $('result-countdown').textContent = `Next round in ${countdownSeconds}s…`;
+                    }
+                }, 1000);
+            }
         }
 
         // Win line
@@ -1037,7 +1124,7 @@
             function anim(n){const p=Math.min((n-t)/350,1),e=1-Math.pow(1-p,3);
                 winCtx.clearRect(0,0,rect.width,rect.height);
                 winCtx.beginPath();winCtx.moveTo(x1,y1);winCtx.lineTo(x1+(x2-x1)*e,y1+(y2-y1)*e);
-                winCtx.strokeStyle='#1a1a1a';winCtx.lineWidth=4;winCtx.lineCap='round';winCtx.stroke();
+                winCtx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--text').trim()||'#1a1a1a';winCtx.lineWidth=4;winCtx.lineCap='round';winCtx.stroke();
                 if(p<1)requestAnimationFrame(anim);}
             requestAnimationFrame(anim);
         }
@@ -1053,6 +1140,7 @@
 
         function continueGame() {
             if (autoRematchTimeout) { clearTimeout(autoRematchTimeout); autoRematchTimeout = null; }
+            if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
             if (opponentLeft) { opponentLeft=false; leaveGame(); return; }
             resultOverlay.classList.remove('show');
             clearWinLine();
@@ -1080,13 +1168,36 @@
 
         // Confetti
         let cp=[],cr=false;
-        function launchConfetti(){cp=[];const cols=['#1a1a1a','#999','#bbb','#d0d0d0','#666','#ccc'];
+        function launchConfetti(){cp=[];const cols=['#FF6B6B','#4ECDC4','#45B7D1','#96CEB4','#FFEAA7','#DDA0DD','#FF9FF3','#54A0FF'];
             for(let i=0;i<50;i++)cp.push({x:Math.random()*confettiCanvas.width,y:-10-Math.random()*60,w:4+Math.random()*4,h:3+Math.random()*3,vx:(Math.random()-0.5)*3,vy:2+Math.random()*3,color:cols[Math.floor(Math.random()*cols.length)],rot:Math.random()*360,rv:(Math.random()-0.5)*8,life:1});
             if(!cr){cr=true;animC();}}
         function animC(){confettiCtx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);cp=cp.filter(p=>p.life>0);
             cp.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=0.08;p.rot+=p.rv;p.life-=0.005;
                 confettiCtx.save();confettiCtx.translate(p.x,p.y);confettiCtx.rotate(p.rot*Math.PI/180);confettiCtx.globalAlpha=p.life;confettiCtx.fillStyle=p.color;confettiCtx.fillRect(-p.w/2,-p.h/2,p.w,p.h);confettiCtx.restore();});
             if(cp.length)requestAnimationFrame(animC);else cr=false;}
+
+        // Dark mode toggle
+        function toggleTheme() {
+            const current = document.documentElement.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+            document.querySelectorAll('.theme-toggle').forEach(btn => {
+                btn.textContent = next === 'dark' ? '☀️' : '🌙';
+            });
+        }
+
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) {
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            document.querySelectorAll('.theme-toggle').forEach(btn => {
+                btn.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+            });
+        }
+
+        document.querySelectorAll('.theme-toggle').forEach(btn => {
+            btn.addEventListener('click', toggleTheme);
+        });
 
         // Auto-join
         const up=new URLSearchParams(location.search);
