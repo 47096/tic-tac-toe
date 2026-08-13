@@ -82,10 +82,15 @@
         .btn:hover { background: var(--text); color: var(--bg); }
         .btn:disabled { opacity: 0.25; cursor: default; background: transparent; color: var(--text-dim); border-color: var(--border); }
         .btn-sm { padding: 6px 14px; font-size: 0.65rem; }
-        .start-btn { margin-top: 8px; padding: 10px 28px; font-size: 0.75rem; letter-spacing: 0.08em; }
 
         .online-link { font-size: 0.65rem; color: var(--text-dim); cursor: pointer; letter-spacing: 0.05em; margin-top: 4px; background: none; border: none; padding: 8px 16px; min-height: 44px; display: flex; align-items: center; }
         .online-link:hover { color: var(--text); }
+
+        .play-tabs { display: flex; width: 100%; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-top: 4px; }
+        .play-tab { flex: 1; padding: 10px; background: var(--surface); color: var(--text-dim); cursor: pointer; font-size: 0.65rem; letter-spacing: 0.05em; text-align: center; transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .play-tab.active { background: var(--bg); color: var(--text); font-weight: 600; }
+        .play-tab:first-child { border-right: 1px solid var(--border); }
+        .play-tab .pt-icon { font-size: 0.9rem; }
 
         .snap-btn { display: flex; align-items: center; gap: 4px; padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text-dim); font-size: 0.6rem; cursor: pointer; letter-spacing: 0.05em; margin-top: 2px; }
         .snap-btn:hover { border-color: var(--text-dim); color: var(--text); }
@@ -212,8 +217,10 @@
                 </div>
             </div>
         </div>
-        <button class="btn start-btn hidden" id="start-btn">Start Game</button>
-        <button class="online-link" id="go-online">Play with a friend online →</button>
+        <div class="play-tabs">
+            <div class="play-tab active" id="play-local-tab"><span class="pt-icon">🎮</span>Play Here</div>
+            <div class="play-tab" id="play-online-tab"><span class="pt-icon">🌐</span>Play Online</div>
+        </div>
     </div>
 
     <!-- ONLINE -->
@@ -425,9 +432,15 @@
                 $('pick-header').textContent = 'Player 2 — pick your emoji';
                 $('pick-header').className = 'pick-header active';
             } else {
-                $('pick-header').textContent = 'Starting…';
-                $('pick-header').className = 'pick-header';
+                $('pick-header').textContent = 'Ready to play!';
+                $('pick-header').className = 'pick-header active';
             }
+
+            // Update play tabs
+            const bothPicked = picks[0] && picks[1];
+            $('play-local-tab').classList.toggle('active', bothPicked);
+            $('play-local-tab').style.opacity = bothPicked ? '1' : '0.5';
+            $('play-local-tab').style.pointerEvents = bothPicked ? 'auto' : 'none';
         }
 
         buildGrid('emoji-grid', (e, btn) => {
@@ -439,7 +452,6 @@
                 photos[0] = null;
                 pickStep = 0;
                 updatePickerUI();
-                $('start-btn').classList.add('hidden');
                 return;
             }
             if (picks[1] === e) {
@@ -465,14 +477,13 @@
             if (pickStep === 0) {
                 pickStep = 1;
                 setTimeout(updatePickerUI, 300);
-            } else {
-                // Both picked — show start button
-                $('start-btn').classList.remove('hidden');
             }
         });
 
         // Start Game button
-        $('start-btn').addEventListener('click', () => {
+        // Play tab handlers
+        $('play-local-tab').addEventListener('click', () => {
+            if (!picks[0] || !picks[1]) return; // Both players must pick
             // Clean up any previous online session
             if(gameListener&&roomRef){roomRef.off('value',gameListener);gameListener=null;}
             if(joinListener&&roomRef){roomRef.child('players/1').off('value',joinListener);joinListener=null;}
@@ -482,6 +493,12 @@
             $('game-screen').classList.remove('hidden');
             resetBoard();
             resizeConfetti();
+        });
+
+        $('play-online-tab').addEventListener('click', () => {
+            $('picker').classList.add('hidden');
+            $('online-screen').classList.remove('hidden');
+            buildOnlineGrids();
         });
 
         updatePickerUI();
@@ -597,12 +614,6 @@
         });
 
         // Online link
-        $('go-online').addEventListener('click', () => {
-            $('picker').classList.add('hidden');
-            $('online-screen').classList.remove('hidden');
-            buildOnlineGrids();
-        });
-
         // Online camera snap - Create Room
         function setupOnlineCamera(snapBtnId, previewId, videoId, canvasId, instructionsId, target) {
             let localStream = null;
@@ -695,7 +706,6 @@
             $('online-screen').classList.add('hidden');
             $('picker').classList.remove('hidden');
             picks = [null, null]; emojis = [null, null]; photos = [null, null]; pickStep = 0;
-            $('start-btn').classList.add('hidden');
             updatePickerUI();
         });
 
@@ -1037,7 +1047,6 @@
             $('online-screen').classList.add('hidden');
             resultOverlay.classList.remove('show');$('picker').classList.remove('hidden');
             picks=[null,null];emojis=[null,null];photos=[null,null];pickStep=0;
-            $('start-btn').classList.add('hidden');
             updatePickerUI();
         }
         $('leave-btn').addEventListener('click',continueGame);
