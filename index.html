@@ -872,10 +872,8 @@
             }
             roomRef = db.ref('rooms/'+roomCode);
 
-            // Set onDisconnect to mark player as disconnected
-            roomRef.child('players/0').onDisconnect().update({disconnected:true});
-            // Set onDisconnect for player 1 as well (will be used when they join)
-            roomRef.child('players/1').onDisconnect().update({disconnected:true});
+            // If P1 disconnects before P2 joins, delete the whole room
+            roomRef.onDisconnect().remove();
 
             roomRef.set({
                 players:{0:{emoji:myPhoto ? null : myEmoji, photo:myPhoto, disconnected:false},1:null},
@@ -888,6 +886,10 @@
                         onlineStarted=true;
                         if(p2.photo){photos[1]=p2.photo;emojis[1]=null;}else{emojis[1]=p2.emoji;photos[1]=null;}
                         roomRef.child('players/1').off('value',joinListener); joinListener=null;
+                        // P2 joined — switch from "delete room" to "mark disconnected"
+                        roomRef.onDisconnect().cancel();
+                        roomRef.child('players/0').onDisconnect().update({disconnected:true});
+                        roomRef.child('players/1').onDisconnect().update({disconnected:true});
                         startOnlineGame();
                     }
                 });
@@ -967,12 +969,18 @@
                 }
             });
 
-            // Clean up room when both players disconnect
+            // Clean up room when both players disconnect, or stale rooms
             roomRef.on('value', snap => {
                 const d = snap.val();
-                if (d && d.players && d.players[0] && d.players[1] &&
-                    d.players[0].disconnected === true && d.players[1].disconnected === true) {
+                if (!d || !d.players) return;
+                const p0 = d.players[0], p1 = d.players[1];
+                // Both disconnected
+                if (p0 && p1 && p0.disconnected === true && p1.disconnected === true) {
                     setTimeout(() => { roomRef.remove().catch(()=>{}); }, 5000);
+                }
+                // P1 disconnected, P2 never joined (stale room)
+                if (p0 && p0.disconnected === true && !p1) {
+                    setTimeout(() => { roomRef.remove().catch(()=>{}); }, 2000);
                 }
             });
 
