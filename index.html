@@ -418,6 +418,9 @@
         let pickStep = 0;
         let photos = [null, null];
         let emojis = [null, null];
+        // Device ID — persists across sessions to identify your rooms
+        let deviceId = localStorage.getItem('ttt-device-id');
+        if (!deviceId) { deviceId = Math.random().toString(36).substring(2, 10); localStorage.setItem('ttt-device-id', deviceId); }
         let isOnline = false;
         let roomCode = null, playerIndex = null, roomRef = null;
         let gameListener = null, joinListener = null, onlineStarted = false;
@@ -877,7 +880,7 @@
 
             roomRef.set({
                 players:{0:{emoji:myPhoto ? null : myEmoji, photo:myPhoto, disconnected:false},1:null},
-                board:Array(9).fill(null),turn:0,scores:[0,0,0],gameOver:false,created:Date.now()
+                board:Array(9).fill(null),turn:0,scores:[0,0,0],gameOver:false,created:Date.now(),host:deviceId
             }).then(() => {
                 // Listen for player 2 joining
                 joinListener = roomRef.child('players/1').on('value', snap => {
