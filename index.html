@@ -232,8 +232,6 @@
         .result-overlay .big { font-size: 3.5rem; margin-bottom: 10px; }
         .result-overlay .big img { width: 90px; height: 90px; border-radius: 8px; object-fit: cover; transform: scaleX(-1); }
 
-        #confetti-canvas { position: fixed; top:0; left:0; width:100%; height:100%; pointer-events: none; z-index: 150; }
-
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
             .cell.win { animation: none; }
@@ -402,8 +400,6 @@
         <div id="aria-announcer" aria-live="polite" class="sr-only"></div>
     </div>
 
-    <canvas id="confetti-canvas"></canvas>
-
     <div class="result-overlay" id="result-overlay">
         <div class="result-content">
             <div class="big" id="result-big"></div>
@@ -453,7 +449,6 @@
         const $ = id => document.getElementById(id);
         const boardEl = $('board'), boardWrap = $('board-wrap');
                         const resultOverlay = $('result-overlay'), resultBig = $('result-big'), resultText = $('result-text');
-        const confettiCanvas = $('confetti-canvas'), confettiCtx = confettiCanvas.getContext('2d');
         const winCanvas = $('win-canvas'), winCtx = winCanvas.getContext('2d');
         const cells = [];
 
@@ -473,9 +468,6 @@
         function hasPhoto(i) { return photos[i]!==null; }
         function hasEmoji(i) { return emojis[i]!==null; }
         function genCode() { let c=Math.random().toString(36).substring(2,8).toUpperCase(); while(c.length<6)c+='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'[Math.floor(Math.random()*36)]; return c; }
-
-        function resizeConfetti() { confettiCanvas.width=innerWidth; confettiCanvas.height=innerHeight; }
-        addEventListener('resize',resizeConfetti); resizeConfetti();
 
         // Countdown timer for auto-rematch
         let countdownInterval = null;
@@ -571,7 +563,7 @@
             isOnline = false;
             $('picker').classList.add('hidden');
             $('game-screen').classList.remove('hidden');
-            resetBoard(); resizeConfetti();
+            resetBoard();
         });
 
         // Play Online link
@@ -1010,7 +1002,7 @@
             $('online-screen').classList.add('hidden');
             $('waiting-screen').classList.add('hidden');
             $('game-screen').classList.remove('hidden');
-            resetBoard(); resizeConfetti();
+            resetBoard();
 
             if(gameListener && roomRef) roomRef.off('value',gameListener);
 
@@ -1046,7 +1038,7 @@
                     state.gameOver=true;
                     let w=null,wl=null;
                     for(const[a,b,c]of WIN_LINES){if(state.board[a]!==null&&state.board[a]===state.board[b]&&state.board[a]===state.board[c]){w=state.board[a];wl=[a,b,c];break;}}
-                    if(w!==null){wl.forEach(i=>cells[i].classList.add('win'));drawWinLine(wl);sndWin();if(navigator.vibrate)navigator.vibrate([50,30,50]);launchConfetti();boardWrap.classList.add('pulse');setTimeout(()=>boardWrap.classList.remove('pulse'),400);
+                    if(w!==null){wl.forEach(i=>cells[i].classList.add('win'));drawWinLine(wl);sndWin();if(navigator.vibrate)navigator.vibrate([50,30,50]);boardWrap.classList.add('pulse');setTimeout(()=>boardWrap.classList.remove('pulse'),400);
                         resultBig.innerHTML=hasPhoto(w)?`<img src="${photos[w]}" alt="">`:`<span style="font-size:3.5rem">${emojis[w]}</span>`;
                         resultText.textContent=`Player ${w+1} wins`;
                     }else{sndDraw();if(navigator.vibrate)navigator.vibrate(100);resultBig.innerHTML='<span style="font-size:3.5rem">🤝</span>';resultText.textContent='Draw';}
@@ -1137,7 +1129,7 @@
         function endGame(w,wl) {
             state.gameOver=true;lastWinLine=wl;
             firstTurn=1-firstTurn; // Alternate who goes first next game
-            if(w!==null&&wl){wl.forEach(i=>cells[i].classList.add('win'));drawWinLine(wl);sndWin();if(navigator.vibrate)navigator.vibrate([50,30,50]);launchConfetti();boardWrap.classList.add('pulse');setTimeout(()=>boardWrap.classList.remove('pulse'),400);
+            if(w!==null&&wl){wl.forEach(i=>cells[i].classList.add('win'));drawWinLine(wl);sndWin();if(navigator.vibrate)navigator.vibrate([50,30,50]);boardWrap.classList.add('pulse');setTimeout(()=>boardWrap.classList.remove('pulse'),400);
                 resultBig.innerHTML=hasPhoto(w)?`<img src="${photos[w]}" alt="">`:`<span style="font-size:3.5rem">${emojis[w]}</span>`;
                 resultText.textContent=`Player ${w+1} wins`;
             }else{sndDraw();if(navigator.vibrate)navigator.vibrate(100);resultBig.innerHTML='<span style="font-size:3.5rem">🤝</span>';resultText.textContent='Draw';}
@@ -1240,16 +1232,8 @@
         $('menu-btn').addEventListener('click',leaveGame);
         $('btn-leave').addEventListener('click',leaveGame);
 
-        // Confetti
+        // Reduced motion check
         const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        let cp=[],cr=false;
-        function launchConfetti(){if(prefersReducedMotion)return;cp=[];const cols=['#FF6B6B','#4ECDC4','#45B7D1','#96CEB4','#FFEAA7','#DDA0DD','#FF9FF3','#54A0FF'];
-            for(let i=0;i<80;i++)cp.push({x:Math.random()*confettiCanvas.width,y:-10-Math.random()*60,w:6+Math.random()*6,h:4+Math.random()*4,vx:(Math.random()-0.5)*3,vy:2+Math.random()*3,color:cols[Math.floor(Math.random()*cols.length)],rot:Math.random()*360,rv:(Math.random()-0.5)*8,life:1});
-            if(!cr){cr=true;animC();}}
-        function animC(){confettiCtx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);cp=cp.filter(p=>p.life>0);
-            cp.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=0.08;p.rot+=p.rv;p.life-=0.005;
-                confettiCtx.save();confettiCtx.translate(p.x,p.y);confettiCtx.rotate(p.rot*Math.PI/180);confettiCtx.globalAlpha=p.life;confettiCtx.fillStyle=p.color;confettiCtx.fillRect(-p.w/2,-p.h/2,p.w,p.h);confettiCtx.restore();});
-            if(cp.length)requestAnimationFrame(animC);else cr=false;}
 
         // Dark mode toggle
         function toggleTheme() {
