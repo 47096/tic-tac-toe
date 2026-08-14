@@ -1018,6 +1018,15 @@
                 }
             });
 
+            // Clean up room when both players disconnect
+            roomRef.on('value', snap => {
+                const d = snap.val();
+                if (d && d.players && d.players[0] && d.players[1] &&
+                    d.players[0].disconnected === true && d.players[1].disconnected === true) {
+                    setTimeout(() => { roomRef.remove().catch(()=>{}); }, 5000);
+                }
+            });
+
             gameListener = roomRef.on('value', snap => {
                 const d=snap.val();
                 if(!d){if(!state.gameOver)setTimeout(()=>leaveGame(),1500);return;}
@@ -1217,8 +1226,10 @@
                         setTimeout(()=>{ roomRef.remove().catch(()=>{}); }, 2000);
                     }).catch(()=>{});
                 } else {
-                    // Guest: just mark disconnected
-                    roomRef.child('players/1').update({disconnected:true}).catch(()=>{});
+                    // Guest: mark disconnected, then remove room after delay
+                    roomRef.child('players/1').update({disconnected:true}).then(()=>{
+                        setTimeout(()=>{ roomRef.remove().catch(()=>{}); }, 5000);
+                    }).catch(()=>{});
                 }
             }
             roomRef=null;roomCode=null;playerIndex=null;onlineStarted=false;isOnline=false;opponentLeft=false;
