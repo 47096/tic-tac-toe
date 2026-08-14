@@ -162,10 +162,6 @@
         .spinner { width: 12px; height: 12px; border: 1.5px solid var(--border); border-top-color: var(--text); border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        .join-input { width: 100%; margin-bottom: 10px; }
-        .join-input input { width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font-size: 16px; letter-spacing: 0.1em; text-align: center; text-transform: uppercase; min-height: 44px; }
-        .join-input input:focus { outline: none; border-color: var(--text); }
-        .join-input input::placeholder { text-transform: none; letter-spacing: 0.05em; }
 
         .error-msg { color: var(--error-text); font-size: 0.75rem; text-align: center; background: var(--error-bg); padding: 8px 12px; border-radius: var(--radius-sm); }
 
@@ -334,17 +330,7 @@
 
         <div class="error-msg hidden" id="online-error"></div>
 
-        <div style="display:flex; flex-direction:column; gap:8px; width:100%; max-width:300px;">
-            <button class="btn" id="create-btn" disabled style="width:100%;">Create Room</button>
-            <button class="btn" id="show-join-btn" style="width:100%;">Join with Code</button>
-        </div>
-
-        <div id="join-area" style="display:none; width:100%; max-width:300px; flex-direction:column; align-items:center; gap:8px;">
-            <div class="join-input">
-                <input type="text" id="room-code-input" maxlength="6" placeholder="Enter 6-letter code" autocomplete="off">
-            </div>
-            <button class="btn" id="join-btn" disabled style="width:100%;">Join Room</button>
-        </div>
+        <button class="btn" id="create-btn" disabled style="width:100%; max-width:300px;">Create Room</button>
 
         <button class="online-link" id="go-local">← Back to local play</button>
     </div>
@@ -571,8 +557,6 @@
             $('picker').classList.add('hidden');
             $('online-screen').classList.remove('hidden');
             onlinePickData = { emoji: null, photo: null };
-            $('join-area').style.display = 'none';
-            $('show-join-btn').style.display = '';
             buildOnlineGrids();
             updateOnlinePickerUI();
         });
@@ -778,7 +762,7 @@
             });
 
             // Cancel on background click
-            $(target === 'create' ? 'create-area' : 'join-area').addEventListener('click', (e) => {
+            $('create-area').addEventListener('click', (e) => {
                 if (localResolve && !e.target.closest('#' + previewId) && !e.target.closest('#' + areaId)) {
                     localResolve('cancel');
                     localResolve = null;
@@ -797,8 +781,6 @@
             $('picker').classList.remove('hidden');
             picks = [null, null]; emojis = [null, null]; photos = [null, null]; pickStep = 0;
             onlinePickData = { emoji: null, photo: null };
-            $('join-area').style.display = 'none';
-            $('show-join-btn').style.display = '';
             updatePickerUI();
         });
 
@@ -812,22 +794,6 @@
             });
         }
 
-        // Online tabs - Create/Join toggle
-        $('show-join-btn').addEventListener('click', () => {
-            $('join-area').style.display = 'flex';
-            $('show-join-btn').style.display = 'none';
-            $('online-error').classList.add('hidden');
-        });
-
-        function updateJoinBtn() {
-            const codeOk = $('room-code-input').value.trim().length === 6;
-            $('join-btn').disabled = !codeOk;
-        }
-
-        $('room-code-input').addEventListener('input', e => {
-            e.target.value = e.target.value.replace(/[^A-Z0-9]/gi,'').toUpperCase();
-            updateJoinBtn();
-        });
 
         function updateOnlinePickerUI() {
             const icon = $('online-pick-p1-icon');
@@ -939,80 +905,6 @@
             $('online-screen').classList.remove('hidden');
             $('create-btn').textContent='Create Room'; $('create-btn').disabled=true;
             updateOnlinePickerUI();
-        });
-
-        // Join room
-        $('join-btn').addEventListener('click', () => {
-            if(navigator.vibrate)navigator.vibrate(10);
-            const btn=$('join-btn'); btn.innerHTML='<span class="spinner"></span>Joining…'; btn.disabled=true;
-            const code=$('room-code-input').value.trim();
-            $('online-error').classList.add('hidden');
-            const myEmoji = onlinePickData.emoji || EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
-
-            db.ref('rooms/'+code).once('value').then(snap => {
-                if (!snap.exists()) {
-                    $('online-error').textContent='Room not found. Check the code.';
-                    $('online-error').classList.remove('hidden');
-                    btn.innerHTML='Join Room'; btn.disabled=false;
-                    return null;
-                }
-
-                const data = snap.val();
-                if (!data || !data.players || !data.players[0]) {
-                    $('online-error').textContent='Invalid room.';
-                    $('online-error').classList.remove('hidden');
-                    btn.innerHTML='Join Room'; btn.disabled=false;
-                    return null;
-                }
-
-                // Check if host is still connected
-                if (data.players[0].disconnected === true) {
-                    $('online-error').textContent='Host has left. Try another room.';
-                    $('online-error').classList.remove('hidden');
-                    btn.innerHTML='Join Room'; btn.disabled=false;
-                    return null;
-                }
-
-                // Check if emoji is already taken by Player 1
-                const hostEmoji = data.players[0].emoji;
-                if (hostEmoji && myEmoji === hostEmoji) {
-                    $('online-error').textContent='That emoji is already taken. Pick another one.';
-                    $('online-error').classList.remove('hidden');
-                    btn.innerHTML='Join Room'; btn.disabled=false;
-                    return null;
-                }
-
-                isOnline = true;
-                roomCode = code;
-                playerIndex = 1;
-                roomRef = db.ref('rooms/' + roomCode);
-                const myPhoto = onlinePickData.photo;
-                if (myPhoto) {
-                    emojis = [null, null];
-                    photos = [null, myPhoto];
-                } else {
-                    emojis = [null, myEmoji];
-                    photos = [null, null];
-                }
-
-                // Read host data
-                if (data.players[0].emoji) emojis[0] = data.players[0].emoji;
-                if (data.players[0].photo) photos[0] = data.players[0].photo;
-
-                // Write player 2 data
-                return roomRef.child('players/1').set({
-                    emoji: myPhoto ? null : myEmoji, photo: myPhoto, disconnected: false
-                }).then(() => {
-                    roomRef.child('players/1').onDisconnect().update({disconnected:true});
-                    startOnlineGame();
-                });
-            }).catch(err => {
-                console.error('Join failed:', err);
-                $('online-error').textContent='Failed: ' + err.message;
-                $('online-error').classList.remove('hidden');
-                btn.innerHTML='Join Room'; btn.disabled=false;
-                isOnline = false;
-            });
         });
 
         // Start online game
@@ -1284,19 +1176,6 @@
 
         themeToggle.addEventListener('click', toggleTheme);
 
-        // Auto-join
-        const up=new URLSearchParams(location.search);
-        const ajc=up.get('room');
-        if(ajc){
-            $('picker').classList.add('hidden');
-            $('online-screen').classList.remove('hidden');
-            $('room-code-input').value=ajc.toUpperCase();
-            $('join-area').style.display='flex';
-            $('show-join-btn').style.display='none';
-            buildOnlineGrids();
-            updateJoinBtn();
-            updateOnlinePickerUI();
-        }
     })();
     </script>
 </body>
