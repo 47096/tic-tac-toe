@@ -168,8 +168,6 @@
         .game-player-row .gp-label { font-size: 0.75rem; color: var(--text-dim); letter-spacing: 0.1em; flex: 1; }
         .game-player-row .gp-score { font-size: 0.75rem; color: var(--text-dim); }
         .game-player-row .gp-score .v { font-weight: 600; color: var(--text); }
-        .game-draw-row { display: flex; align-items: center; justify-content: space-between; padding: 4px 10px; font-size: 0.75rem; color: var(--text-dim); }
-        .game-draw-row .gd-score .v { font-weight: 600; color: var(--text); }
         .player-box { display: flex; flex-direction: column; align-items: center; gap: 4px; }
         .player-box .p-label { font-size: 0.75rem; color: var(--text-dim); letter-spacing: 0.1em; }
         .player-box .p-icon { width: 44px; height: 44px; border: 2px solid var(--border); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; background: var(--surface); transition: all 0.3s; }
@@ -357,9 +355,10 @@
                 <div class="gp-label">Player 2</div>
                 <div class="gp-score"><span class="v" id="p2-score">0</span> wins</div>
             </div>
-            <div class="game-draw-row">
-                <div class="gd-label">Draws</div>
-                <div class="gd-score"><span class="v" id="draw-score">0</span></div>
+            <div class="game-player-row" id="draw-game-box">
+                <div class="gp-icon">🤝</div>
+                <div class="gp-label">Draws</div>
+                <div class="gp-score"><span class="v" id="draw-score">0</span></div>
             </div>
         </div>
         <div class="board-wrap" id="board-wrap">
