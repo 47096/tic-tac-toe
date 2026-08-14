@@ -330,13 +330,13 @@
 
         <div class="error-msg hidden" id="online-error"></div>
 
-        <button class="btn" id="create-btn" disabled style="width:100%; max-width:300px;">Create Room</button>
+        <button class="btn" id="create-btn" disabled style="width:100%; max-width:300px; margin-top:4px;">Create Room</button>
 
         <button class="online-link" id="go-local">← Back to local play</button>
     </div>
 
     <!-- WAITING -->
-    <div class="screen hidden" id="waiting-screen">
+    <div class="screen hidden no-select" id="waiting-screen">
         <h1>過三關</h1>
         <div class="subtitle">tic tac toe</div>
         <div class="room-box">
@@ -680,7 +680,6 @@
             }
         });
 
-        // Online link
         // Online camera snap - Create Room
         function setupOnlineCamera(areaId, previewId, videoId, canvasId, instructionsId, target) {
             let localStream = null;
