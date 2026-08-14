@@ -421,6 +421,11 @@
         // Device ID — persists across sessions to identify your rooms
         let deviceId = localStorage.getItem('ttt-device-id');
         if (!deviceId) { deviceId = Math.random().toString(36).substring(2, 10); localStorage.setItem('ttt-device-id', deviceId); }
+        // Device & browser detection
+        const ua = navigator.userAgent;
+        const deviceType = /Mobi|Android|iPhone|iPad/i.test(ua) ? 'mobile' : 'desktop';
+        const browser = /Edg\//.test(ua) ? 'edge' : /Chrome\//.test(ua) && !/Edg\//.test(ua) ? 'chrome' : /Firefox\//.test(ua) ? 'firefox' : /Safari\//.test(ua) && !/Chrome\//.test(ua) ? 'safari' : 'other';
+        const referrer = document.referrer || 'direct';
         let isOnline = false;
         let roomCode = null, playerIndex = null, roomRef = null;
         let gameListener = null, joinListener = null, onlineStarted = false;
@@ -880,7 +885,8 @@
 
             roomRef.set({
                 players:{0:{emoji:myPhoto ? null : myEmoji, photo:myPhoto, disconnected:false},1:null},
-                board:Array(9).fill(null),turn:0,scores:[0,0,0],gameOver:false,created:Date.now(),host:deviceId
+                board:Array(9).fill(null),turn:0,scores:[0,0,0],gameOver:false,
+                created:Date.now(),host:deviceId,status:'waiting',deviceType,browser,referrer
             }).then(() => {
                 // Listen for player 2 joining
                 joinListener = roomRef.child('players/1').on('value', snap => {
@@ -957,6 +963,7 @@
             $('waiting-screen').classList.add('hidden');
             $('game-screen').classList.remove('hidden');
             resetBoard();
+            roomRef.update({status:'playing',startedAt:Date.now()});
 
             if(gameListener && roomRef) roomRef.off('value',gameListener);
 
@@ -1180,6 +1187,8 @@
             if(roomRef&&playerIndex!==null)roomRef.child(`players/${1-playerIndex}`).off();
             if(roomRef){
                 roomRef.onDisconnect().cancel();
+                // Update status and duration before leaving
+                roomRef.update({status:'finished',endedAt:Date.now()}).catch(()=>{});
                 if(playerIndex===0){
                     // Host: mark disconnected, then remove room after short delay
                     roomRef.child('players/0').update({disconnected:true}).then(()=>{
