@@ -762,7 +762,7 @@
             });
 
             // Cancel on background click
-            $('create-area').addEventListener('click', (e) => {
+            $('online-screen').addEventListener('click', (e) => {
                 if (localResolve && !e.target.closest('#' + previewId) && !e.target.closest('#' + areaId)) {
                     localResolve('cancel');
                     localResolve = null;
@@ -774,7 +774,6 @@
         }
 
         const stopOnlineCamera = setupOnlineCamera('online-camera-area', 'online-camera-preview', 'online-snap-video', 'online-snap-canvas', 'online-cam-instructions', 'create');
-        const stopJoinCamera = setupOnlineCamera('join-camera-area', 'join-camera-preview', 'join-snap-video', 'join-snap-canvas', 'join-cam-instructions', 'join');
 
         $('go-local').addEventListener('click', () => {
             $('online-screen').classList.add('hidden');
