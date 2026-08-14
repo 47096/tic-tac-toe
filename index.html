@@ -331,6 +331,7 @@
         <div class="error-msg hidden" id="online-error"></div>
 
         <button class="btn" id="create-btn" disabled style="width:100%; max-width:300px; margin-top:4px;">Create Room</button>
+        <button class="btn" id="join-btn" disabled style="width:100%; max-width:300px; margin-top:4px; display:none;">Join Room</button>
 
         <button class="online-link" id="go-local">← Back to local play</button>
     </div>
@@ -779,6 +780,14 @@
             $('picker').classList.remove('hidden');
             picks = [null, null]; emojis = [null, null]; photos = [null, null]; pickStep = 0;
             onlinePickData = { emoji: null, photo: null };
+            hostPickData = null;
+            // Reset to create flow
+            $('create-btn').style.display = '';
+            $('create-btn').textContent = 'Create Room'; $('create-btn').disabled = true;
+            $('join-btn').style.display = 'none';
+            $('online-header').textContent = 'You are Player 1 — pick your emoji';
+            // Clear URL params
+            history.replaceState(null, '', location.pathname);
             updatePickerUI();
         });
 
@@ -793,27 +802,59 @@
         }
 
 
+        // Host P1 data (set from Firebase for invite links, null for create flow)
+        let hostPickData = null;
+
         function updateOnlinePickerUI() {
-            const icon = $('online-pick-p1-icon');
-            const status = $('online-pick-p1-status');
-            const ready = $('online-p1-ready');
-            if (onlinePickData.photo) {
-                icon.innerHTML = `<img src="${onlinePickData.photo}" style="width:100%;height:100%;object-fit:cover;border-radius:5px;transform:scaleX(-1);" alt="">`;
-                status.textContent = '✓ Ready';
-                status.className = 'rp-status ready';
-                ready.classList.add('ready');
-            } else if (onlinePickData.emoji) {
-                icon.textContent = onlinePickData.emoji;
-                status.textContent = '✓ Ready';
-                status.className = 'rp-status ready';
-                ready.classList.add('ready');
+            // P1 box — show host data if joining, else show local pick
+            const p1Icon = $('online-pick-p1-icon');
+            const p1Status = $('online-pick-p1-status');
+            const p1Ready = $('online-p1-ready');
+            const p1Data = hostPickData || onlinePickData;
+            if (p1Data.photo) {
+                p1Icon.innerHTML = `<img src="${p1Data.photo}" style="width:100%;height:100%;object-fit:cover;border-radius:5px;transform:scaleX(-1);" alt="">`;
+                p1Status.textContent = '✓ Ready';
+                p1Status.className = 'rp-status ready';
+                p1Ready.classList.add('ready');
+            } else if (p1Data.emoji) {
+                p1Icon.textContent = p1Data.emoji;
+                p1Status.textContent = '✓ Ready';
+                p1Status.className = 'rp-status ready';
+                p1Ready.classList.add('ready');
             } else {
-                icon.textContent = '👤';
-                status.textContent = 'Pick emoji';
-                status.className = 'rp-status';
-                ready.classList.remove('ready');
+                p1Icon.textContent = '👤';
+                p1Status.textContent = 'Pick emoji';
+                p1Status.className = 'rp-status';
+                p1Ready.classList.remove('ready');
             }
+
+            // P2 box — only when joining (hostPickData is set)
+            const p2Icon = $('online-pick-p2-icon');
+            const p2Status = $('online-pick-p2-status');
+            const p2Ready = $('online-p2-ready');
+            if (hostPickData) {
+                if (onlinePickData.photo) {
+                    p2Icon.innerHTML = `<img src="${onlinePickData.photo}" style="width:100%;height:100%;object-fit:cover;border-radius:5px;transform:scaleX(-1);" alt="">`;
+                    p2Status.textContent = '✓ Ready';
+                    p2Status.className = 'rp-status ready';
+                    p2Ready.classList.add('ready');
+                } else if (onlinePickData.emoji) {
+                    p2Icon.textContent = onlinePickData.emoji;
+                    p2Status.textContent = '✓ Ready';
+                    p2Status.className = 'rp-status ready';
+                    p2Ready.classList.add('ready');
+                } else {
+                    p2Icon.textContent = '👤';
+                    p2Status.textContent = 'Pick emoji';
+                    p2Status.className = 'rp-status';
+                    p2Ready.classList.remove('ready');
+                }
+                p2Ready.classList.add('active');
+                p1Ready.classList.remove('active');
+            }
+
             $('create-btn').disabled = !onlinePickData.emoji && !onlinePickData.photo;
+            $('join-btn').disabled = !onlinePickData.emoji && !onlinePickData.photo;
         }
 
         // Create room
@@ -1150,6 +1191,116 @@
         $('leave-btn').addEventListener('click',continueGame);
         $('menu-btn').addEventListener('click',leaveGame);
         $('btn-leave').addEventListener('click',leaveGame);
+
+
+        // ===== INVITE LINK (join flow) =====
+        const urlParams = new URLSearchParams(location.search);
+        const inviteCode = urlParams.get('room');
+
+        if (inviteCode) {
+            $('picker').classList.add('hidden');
+            $('online-screen').classList.remove('hidden');
+            $('create-btn').style.display = 'none';
+            $('join-btn').style.display = '';
+            $('online-header').textContent = 'You are Player 2 — pick your emoji';
+            buildOnlineGrids();
+
+            // Fetch P1's data from Firebase
+            const inviteRef = db.ref('rooms/' + inviteCode.toUpperCase());
+            inviteRef.once('value').then(snap => {
+                if (!snap.exists()) {
+                    $('online-error').textContent = 'Room not found. It may have expired.';
+                    $('online-error').classList.remove('hidden');
+                    return;
+                }
+                const data = snap.val();
+                if (!data.players || !data.players[0]) {
+                    $('online-error').textContent = 'Invalid room.';
+                    $('online-error').classList.remove('hidden');
+                    return;
+                }
+                if (data.players[0].disconnected === true) {
+                    $('online-error').textContent = 'Host has left. Try another room.';
+                    $('online-error').classList.remove('hidden');
+                    return;
+                }
+
+                // Show P1's emoji/photo
+                const p1 = data.players[0];
+                hostPickData = { emoji: p1.emoji || null, photo: p1.photo || null };
+                updateOnlinePickerUI();
+            }).catch(err => {
+                $('online-error').textContent = 'Failed to load room: ' + err.message;
+                $('online-error').classList.remove('hidden');
+            });
+        }
+
+        // Join Room button
+        $('join-btn').addEventListener('click', () => {
+            if(navigator.vibrate)navigator.vibrate(10);
+            const btn = $('join-btn'); btn.innerHTML = '<span class="spinner"></span>Joining…'; btn.disabled = true;
+            const code = inviteCode.toUpperCase();
+            const myEmoji = onlinePickData.emoji || EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
+            const myPhoto = onlinePickData.photo;
+
+            const joinRef = db.ref('rooms/' + code);
+            joinRef.once('value').then(snap => {
+                if (!snap.exists()) {
+                    $('online-error').textContent = 'Room not found. It may have expired.';
+                    $('online-error').classList.remove('hidden');
+                    btn.innerHTML = 'Join Room'; btn.disabled = false;
+                    return null;
+                }
+                const data = snap.val();
+                if (!data.players || !data.players[0]) {
+                    $('online-error').textContent = 'Invalid room.';
+                    $('online-error').classList.remove('hidden');
+                    btn.innerHTML = 'Join Room'; btn.disabled = false;
+                    return null;
+                }
+                if (data.players[0].disconnected === true) {
+                    $('online-error').textContent = 'Host has left. Try another room.';
+                    $('online-error').classList.remove('hidden');
+                    btn.innerHTML = 'Join Room'; btn.disabled = false;
+                    return null;
+                }
+
+                // Check emoji collision
+                const hostEmoji = data.players[0].emoji;
+                if (hostEmoji && !myPhoto && myEmoji === hostEmoji) {
+                    $('online-error').textContent = 'That emoji is taken. Pick another one.';
+                    $('online-error').classList.remove('hidden');
+                    btn.innerHTML = 'Join Room'; btn.disabled = false;
+                    return null;
+                }
+
+                isOnline = true;
+                roomCode = code;
+                playerIndex = 1;
+                roomRef = joinRef;
+                if (myPhoto) {
+                    emojis = [null, null]; photos = [null, myPhoto];
+                } else {
+                    emojis = [null, myEmoji]; photos = [null, null];
+                }
+                // Read host data
+                if (data.players[0].emoji) emojis[0] = data.players[0].emoji;
+                if (data.players[0].photo) photos[0] = data.players[0].photo;
+
+                return roomRef.child('players/1').set({
+                    emoji: myPhoto ? null : myEmoji, photo: myPhoto, disconnected: false
+                }).then(() => {
+                    roomRef.child('players/1').onDisconnect().update({disconnected:true});
+                    startOnlineGame();
+                });
+            }).catch(err => {
+                console.error('Join failed:', err);
+                $('online-error').textContent = 'Failed: ' + err.message;
+                $('online-error').classList.remove('hidden');
+                btn.innerHTML = 'Join Room'; btn.disabled = false;
+                isOnline = false;
+            });
+        });
 
         // Reduced motion check
         const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
