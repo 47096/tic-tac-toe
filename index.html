@@ -296,21 +296,6 @@
         <div class="subtitle">tic tac toe</div>
         <div class="pick-header active" id="online-header">You are Player 1 — pick your emoji</div>
 
-        <div class="ready-area">
-            <div class="ready-row">
-                <div class="ready-player active" id="online-p1-ready">
-                    <div class="rp-icon" id="online-pick-p1-icon">👤</div>
-                    <div class="rp-label">P1 (You)</div>
-                    <div class="rp-status" id="online-pick-p1-status">Pick emoji</div>
-                </div>
-                <div class="ready-player" id="online-p2-ready">
-                    <div class="rp-icon" id="online-pick-p2-icon">👤</div>
-                    <div class="rp-label">P2</div>
-                    <div class="rp-status" id="online-pick-p2-status">Waiting</div>
-                </div>
-            </div>
-        </div>
-
         <div class="pick-tabs" role="tablist">
             <button class="pick-tab active" data-tab="online-emoji" role="tab" aria-selected="true">😀 Emoji</button>
             <button class="pick-tab" data-tab="online-photo" role="tab" aria-selected="false">📸 Photo</button>
@@ -330,6 +315,21 @@
             <div class="cam-instructions" id="online-cam-instructions" style="display:none;">Tap preview to snap</div>
             <button class="btn btn-sm online-cam-cancel" data-target="create" style="display:none; margin-top:4px;">Cancel</button>
             <canvas id="online-snap-canvas" class="snap-hidden"></canvas>
+        </div>
+
+        <div class="ready-area">
+            <div class="ready-row">
+                <div class="ready-player active" id="online-p1-ready">
+                    <div class="rp-icon" id="online-pick-p1-icon">👤</div>
+                    <div class="rp-label">P1 (You)</div>
+                    <div class="rp-status" id="online-pick-p1-status">Pick emoji</div>
+                </div>
+                <div class="ready-player" id="online-p2-ready">
+                    <div class="rp-icon" id="online-pick-p2-icon">👤</div>
+                    <div class="rp-label">P2</div>
+                    <div class="rp-status" id="online-pick-p2-status">Waiting</div>
+                </div>
+            </div>
         </div>
 
         <div class="error-msg hidden" id="online-error"></div>
