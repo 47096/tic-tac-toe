@@ -1030,7 +1030,7 @@
                     if(w!==null){wl.forEach(i=>cells[i].classList.add('win'));drawWinLine(wl);sndWin();if(navigator.vibrate)navigator.vibrate([50,30,50]);
                         resultBig.innerHTML=hasPhoto(w)?`<img src="${photos[w]}" alt="">`:`<span style="font-size:3.5rem">${emojis[w]}</span>`;
                         resultText.textContent=`Player ${w+1} wins`;
-                    }else{sndDraw();resultBig.textContent='🤝';resultText.textContent='Draw';}
+                    }else{sndDraw();resultBig.innerHTML='<span style="font-size:3.5rem">🤝</span>';resultText.textContent='Draw';}
                     launchConfetti();setTimeout(()=>resultOverlay.classList.add('show'),w!==null?600:300);
                 }
             });
@@ -1114,7 +1114,7 @@
             if(w!==null&&wl){wl.forEach(i=>cells[i].classList.add('win'));drawWinLine(wl);sndWin();if(navigator.vibrate)navigator.vibrate([50,30,50]);
                 resultBig.innerHTML=hasPhoto(w)?`<img src="${photos[w]}" alt="">`:`<span style="font-size:3.5rem">${emojis[w]}</span>`;
                 resultText.textContent=`Player ${w+1} wins`;
-            }else{sndDraw();resultBig.textContent='🤝';resultText.textContent='Draw';}
+            }else{sndDraw();resultBig.innerHTML='<span style="font-size:3.5rem">🤝</span>';resultText.textContent='Draw';}
             updateScores();launchConfetti();
             setTimeout(()=>resultOverlay.classList.add('show'),w!==null?600:300);
 
