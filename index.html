@@ -272,12 +272,12 @@
         <div class="ready-area">
             <div class="ready-row">
                 <div class="ready-player" id="p1-ready">
-                    <div class="rp-icon" id="pick-p1-icon">?</div>
+                    <div class="rp-icon" id="pick-p1-icon">👤</div>
                     <div class="rp-label">P1</div>
                     <div class="rp-status" id="pick-p1-status">Pick emoji</div>
                 </div>
                 <div class="ready-player" id="p2-ready">
-                    <div class="rp-icon" id="pick-p2-icon">?</div>
+                    <div class="rp-icon" id="pick-p2-icon">👤</div>
                     <div class="rp-label">P2</div>
                     <div class="rp-status" id="pick-p2-status">Waiting</div>
                 </div>
@@ -501,7 +501,7 @@
                     status.className = 'rp-status ready';
                     ready.classList.add('ready');
                 } else {
-                    icon.textContent = '?';
+                    icon.textContent = '👤';
                     status.textContent = i === 0 ? 'Pick emoji' : 'Waiting';
                     status.className = 'rp-status';
                     ready.classList.remove('ready');
