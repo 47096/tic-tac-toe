@@ -165,27 +165,15 @@
 
         .error-msg { color: var(--error-text); font-size: 0.75rem; text-align: center; background: var(--error-bg); padding: 8px 12px; border-radius: var(--radius-sm); }
 
-        /* Game */
-        .player-row { display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 8px; }
-        .game-players { width: 100%; display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
-        .game-player-row { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: var(--surface); border-radius: var(--radius-sm); border: 1px solid transparent; transition: all 0.15s; }
-        .game-player-row.active { background: var(--bg); border-color: var(--text); }
-        .game-player-row .gp-icon { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 1rem; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); }
-        .game-player-row .gp-icon img { width: 100%; height: 100%; object-fit: cover; border-radius: 3px; transform: scaleX(-1); }
-        .game-player-row .gp-label { font-size: 0.75rem; color: var(--text-dim); letter-spacing: 0.1em; flex: 1; }
-        .game-player-row .gp-score { font-size: 0.8rem; color: var(--text-dim); }
-        .game-player-row .gp-score .v { font-weight: 600; color: var(--text); }
-        .game-player-row.active { border-left: 3px solid var(--accent); }
-        .player-box { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-        .player-box .p-label { font-size: 0.75rem; color: var(--text-dim); letter-spacing: 0.1em; }
-        .player-box .p-icon { width: 44px; height: 44px; border: 2px solid var(--border); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; background: var(--surface); transition: all 0.3s; }
-        .player-box .p-icon.img-icon { padding: 2px; }
-        .player-box .p-icon.img-icon img { width: 100%; height: 100%; border-radius: 4px; object-fit: cover; transform: scaleX(-1); }
-        .player-box .p-score { font-size: 0.75rem; color: var(--text-dim); }
-        .player-box .p-score .v { font-weight: 600; color: var(--text); }
-        .player-box.active .p-icon { border-color: var(--text); box-shadow: 0 0 12px rgba(0,0,0,0.15), 0 0 0 2px var(--text); }
-        .player-box.waiting .p-icon { opacity: 0.4; }
-        .player-vs { font-size: 0.7rem; color: var(--text-dim); }
+        /* Game — Tab Bar */
+        .game-players { width: 100%; display: flex; background: var(--surface); border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border); margin-bottom: 8px; }
+        .game-tab { flex: 1; text-align: center; padding: 8px 4px; font-size: 0.7rem; color: var(--text-dim); border-right: 1px solid var(--border); transition: all 0.15s; }
+        .game-tab:last-child { border-right: none; }
+        .game-tab.active { background: var(--accent-bg); color: var(--text); font-weight: 600; }
+        .game-tab .gt-emoji { font-size: 1.1rem; display: block; line-height: 1.2; }
+        .game-tab .gt-emoji img { width: 24px; height: 24px; border-radius: 3px; object-fit: cover; transform: scaleX(-1); vertical-align: middle; }
+        .game-tab .gt-val { font-size: 0.85rem; font-weight: 300; }
+        .game-tab.active .gt-val { font-weight: 600; }
 
         .board-wrap { position: relative; width: min(85vw, 55dvh, 55vh, 400px); height: min(85vw, 55dvh, 55vh, 400px); }
         .board { display: grid; grid-template-columns: repeat(3,1fr); grid-template-rows: repeat(3,1fr); gap: 0; width: 100%; height: 100%; position: relative; overflow: visible; }
@@ -353,20 +341,17 @@
     <!-- GAME -->
     <div class="screen hidden no-select" id="game-screen">
         <div class="game-players">
-            <div class="game-player-row active" id="p1-game-box">
-                <div class="gp-icon" id="p1-icon"></div>
-                <div class="gp-label">Player 1</div>
-                <div class="gp-score"><span class="v" id="p1-score">0</span> wins</div>
+            <div class="game-tab active" id="p1-game-box">
+                <span class="gt-emoji" id="p1-icon">😎</span>
+                <span class="gt-val"><span id="p1-score">0</span></span>
             </div>
-            <div class="game-player-row" id="p2-game-box">
-                <div class="gp-icon" id="p2-icon"></div>
-                <div class="gp-label">Player 2</div>
-                <div class="gp-score"><span class="v" id="p2-score">0</span> wins</div>
+            <div class="game-tab" id="draw-game-box">
+                <span class="gt-emoji">🤝</span>
+                <span class="gt-val"><span id="draw-score">0</span></span>
             </div>
-            <div class="game-player-row" id="draw-game-box">
-                <div class="gp-icon">🤝</div>
-                <div class="gp-label">Draws</div>
-                <div class="gp-score"><span class="v" id="draw-score">0</span></div>
+            <div class="game-tab" id="p2-game-box">
+                <span class="gt-emoji" id="p2-icon">🐱</span>
+                <span class="gt-val"><span id="p2-score">0</span></span>
             </div>
         </div>
         <div class="board-wrap" id="board-wrap">
@@ -1060,13 +1045,11 @@
                 const box = $(i===0 ? 'p1-game-box' : 'p2-game-box');
                 if (photos[i]) {
                     icon.innerHTML = `<img src="${photos[i]}" alt="">`;
-                    icon.className = 'gp-icon';
                 } else if (emojis[i]) {
                     icon.textContent = emojis[i];
-                    icon.className = 'gp-icon';
                 }
                 score.textContent = state.scores[i];
-                box.className = 'game-player-row' + (state.turn === i ? ' active' : '');
+                box.className = 'game-tab' + (state.turn === i ? ' active' : '');
             });
             $('draw-score').textContent = state.scores[2];
         }
