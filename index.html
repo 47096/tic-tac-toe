@@ -216,7 +216,8 @@
         
         .ctrls { display: flex; gap: 6px; margin-top: 8px; align-items: center; }
 
-        .theme-toggle { background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 4px; min-height: 44px; min-width: 44px; display: flex; align-items: center; justify-content: center; }
+        .theme-toggle { position: fixed; top: 10px; right: 10px; z-index: 100; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; font-size: 0.7rem; cursor: pointer; padding: 6px 12px; min-height: 36px; display: flex; align-items: center; gap: 4px; transition: all 0.15s; color: var(--text); }
+        .theme-toggle:hover { background: var(--bg); }
 
         .result-overlay { position: fixed; inset:0; background: var(--overlay-bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.2s; backdrop-filter: blur(6px); }
         .result-overlay.show { opacity: 1; pointer-events: all; }
@@ -241,6 +242,8 @@
 <body>
 
     <div id="loading-screen"><div class="spinner"></div><p>Loading…</p></div>
+
+    <button class="theme-toggle" id="theme-toggle" title="Toggle dark mode">🌙 Dark</button>
 
     <!-- PICKER -->
     <div class="screen no-select" id="picker">
@@ -285,7 +288,6 @@
         </div>
         <button class="btn" id="start-local-btn" style="width:100%;max-width:300px;margin-top:4px;" disabled>🎮 Start Game</button>
         <button class="online-link" id="play-online-link">🌐 Play Online</button>
-        <button class="theme-toggle" id="theme-toggle-picker" title="Toggle dark mode">🌙</button>
     </div>
 
     <!-- ONLINE -->
@@ -395,7 +397,6 @@
         <div class="ctrls">
             <button class="btn btn-sm" id="btn-restart">Restart</button>
             <button class="btn btn-sm" id="btn-leave">Back</button>
-            <button class="theme-toggle" id="theme-toggle" title="Toggle dark mode">🌙</button>
         </div>
         <div id="aria-announcer" aria-live="polite" class="sr-only"></div>
     </div>
@@ -1247,27 +1248,24 @@
         const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
         // Dark mode toggle
+        const themeToggle = $('theme-toggle');
         function toggleTheme() {
             const current = document.documentElement.getAttribute('data-theme');
             const next = current === 'dark' ? 'light' : 'dark';
             document.documentElement.setAttribute('data-theme', next);
             localStorage.setItem('theme', next);
-            document.querySelectorAll('.theme-toggle').forEach(btn => {
-                btn.textContent = next === 'dark' ? '☀️' : '🌙';
-            });
+            themeToggle.textContent = next === 'dark' ? '☀️ Light' : '🌙 Dark';
+            // Redraw win line with new theme color
+            if (lastWinLine && state.gameOver) drawWinLine(lastWinLine);
         }
 
         const savedTheme = localStorage.getItem('theme');
         const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         const initialTheme = savedTheme || (systemDark ? 'dark' : 'light');
         document.documentElement.setAttribute('data-theme', initialTheme);
-        document.querySelectorAll('.theme-toggle').forEach(btn => {
-            btn.textContent = initialTheme === 'dark' ? '☀️' : '🌙';
-        });
+        themeToggle.textContent = initialTheme === 'dark' ? '☀️ Light' : '🌙 Dark';
 
-        document.querySelectorAll('.theme-toggle').forEach(btn => {
-            btn.addEventListener('click', toggleTheme);
-        });
+        themeToggle.addEventListener('click', toggleTheme);
 
         // Auto-join
         const up=new URLSearchParams(location.search);
