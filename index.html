@@ -294,64 +294,58 @@
     <div class="screen hidden" id="online-screen">
         <h1>過三關</h1>
         <div class="subtitle">tic tac toe</div>
-        <div class="pick-header active" id="online-header">Create a room to play online</div>
-        <div class="online-tabs">
-            <button class="online-tab active" data-role="create"><span class="ot-icon">➕</span>Create Room</button>
-            <button class="online-tab" data-role="join"><span class="ot-icon">🔗</span>Join Room</button>
+        <div class="pick-header active" id="online-header">You are Player 1 — pick your emoji</div>
+
+        <div class="ready-area">
+            <div class="ready-row">
+                <div class="ready-player active" id="online-p1-ready">
+                    <div class="rp-icon" id="online-pick-p1-icon">👤</div>
+                    <div class="rp-label">P1 (You)</div>
+                    <div class="rp-status" id="online-pick-p1-status">Pick emoji</div>
+                </div>
+                <div class="ready-player" id="online-p2-ready">
+                    <div class="rp-icon" id="online-pick-p2-icon">👤</div>
+                    <div class="rp-label">P2</div>
+                    <div class="rp-status" id="online-pick-p2-status">Waiting</div>
+                </div>
+            </div>
         </div>
 
-        <div id="create-area" style="width:100%; display:flex; flex-direction:column; align-items:center; gap:10px;">
-            <div class="pick-tabs" role="tablist">
-                <button class="pick-tab active" data-tab="online-emoji" role="tab" aria-selected="true">😀 Emoji</button>
-                <button class="pick-tab" data-tab="online-photo" role="tab" aria-selected="false">📸 Photo</button>
-            </div>
-            <div class="pick-tab-content active" id="online-emoji-tab">
-                <div class="emoji-grid" id="online-emoji-grid"></div>
-            </div>
-            <div class="pick-tab-content" id="online-photo-tab">
-                <div class="camera-area" id="online-camera-area">
-                    <div class="camera-icon">📸</div>
-                    <div class="camera-text">Tap to take photo</div>
-                </div>
-                <div class="camera-preview" id="online-camera-preview" style="position:relative; cursor:pointer;">
-                    <video id="online-snap-video" playsinline autoplay></video>
-                    <div class="cam-label">Tap to snap</div>
-                </div>
-                <div class="cam-instructions" id="online-cam-instructions" style="display:none;">Tap preview to snap</div>
-                <button class="btn btn-sm online-cam-cancel" data-target="create" style="display:none; margin-top:4px;">Cancel</button>
-                <canvas id="online-snap-canvas" class="snap-hidden"></canvas>
-            </div>
-            <button class="btn primary" id="create-btn" style="width:100%;margin-top:8px;">Create Room</button>
+        <div class="pick-tabs" role="tablist">
+            <button class="pick-tab active" data-tab="online-emoji" role="tab" aria-selected="true">😀 Emoji</button>
+            <button class="pick-tab" data-tab="online-photo" role="tab" aria-selected="false">📸 Photo</button>
         </div>
-
-        <div id="join-area" style="display:none; width:100%; flex-direction:column; align-items:center; gap:10px;">
-            <div class="join-input">
-                <input type="text" id="room-code-input" maxlength="6" placeholder="Enter 6-letter code" autocomplete="off">
+        <div class="pick-tab-content active" id="online-emoji-tab">
+            <div class="emoji-grid" id="online-emoji-grid"></div>
+        </div>
+        <div class="pick-tab-content" id="online-photo-tab">
+            <div class="camera-area" id="online-camera-area">
+                <div class="camera-icon">📸</div>
+                <div class="camera-text">Tap to take photo</div>
             </div>
-            <div class="pick-tabs" role="tablist">
-                <button class="pick-tab active" data-tab="join-emoji" role="tab" aria-selected="true">😀 Emoji</button>
-                <button class="pick-tab" data-tab="join-photo" role="tab" aria-selected="false">📸 Photo</button>
+            <div class="camera-preview" id="online-camera-preview" style="position:relative; cursor:pointer;">
+                <video id="online-snap-video" playsinline autoplay></video>
+                <div class="cam-label">Tap to snap</div>
             </div>
-            <div class="pick-tab-content active" id="join-emoji-tab">
-                <div class="emoji-grid" id="join-emoji-grid"></div>
-            </div>
-            <div class="pick-tab-content" id="join-photo-tab">
-                <div class="camera-area" id="join-camera-area">
-                    <div class="camera-icon">📸</div>
-                    <div class="camera-text">Tap to take photo</div>
-                </div>
-                <div class="camera-preview" id="join-camera-preview" style="position:relative; cursor:pointer;">
-                    <video id="join-snap-video" playsinline autoplay></video>
-                    <div class="cam-label">Tap to snap</div>
-                </div>
-                <div class="cam-instructions" id="join-cam-instructions" style="display:none;">Tap preview to snap</div>
-                <button class="btn btn-sm online-cam-cancel" data-target="join" style="display:none; margin-top:4px;">Cancel</button>
-                <canvas id="join-snap-canvas" class="snap-hidden"></canvas>
-            </div>
-            <button class="btn primary" id="join-btn" disabled style="width:100%;margin-top:8px;">Join Room</button>
+            <div class="cam-instructions" id="online-cam-instructions" style="display:none;">Tap preview to snap</div>
+            <button class="btn btn-sm online-cam-cancel" data-target="create" style="display:none; margin-top:4px;">Cancel</button>
+            <canvas id="online-snap-canvas" class="snap-hidden"></canvas>
         </div>
 
         <div class="error-msg hidden" id="online-error"></div>
+
+        <div style="display:flex; flex-direction:column; gap:8px; width:100%; max-width:300px;">
+            <button class="btn" id="create-btn" disabled style="width:100%;">Create Room</button>
+            <button class="btn" id="show-join-btn" style="width:100%;">Join with Code</button>
+        </div>
+
+        <div id="join-area" style="display:none; width:100%; max-width:300px; flex-direction:column; align-items:center; gap:8px;">
+            <div class="join-input">
+                <input type="text" id="room-code-input" maxlength="6" placeholder="Enter 6-letter code" autocomplete="off">
+            </div>
+            <button class="btn" id="join-btn" disabled style="width:100%;">Join Room</button>
+        </div>
+
         <button class="online-link" id="go-local">← Back to local play</button>
     </div>
 
@@ -571,7 +565,11 @@
         $('play-online-link').addEventListener('click', () => {
             $('picker').classList.add('hidden');
             $('online-screen').classList.remove('hidden');
+            onlinePickData = { emoji: null, photo: null };
+            $('join-area').style.display = 'none';
+            $('show-join-btn').style.display = '';
             buildOnlineGrids();
+            updateOnlinePickerUI();
         });
 
         updatePickerUI();
@@ -759,10 +757,7 @@
                     onlinePickData = { emoji: null, photo: photo };
                     if (target === 'create') {
                         document.querySelectorAll('#online-emoji-grid .e').forEach(b=>b.classList.remove('sel'));
-                        $('create-btn').disabled = false;
-                    } else {
-                        document.querySelectorAll('#join-emoji-grid .e').forEach(b=>b.classList.remove('sel'));
-                        updateJoinBtn();
+                        updateOnlinePickerUI();
                     }
                 } catch (e) {
                     console.error('Camera error:', e);
@@ -796,6 +791,9 @@
             $('online-screen').classList.add('hidden');
             $('picker').classList.remove('hidden');
             picks = [null, null]; emojis = [null, null]; photos = [null, null]; pickStep = 0;
+            onlinePickData = { emoji: null, photo: null };
+            $('join-area').style.display = 'none';
+            $('show-join-btn').style.display = '';
             updatePickerUI();
         });
 
@@ -805,25 +803,15 @@
                 document.querySelectorAll('#online-emoji-grid .e').forEach(b=>b.classList.remove('sel'));
                 btn.classList.add('sel');
                 onlinePickData = { emoji: e, photo: null };
-                $('create-btn').disabled = false;
-            });
-            buildGrid('join-emoji-grid', (e, btn) => {
-                document.querySelectorAll('#join-emoji-grid .e').forEach(b=>b.classList.remove('sel'));
-                btn.classList.add('sel');
-                onlinePickData = { emoji: e, photo: null };
-                updateJoinBtn();
+                updateOnlinePickerUI();
             });
         }
 
-        // Online tabs
-        document.querySelectorAll('.online-tab').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.online-tab').forEach(b=>b.classList.remove('active'));
-                btn.classList.add('active');
-                $('create-area').style.display = btn.dataset.role==='create'?'flex':'none';
-                $('join-area').style.display = btn.dataset.role==='join'?'flex':'none';
-                $('online-error').classList.add('hidden');
-            });
+        // Online tabs - Create/Join toggle
+        $('show-join-btn').addEventListener('click', () => {
+            $('join-area').style.display = 'flex';
+            $('show-join-btn').style.display = 'none';
+            $('online-error').classList.add('hidden');
         });
 
         function updateJoinBtn() {
@@ -835,6 +823,29 @@
             e.target.value = e.target.value.replace(/[^A-Z0-9]/gi,'').toUpperCase();
             updateJoinBtn();
         });
+
+        function updateOnlinePickerUI() {
+            const icon = $('online-pick-p1-icon');
+            const status = $('online-pick-p1-status');
+            const ready = $('online-p1-ready');
+            if (onlinePickData.photo) {
+                icon.innerHTML = `<img src="${onlinePickData.photo}" style="width:100%;height:100%;object-fit:cover;border-radius:5px;transform:scaleX(-1);" alt="">`;
+                status.textContent = '✓ Ready';
+                status.className = 'rp-status ready';
+                ready.classList.add('ready');
+            } else if (onlinePickData.emoji) {
+                icon.textContent = onlinePickData.emoji;
+                status.textContent = '✓ Ready';
+                status.className = 'rp-status ready';
+                ready.classList.add('ready');
+            } else {
+                icon.textContent = '👤';
+                status.textContent = 'Pick emoji';
+                status.className = 'rp-status';
+                ready.classList.remove('ready');
+            }
+            $('create-btn').disabled = !onlinePickData.emoji && !onlinePickData.photo;
+        }
 
         // Create room
         $('create-btn').addEventListener('click', () => {
@@ -921,7 +932,8 @@
             roomRef=null; roomCode=null;
             $('waiting-screen').classList.add('hidden');
             $('online-screen').classList.remove('hidden');
-            $('create-btn').innerHTML='Create Room'; $('create-btn').disabled=true;
+            $('create-btn').textContent='Create Room'; $('create-btn').disabled=true;
+            updateOnlinePickerUI();
         });
 
         // Join room
@@ -1273,13 +1285,12 @@
         if(ajc){
             $('picker').classList.add('hidden');
             $('online-screen').classList.remove('hidden');
-            document.querySelectorAll('.online-tab').forEach(b=>b.classList.remove('active'));
-            document.querySelector('[data-role="join"]').classList.add('active');
-            $('create-area').style.display='none';
-            $('join-area').style.display='flex';
             $('room-code-input').value=ajc.toUpperCase();
+            $('join-area').style.display='flex';
+            $('show-join-btn').style.display='none';
             buildOnlineGrids();
             updateJoinBtn();
+            updateOnlinePickerUI();
         }
     })();
     </script>
