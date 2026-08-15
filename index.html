@@ -1265,7 +1265,7 @@
             if (autoRematchTimeout) { clearTimeout(autoRematchTimeout); autoRematchTimeout = null; }
             if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
             $('countdown-bar').style.display = 'none';
-            if (opponentLeft) { opponentLeft=false; leaveGame(); return; }
+            if (opponentLeft) { opponentLeft=false; leaveGame(); $('picker').classList.add('hidden'); $('online-screen').classList.remove('hidden'); return; }
             resultOverlay.classList.remove('show');
             clearWinLine();
             state.gameOver = false;
