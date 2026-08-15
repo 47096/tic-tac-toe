@@ -272,7 +272,7 @@
                 <div class="ready-player" id="p1-ready">
                     <div class="rp-icon" id="pick-p1-icon">👤</div>
                     <div class="rp-label">P1</div>
-                    <div class="rp-status" id="pick-p1-status">Pick emoji</div>
+                    <div class="rp-status" id="pick-p1-status">Pick your avatar</div>
                 </div>
                 <div class="ready-player" id="p2-ready">
                     <div class="rp-icon" id="pick-p2-icon">👤</div>
@@ -317,7 +317,7 @@
                 <div class="ready-player active" id="online-p1-ready">
                     <div class="rp-icon" id="online-pick-p1-icon">👤</div>
                     <div class="rp-label">P1 (You)</div>
-                    <div class="rp-status" id="online-pick-p1-status">Pick emoji</div>
+                    <div class="rp-status" id="online-pick-p1-status">Pick your avatar</div>
                 </div>
                 <div class="ready-player" id="online-p2-ready">
                     <div class="rp-icon" id="online-pick-p2-icon">👤</div>
@@ -507,7 +507,7 @@
                     ready.classList.add('ready');
                 } else {
                     icon.textContent = '👤';
-                    status.textContent = i === 0 ? 'Pick emoji' : 'Waiting';
+                    status.textContent = i === 0 ? 'Pick your avatar' : 'Waiting';
                     status.className = 'rp-status';
                     ready.classList.remove('ready');
                 }
@@ -846,7 +846,7 @@
                 p1Ready.classList.add('ready');
             } else {
                 p1Icon.textContent = '👤';
-                p1Status.textContent = 'Pick emoji';
+                p1Status.textContent = 'Pick your avatar';
                 p1Status.className = 'rp-status';
                 p1Ready.classList.remove('ready');
             }
@@ -868,7 +868,7 @@
                     p2Ready.classList.add('ready');
                 } else {
                     p2Icon.textContent = '👤';
-                    p2Status.textContent = 'Pick emoji';
+                    p2Status.textContent = 'Pick your avatar';
                     p2Status.className = 'rp-status';
                     p2Ready.classList.remove('ready');
                 }
