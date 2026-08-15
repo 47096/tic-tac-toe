@@ -103,6 +103,7 @@
         .pick-header.active { color: var(--text); font-weight: 600; }
         .pick-tabs { display: flex; width: 100%; max-width: 300px; margin-bottom: 10px; }
         .pick-tab { flex: 1; padding: 10px; text-align: center; font-size: 0.75rem; background: var(--surface); border: 1px solid var(--border); cursor: pointer; letter-spacing: 0.05em; transition: all 0.15s; min-height: 44px; display: flex; align-items: center; justify-content: center; }
+        .pick-tab:active { transform: scale(0.97); }
         .pick-tab.active { background: var(--bg); border-color: var(--text); font-weight: 600; }
         .pick-tab:first-child { border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
         .pick-tab:last-child { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
@@ -112,6 +113,7 @@
         .emoji-grid .e { width: 100%; aspect-ratio: 1; min-height: 44px; font-size: 1.4rem; border: 1px solid var(--border); background: var(--bg); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; border-radius: var(--radius-sm); color: var(--text); }
         .emoji-grid .e:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
         .emoji-grid .e:hover { border-color: var(--text-dim); }
+        .emoji-grid .e:active { transform: scale(0.9); }
         .emoji-grid .e.sel { border-color: var(--text); background: var(--surface); }
         .camera-area { width: 100%; max-width: 300px; aspect-ratio: 1; border: 2px dashed var(--border); border-radius: var(--radius-md); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; background: var(--surface); cursor: pointer; transition: all 0.15s; }
         .camera-area:hover { border-color: var(--text-dim); }
@@ -133,6 +135,7 @@
         .btn-row { display: flex; gap: 8px; margin-top: 4px; }
         .btn { padding: 10px 24px; border: 1px solid var(--text); border-radius: var(--radius-sm); background: transparent; color: var(--text); font-size: 0.8rem; font-weight: 600; cursor: pointer; letter-spacing: 0.1em; transition: all 0.15s; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
         .btn:hover { background: var(--text); color: var(--bg); }
+        .btn:active { transform: scale(0.97); }
         .btn:disabled { opacity: 0.25; cursor: default; background: transparent; color: var(--text-dim); border-color: var(--border); }
         .btn-sm { padding: 8px 16px; font-size: 0.75rem; }
         .btn-ghost { border-color: var(--border); color: var(--text-dim); }
@@ -141,9 +144,11 @@
 
         .online-link { font-size: 0.75rem; color: var(--text-dim); cursor: pointer; letter-spacing: 0.05em; margin-top: 4px; background: none; border: none; padding: 8px 16px; min-height: 44px; display: flex; align-items: center; }
         .online-link:hover { color: var(--text); }
+        .online-link:active { opacity: 0.7; }
 
         .play-tabs { display: flex; width: 100%; border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; margin-top: 4px; }
         .play-tab { flex: 1; padding: 10px; background: var(--surface); color: var(--text-dim); cursor: pointer; font-size: 0.75rem; letter-spacing: 0.05em; text-align: center; transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; }
+        .play-tab:active { transform: scale(0.97); }
         .play-tab.active { background: var(--bg); color: var(--text); font-weight: 600; }
         .play-tab:first-child { border-right: 1px solid var(--border); }
         .play-tab .pt-icon { font-size: 0.9rem; }
