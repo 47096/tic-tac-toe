@@ -429,7 +429,6 @@
         let roomCode = null, playerIndex = null, roomRef = null;
         let gameListener = null, joinListener = null, cleanupListener = null, opponentListener = null, connectedListener = null, onlineStarted = false;
         let onlinePickData = { emoji: null, photo: null };
-        let autoRematchTimeout = null;
         let moveInProgress = false;
         let opponentLeft = false;
         let firstTurn = 0; // Alternates who goes first each game
@@ -1247,7 +1246,6 @@
         });
 
         function continueGame() {
-            if (autoRematchTimeout) { clearTimeout(autoRematchTimeout); autoRematchTimeout = null; }
             if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
             $('countdown-bar').style.display = 'none';
             if (opponentLeft) { opponentLeft=false; leaveGame(); $('picker').classList.add('hidden'); $('online-screen').classList.remove('hidden'); return; }
@@ -1347,6 +1345,7 @@
 
             // Fetch P1's data from Firebase
             const inviteRef = db.ref('rooms/' + inviteCode.toUpperCase());
+            let inviteData = null;
             inviteRef.once('value').then(snap => {
                 if (!snap.exists()) {
                     $('online-error').textContent = 'Room not found. It may have expired.';
@@ -1366,6 +1365,7 @@
                 }
 
                 // Show P1's emoji/photo
+                inviteData = data;
                 const p1 = data.players[0];
                 hostPickData = { emoji: p1.emoji || null, photo: p1.photo || null };
                 updateOnlinePickerUI();
