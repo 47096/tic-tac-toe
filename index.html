@@ -400,24 +400,9 @@
             <h2 id="result-text"></h2>
             <div class="countdown" id="result-countdown"></div>
             <div class="countdown-bar" id="countdown-bar" style="display:none;"><div class="countdown-bar-fill" id="countdown-bar-fill"></div></div>
-            <div style="margin-top:12px; display:flex; gap:8px; justify-content:center;" id="result-buttons">
+            <div style="margin-top:12px; display:flex; gap:8px; justify-content:center;">
                 <button class="btn btn-sm" id="leave-btn">Play Again</button>
                 <button class="btn btn-sm" id="menu-btn">Menu</button>
-            </div>
-            <div id="rematch-request" style="margin-top:12px; display:none; text-align:center;">
-                <button class="btn btn-sm" id="rematch-btn">🔄 Play Again</button>
-                <button class="btn btn-sm" id="rematch-menu-btn" style="border-color:var(--border);color:var(--text-dim);">Menu</button>
-            </div>
-            <div id="rematch-waiting" style="margin-top:12px; display:none; text-align:center;">
-                <div class="sub" style="margin-bottom:8px;">Waiting for opponent…</div>
-                <button class="btn btn-sm" id="rematch-cancel-btn" style="border-color:var(--border);color:var(--text-dim);">Cancel</button>
-            </div>
-            <div id="rematch-ask" style="margin-top:12px; display:none; text-align:center;">
-                <div class="sub" style="margin-bottom:8px;">Wants to play again!</div>
-                <div style="display:flex; gap:8px; justify-content:center;">
-                    <button class="btn btn-sm" id="rematch-accept-btn">Accept</button>
-                    <button class="btn btn-sm" id="rematch-decline-btn" style="border-color:var(--border);color:var(--text-dim);">Decline</button>
-                </div>
             </div>
         </div>
     </div>
@@ -458,7 +443,7 @@
         const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         let isOnline = false;
         let roomCode = null, playerIndex = null, roomRef = null;
-        let gameListener = null, joinListener = null, cleanupListener = null, opponentListener = null, rematchListener = null, onlineStarted = false;
+        let gameListener = null, joinListener = null, cleanupListener = null, opponentListener = null, onlineStarted = false;
         let onlinePickData = { emoji: null, photo: null };
         let autoRematchTimeout = null;
         let moveInProgress = false;
@@ -1198,89 +1183,8 @@
                         $('result-countdown').textContent = `Next round in ${countdownSeconds}s…`;
                     }
                 }, 1000);
-            } else {
-                // Online: show rematch UI
-                showRematchUI();
             }
         }
-
-        // ===== REMATCH HANDSHAKE =====
-        function showRematchUI() {
-            $('result-buttons').style.display = 'none';
-            $('rematch-request').style.display = 'flex';
-            $('rematch-request').style.justifyContent = 'center';
-            $('rematch-waiting').style.display = 'none';
-            $('rematch-ask').style.display = 'none';
-            // Listen for opponent's rematch request
-            if(rematchListener && roomRef) roomRef.child('rematch').off('value', rematchListener);
-            rematchListener = roomRef.child('rematch').on('value', snap => {
-                const r = snap.val();
-                if(!r) {
-                    // No rematch request — show our request buttons
-                    $('rematch-request').style.display = 'flex';
-                    $('rematch-waiting').style.display = 'none';
-                    $('rematch-ask').style.display = 'none';
-                } else if(r.from === playerIndex && !r.accepted) {
-                    // We requested — show waiting
-                    $('rematch-request').style.display = 'none';
-                    $('rematch-waiting').style.display = 'block';
-                    $('rematch-ask').style.display = 'none';
-                } else if(r.from !== playerIndex && !r.accepted) {
-                    // Opponent requested — ask us
-                    $('rematch-request').style.display = 'none';
-                    $('rematch-waiting').style.display = 'none';
-                    $('rematch-ask').style.display = 'block';
-                } else if(r.accepted) {
-                    // Both agreed — clean up UI, accept handler resets the board
-                    cleanupRematchUI();
-                    roomRef.child('rematch').remove().catch(()=>{});
-                    state.gameOver = false;
-                    resultOverlay.classList.remove('show');
-                    clearWinLine();
-                    resetBoard();
-                }
-            });
-        }
-
-        function cleanupRematchUI() {
-            if(rematchListener && roomRef) { roomRef.child('rematch').off('value', rematchListener); rematchListener = null; }
-            $('result-buttons').style.display = 'flex';
-            $('rematch-request').style.display = 'none';
-            $('rematch-waiting').style.display = 'none';
-            $('rematch-ask').style.display = 'none';
-        }
-
-        $('rematch-btn').addEventListener('click', () => {
-            if(!roomRef) return;
-            roomRef.child('rematch').set({ from: playerIndex, accepted: false }).catch(()=>{});
-        });
-        $('rematch-cancel-btn').addEventListener('click', () => {
-            if(!roomRef) return;
-            roomRef.child('rematch').remove().catch(()=>{});
-        });
-        $('rematch-accept-btn').addEventListener('click', () => {
-            if(!roomRef) return;
-            // Accept and reset — both players do this to ensure sync
-            roomRef.child('rematch').update({ accepted: true }).then(() => {
-                cleanupRematchUI();
-                state.gameOver = false;
-                resultOverlay.classList.remove('show');
-                clearWinLine();
-                resetBoard();
-                roomRef.update({ board: Array(9).fill(null), turn: firstTurn, gameOver: false }).catch(() => {});
-            }).catch(()=>{});
-        });
-        $('rematch-decline-btn').addEventListener('click', () => {
-            if(!roomRef) return;
-            roomRef.child('rematch').remove().catch(()=>{});
-            cleanupRematchUI();
-            leaveGame();
-        });
-        $('rematch-menu-btn').addEventListener('click', () => {
-            if(roomRef) roomRef.child('rematch').remove().catch(()=>{});
-            cleanupRematchUI();
-            leaveGame();
-        });
 
         // Win line
         function drawWinLine(wl) {
@@ -1337,16 +1241,12 @@
         // Restart / Leave
         $('btn-restart').addEventListener('click',()=>{
             if(navigator.vibrate)navigator.vibrate(10);
-            cleanupRematchUI();
-            if(roomRef) roomRef.child('rematch').remove().catch(()=>{});
             firstTurn=0;state.scores=[0,0,0];saveScores();
             if(roomRef){roomRef.update({board:Array(9).fill(null),turn:0,scores:[0,0,0],gameOver:false}).catch(()=>{});}
             lastWinLine=null;state.gameOver=false;resultOverlay.classList.remove('show');resetBoard();
         });
 
         function continueGame() {
-            cleanupRematchUI();
-            if(roomRef) roomRef.child('rematch').remove().catch(()=>{});
             if (autoRematchTimeout) { clearTimeout(autoRematchTimeout); autoRematchTimeout = null; }
             if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
             $('countdown-bar').style.display = 'none';
@@ -1361,7 +1261,6 @@
         }
 
         function leaveGame() {
-            cleanupRematchUI();
             if(countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
             if(joinListener&&roomRef){roomRef.child('players/1').off('value',joinListener);joinListener=null;}
             if(gameListener&&roomRef){roomRef.off('value',gameListener);gameListener=null;}
