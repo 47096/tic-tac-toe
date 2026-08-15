@@ -974,6 +974,7 @@
 
         // Start online game
         function startOnlineGame() {
+            try{sessionStorage.setItem('ttt-session',JSON.stringify({roomCode,playerIndex}));}catch(e){}
             $('online-screen').classList.add('hidden');
             $('waiting-screen').classList.add('hidden');
             $('game-screen').classList.remove('hidden');
@@ -1285,6 +1286,7 @@
                     }).catch(()=>{});
                 }
             }
+            try{sessionStorage.removeItem('ttt-session');}catch(e){}
             roomRef=null;roomCode=null;playerIndex=null;onlineStarted=false;isOnline=false;opponentLeft=false;
             $('game-screen').classList.add('hidden');$('waiting-screen').classList.add('hidden');
             $('online-screen').classList.add('hidden');
@@ -1297,6 +1299,32 @@
         $('menu-btn').addEventListener('click',leaveGame);
         $('btn-leave').addEventListener('click',leaveGame);
 
+
+        // ===== SESSION RECOVERY =====
+        try {
+            const saved = JSON.parse(sessionStorage.getItem('ttt-session'));
+            if (saved && saved.roomCode && saved.playerIndex !== null) {
+                roomCode = saved.roomCode; playerIndex = saved.playerIndex; isOnline = true;
+                roomRef = db.ref('rooms/' + roomCode);
+                roomRef.once('value', snap => {
+                    if (snap.exists() && snap.val().players && snap.val().players[playerIndex]) {
+                        const d = snap.val();
+                        // Restore game state
+                        if(d.players[0]){if(d.players[0].emoji)emojis[0]=d.players[0].emoji;if(d.players[0].photo)photos[0]=d.players[0].photo;}
+                        if(d.players[1]){if(d.players[1].emoji)emojis[1]=d.players[1].emoji;if(d.players[1].photo)photos[1]=d.players[1].photo;}
+                        $('picker').classList.add('hidden');
+                        $('game-screen').classList.remove('hidden');
+                        startOnlineGame();
+                    } else {
+                        sessionStorage.removeItem('ttt-session');
+                        roomRef = null; roomCode = null; playerIndex = null; isOnline = false;
+                    }
+                }).catch(() => {
+                    sessionStorage.removeItem('ttt-session');
+                    roomRef = null; roomCode = null; playerIndex = null; isOnline = false;
+                });
+            }
+        } catch(e) { sessionStorage.removeItem('ttt-session'); }
 
         // ===== INVITE LINK (join flow) =====
         const urlParams = new URLSearchParams(location.search);
