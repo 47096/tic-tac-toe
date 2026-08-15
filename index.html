@@ -441,6 +441,8 @@
         const boardEl = $('board'), boardWrap = $('board-wrap');
                         const resultOverlay = $('result-overlay'), resultBig = $('result-big'), resultText = $('result-text');
         const winCanvas = $('win-canvas'), winCtx = winCanvas.getContext('2d');
+        const pickHeader = pickHeader, drawScore = drawScore, ariaAnnouncer = ariaAnnouncer;
+        const countdownBar = $('countdown-bar'), countdownBarFill = countdownBarFill, resultCountdown = resultCountdown;
         const cells = [];
 
         // Sound
@@ -509,19 +511,19 @@
             });
 
             if (pickStep === 0) {
-                $('pick-header').textContent = 'Player 1 — pick your avatar';
-                $('pick-header').className = 'pick-header active';
+                pickHeader.textContent = 'Player 1 — pick your avatar';
+                pickHeader.className = 'pick-header active';
             } else if (!picks[1]) {
-                $('pick-header').textContent = 'Player 2 — pick your avatar';
-                $('pick-header').className = 'pick-header active';
+                pickHeader.textContent = 'Player 2 — pick your avatar';
+                pickHeader.className = 'pick-header active';
                 // Re-activate emoji tab for P2
                 document.querySelectorAll('#picker .pick-tab-content').forEach(t => t.classList.remove('active'));
                 document.querySelector('#picker #emoji-tab').classList.add('active');
                 document.querySelectorAll('#picker .pick-tab').forEach(t => t.classList.remove('active'));
                 document.querySelector('#picker .pick-tab[data-tab="emoji"]').classList.add('active');
             } else {
-                $('pick-header').textContent = 'Ready to play!';
-                $('pick-header').className = 'pick-header active';
+                pickHeader.textContent = 'Ready to play!';
+                pickHeader.className = 'pick-header active';
             }
 
             // Update buttons: online needs P1, local needs both
@@ -1088,9 +1090,9 @@
                 score.textContent = state.scores[i];
                 box.className = 'game-tab' + (state.turn === i ? ' active' : '');
             });
-            $('draw-score').textContent = state.scores[2];
+            drawScore.textContent = state.scores[2];
         }
-        function updateTurn(){updatePlayerBoxes();$('aria-announcer').textContent='Player '+(state.turn+1)+' turn';}
+        function updateTurn(){updatePlayerBoxes();ariaAnnouncer.textContent='Player '+(state.turn+1)+' turn';}
         function updateScores(){updatePlayerBoxes();if(!isOnline)saveScores();}
 
         function handleClick(i) {
@@ -1162,23 +1164,23 @@
             // Auto-rematch with countdown for local games
             if(!isOnline) {
                 countdownSeconds = 8;
-                $('result-countdown').textContent = `Next round in ${countdownSeconds}s…`;
+                resultCountdown.textContent = `Next round in ${countdownSeconds}s…`;
                 $('countdown-bar').style.display = 'block';
-                $('countdown-bar-fill').style.width = '100%';
-                setTimeout(() => { $('countdown-bar-fill').style.width = '0%'; }, 50);
+                countdownBarFill.style.width = '100%';
+                setTimeout(() => { countdownBarFill.style.width = '0%'; }, 50);
                 countdownInterval = setInterval(() => {
                     countdownSeconds--;
                     if(countdownSeconds <= 0) {
                         clearInterval(countdownInterval);
                         countdownInterval = null;
-                        $('result-countdown').textContent = '';
+                        resultCountdown.textContent = '';
                         $('countdown-bar').style.display = 'none';
                         resultOverlay.classList.remove('show');
                         clearWinLine();
                         state.gameOver=false;
                         resetBoard();
                     } else {
-                        $('result-countdown').textContent = `Next round in ${countdownSeconds}s…`;
+                        resultCountdown.textContent = `Next round in ${countdownSeconds}s…`;
                     }
                 }, 1000);
             }
