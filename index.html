@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tic Tac Toe — 過三關</title>
+    <meta name="description" content="Classic tic-tac-toe with local and online multiplayer. Pick your emoji and play!">
+    <meta name="theme-color" content="#4ecdc4">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>❌</text></svg>">
+    <meta property="og:title" content="過三關 — Tic Tac Toe">
+    <meta property="og:description" content="Classic tic-tac-toe with local and online multiplayer. Pick your emoji and play!">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>❌⭕</text></svg>">
 
     <link rel="preconnect" href="https://www.gstatic.com">
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -12,6 +19,7 @@
         #loading-screen { position: fixed; inset: 0; background: #fafafa; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; gap: 12px; }
         #loading-screen .spinner { width: 20px; height: 20px; border: 2px solid #e0e0e0; border-top-color: #1a1a1a; border-radius: 50%; animation: spin 0.8s linear infinite; }
         #loading-screen p { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 0.8rem; color: #767676; }
+        @media (prefers-color-scheme: dark) { #loading-screen { background: #1a1a1a; } #loading-screen .spinner { border-color: #444; border-top-color: #f0f0f0; } #loading-screen p { color: #aaa; } }
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 
@@ -125,6 +133,8 @@
         .btn:hover { background: var(--text); color: var(--bg); }
         .btn:disabled { opacity: 0.25; cursor: default; background: transparent; color: var(--text-dim); border-color: var(--border); }
         .btn-sm { padding: 8px 16px; font-size: 0.75rem; }
+        .btn-ghost { border-color: var(--border); color: var(--text-dim); }
+        .btn-ghost:hover { background: var(--surface); color: var(--text); border-color: var(--text-dim); }
         .btn .spinner { width: 12px; height: 12px; border: 1.5px solid var(--border); border-top-color: var(--text); border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 6px; }
 
         .online-link { font-size: 0.75rem; color: var(--text-dim); cursor: pointer; letter-spacing: 0.05em; margin-top: 4px; background: none; border: none; padding: 8px 16px; min-height: 44px; display: flex; align-items: center; }
@@ -160,7 +170,6 @@
         .share-url .copy-icon { font-size: 0.85rem; }
         .waiting { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--text-dim); margin-top: 8px; }
         .spinner { width: 12px; height: 12px; border: 1.5px solid var(--border); border-top-color: var(--text); border-radius: 50%; animation: spin 0.8s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
 
 
         .error-msg { color: var(--error-text); font-size: 0.75rem; text-align: center; background: var(--error-bg); padding: 8px 12px; border-radius: var(--radius-sm); }
@@ -200,8 +209,9 @@
         
         .ctrls { display: flex; gap: 8px; margin-top: 8px; width: 100%; max-width: 300px; }
         .ctrls .btn { flex: 1; }
+        .network-banner { position: fixed; top: 0; left: 0; right: 0; background: #ff6b6b; color: #fff; text-align: center; padding: 6px; font-size: 0.75rem; z-index: 500; letter-spacing: 0.05em; }
 
-        .theme-toggle { position: fixed; top: 10px; right: 10px; z-index: 100; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; font-size: 0.7rem; cursor: pointer; padding: 6px 12px; min-height: 36px; display: flex; align-items: center; gap: 4px; transition: all 0.15s; color: var(--text); }
+        .theme-toggle { position: fixed; top: env(safe-area-inset-top, 10px); right: 10px; z-index: 100; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; font-size: 0.7rem; cursor: pointer; padding: 6px 12px; min-height: 36px; display: flex; align-items: center; gap: 4px; transition: all 0.15s; color: var(--text); }
         .theme-toggle:hover { background: var(--bg); }
 
         .result-overlay { position: fixed; inset:0; background: var(--overlay-bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.2s; backdrop-filter: blur(6px); }
@@ -363,7 +373,7 @@
         </div>
         <div class="ctrls">
             <button class="btn btn-sm" id="btn-restart">Restart</button>
-            <button class="btn btn-sm" id="btn-leave" style="border-color:var(--border);color:var(--text-dim);">Back</button>
+            <button class="btn btn-sm btn-ghost" id="btn-leave">Back</button>
         </div>
         <div id="aria-announcer" aria-live="polite" class="sr-only"></div>
     </div>
@@ -374,12 +384,29 @@
             <h2 id="result-text"></h2>
             <div class="countdown" id="result-countdown"></div>
             <div class="countdown-bar" id="countdown-bar" style="display:none;"><div class="countdown-bar-fill" id="countdown-bar-fill"></div></div>
-            <div style="margin-top:12px; display:flex; gap:8px; justify-content:center;">
+            <div style="margin-top:12px; display:flex; gap:8px; justify-content:center;" id="result-buttons">
                 <button class="btn btn-sm" id="leave-btn">Play Again</button>
                 <button class="btn btn-sm" id="menu-btn">Menu</button>
             </div>
+            <div id="rematch-request" style="margin-top:12px; display:none; text-align:center;">
+                <button class="btn btn-sm" id="rematch-btn">🔄 Rematch?</button>
+                <button class="btn btn-sm" id="rematch-menu-btn" style="border-color:var(--border);color:var(--text-dim);">Menu</button>
+            </div>
+            <div id="rematch-waiting" style="margin-top:12px; display:none; text-align:center;">
+                <div class="sub" style="margin-bottom:8px;">Waiting for opponent…</div>
+                <button class="btn btn-sm" id="rematch-cancel-btn" style="border-color:var(--border);color:var(--text-dim);">Cancel</button>
+            </div>
+            <div id="rematch-ask" style="margin-top:12px; display:none; text-align:center;">
+                <div class="sub" style="margin-bottom:8px;">Wants a rematch!</div>
+                <div style="display:flex; gap:8px; justify-content:center;">
+                    <button class="btn btn-sm" id="rematch-accept-btn">Accept</button>
+                    <button class="btn btn-sm" id="rematch-decline-btn" style="border-color:var(--border);color:var(--text-dim);">Decline</button>
+                </div>
+            </div>
         </div>
     </div>
+
+    <div id="network-banner" class="network-banner hidden">Reconnecting…</div>
 
     <script>
     // Hide loading screen
@@ -412,15 +439,18 @@
         const deviceType = /Mobi|Android|iPhone|iPad/i.test(ua) ? 'mobile' : 'desktop';
         const browser = /Edg\//.test(ua) ? 'edge' : /Chrome\//.test(ua) && !/Edg\//.test(ua) ? 'chrome' : /Firefox\//.test(ua) ? 'firefox' : /Safari\//.test(ua) && !/Chrome\//.test(ua) ? 'safari' : 'other';
         const referrer = document.referrer || 'direct';
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         let isOnline = false;
         let roomCode = null, playerIndex = null, roomRef = null;
-        let gameListener = null, joinListener = null, onlineStarted = false;
+        let gameListener = null, joinListener = null, cleanupListener = null, opponentListener = null, rematchListener = null, onlineStarted = false;
         let onlinePickData = { emoji: null, photo: null };
         let autoRematchTimeout = null;
         let moveInProgress = false;
         let opponentLeft = false;
         let firstTurn = 0; // Alternates who goes first each game
-        const state = { board: Array(9).fill(null), turn: 0, gameOver: false, scores: [0,0,0] };
+        const savedScores = (() => { try { const s = JSON.parse(localStorage.getItem('ttt-scores')); return Array.isArray(s) && s.length===3 ? s : [0,0,0]; } catch(e) { return [0,0,0]; } })();
+        const state = { board: Array(9).fill(null), turn: 0, gameOver: false, scores: savedScores };
+        function saveScores() { try { localStorage.setItem('ttt-scores', JSON.stringify(state.scores)); } catch(e) {} }
 
         const $ = id => document.getElementById(id);
         const boardEl = $('board'), boardWrap = $('board-wrap');
@@ -439,11 +469,10 @@
         function sndDraw() { snd(300,0.25,'triangle',0.05); }
 
         // Helpers
-        function visFor(i) { if(photos[i]) return `<img class="img" src="${photos[i]}" alt="">`; if(emojis[i]) return `<span class="emoji">${emojis[i]}</span>`; return '?'; }
-        function scoreFor(i) { if(photos[i]) return `<img class="img" src="${photos[i]}" alt=""> <span class="v">${state.scores[i]}</span>`; if(emojis[i]) return `<span class="emoji">${emojis[i]}</span> <span class="v">${state.scores[i]}</span>`; return '?'; }
         function hasPhoto(i) { return photos[i]!==null; }
         function hasEmoji(i) { return emojis[i]!==null; }
-        function genCode() { let c=Math.random().toString(36).substring(2,8).toUpperCase(); while(c.length<6)c+='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'[Math.floor(Math.random()*36)]; return c; }
+        function safePhotoSrc(src) { return src && typeof src==='string' && src.startsWith('data:image/') ? src : ''; }
+        function genCode() { return Math.random().toString(36).substring(2,8).toUpperCase(); }
 
         // Countdown timer for auto-rematch
         let countdownInterval = null;
@@ -454,7 +483,7 @@
             const grid = $(gridId); grid.innerHTML = '';
             EMOJIS.forEach(e => {
                 const btn = document.createElement('button');
-                btn.className = 'e'; btn.textContent = e;
+                btn.className = 'e'; btn.textContent = e; btn.setAttribute('aria-label', 'Select '+e);
                 btn.addEventListener('click', () => onPick(e, btn));
                 grid.appendChild(btn);
             });
@@ -467,7 +496,7 @@
                 const status = $(i===0?'pick-p1-status':'pick-p2-status');
                 const ready = $(i===0?'p1-ready':'p2-ready');
                 if (photos[i]) {
-                    icon.innerHTML = `<img src="${photos[i]}" style="width:100%;height:100%;object-fit:cover;border-radius:5px;transform:scaleX(-1);" alt="">`;
+                    icon.innerHTML = `<img src="${safePhotoSrc(photos[i])}" style="width:100%;height:100%;object-fit:cover;border-radius:5px;transform:scaleX(-1);" alt="">`;
                     status.textContent = '✓ Ready';
                     status.className = 'rp-status ready';
                     ready.classList.add('ready');
@@ -806,7 +835,7 @@
             const p1Ready = $('online-p1-ready');
             const p1Data = hostPickData || onlinePickData;
             if (p1Data.photo) {
-                p1Icon.innerHTML = `<img src="${p1Data.photo}" style="width:100%;height:100%;object-fit:cover;border-radius:5px;transform:scaleX(-1);" alt="">`;
+                p1Icon.innerHTML = `<img src="${safePhotoSrc(p1Data.photo)}" style="width:100%;height:100%;object-fit:cover;border-radius:5px;transform:scaleX(-1);" alt="">`;
                 p1Status.textContent = '✓ Ready';
                 p1Status.className = 'rp-status ready';
                 p1Ready.classList.add('ready');
@@ -828,7 +857,7 @@
             const p2Ready = $('online-p2-ready');
             if (hostPickData) {
                 if (onlinePickData.photo) {
-                    p2Icon.innerHTML = `<img src="${onlinePickData.photo}" style="width:100%;height:100%;object-fit:cover;border-radius:5px;transform:scaleX(-1);" alt="">`;
+                    p2Icon.innerHTML = `<img src="${safePhotoSrc(onlinePickData.photo)}" style="width:100%;height:100%;object-fit:cover;border-radius:5px;transform:scaleX(-1);" alt="">`;
                     p2Status.textContent = '✓ Ready';
                     p2Status.className = 'rp-status ready';
                     p2Ready.classList.add('ready');
@@ -910,6 +939,10 @@
 
         $('share-url').addEventListener('click', () => {
             const url=$('share-url-text').textContent;
+            if (navigator.share) {
+                navigator.share({ title: '過三關 — Play with me!', text: 'Join my tic-tac-toe game:', url }).catch(()=>{});
+                return;
+            }
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(url).then(() => {
                     $('share-url-text').textContent='✓ Copied!';
@@ -952,8 +985,10 @@
             roomRef.update({status:'playing',startedAt:Date.now()});
 
             if(gameListener && roomRef) roomRef.off('value',gameListener);
+            if(cleanupListener && roomRef) roomRef.off('value',cleanupListener);
+            if(opponentListener && roomRef) roomRef.child(`players/${1-playerIndex}`).off('value',opponentListener);
 
-            roomRef.child(`players/${1-playerIndex}`).on('value', snap => {
+            opponentListener = snap => {
                 const p=snap.val();
                 const gone=!p||p.disconnected===true;
                 if(gone&&!state.gameOver&&onlineStarted){
@@ -963,10 +998,11 @@
                     resultText.textContent='Opponent left';
                     resultOverlay.classList.add('show');
                 }
-            });
+            };
+            roomRef.child(`players/${1-playerIndex}`).on('value', opponentListener);
 
             // Clean up room when both players disconnect, or stale rooms
-            roomRef.on('value', snap => {
+            cleanupListener = snap => {
                 const d = snap.val();
                 if (!d || !d.players) return;
                 const p0 = d.players[0], p1 = d.players[1];
@@ -978,6 +1014,15 @@
                 if (p0 && p0.disconnected === true && !p1) {
                     setTimeout(() => { roomRef.remove().catch(()=>{}); }, 2000);
                 }
+            };
+            roomRef.on('value', cleanupListener);
+
+            // Reset disconnected flag on reconnect
+            db.ref('.info/connected').on('value', snap => {
+                if(snap.val()===true && roomRef && playerIndex!==null) {
+                    roomRef.child('players/'+playerIndex).update({disconnected:false}).catch(()=>{});
+                    roomRef.child('players/'+playerIndex).onDisconnect().update({disconnected:true});
+                }
             });
 
             gameListener = roomRef.on('value', snap => {
@@ -986,13 +1031,12 @@
                 if(moveInProgress)return;
                 const rb=d.board, nb=Array(9).fill(null);
                 if(rb&&typeof rb==='object'){for(let i=0;i<9;i++)if(rb[i]!=null)nb[i]=rb[i];}
+                const prevBoard = state.board.slice();
                 state.board=nb; state.turn=d.turn!=null?d.turn:0;
                 const rs=d.scores; state.scores=[0,0,0];
                 if(rs&&typeof rs==='object'){if(rs[0]!=null)state.scores[0]=rs[0];if(rs[1]!=null)state.scores[1]=rs[1];if(rs[2]!=null)state.scores[2]=rs[2];}
                 if(d.players&&d.players[0]){if(d.players[0].emoji)emojis[0]=d.players[0].emoji;if(d.players[0].photo)photos[0]=d.players[0].photo;}
                 if(d.players&&d.players[1]){if(d.players[1].emoji)emojis[1]=d.players[1].emoji;if(d.players[1].photo)photos[1]=d.players[1].photo;}
-                // Detect opponent's move and play sound
-                const prevBoard = state.board.slice();
                 renderBoard(); updateTurn(); updateScores();
                 // Play sound for opponent's new placement
                 for(let i=0;i<9;i++){if(nb[i]!==null&&prevBoard[i]===null&&nb[i]!==playerIndex){sndPlace();break;}}
@@ -1000,8 +1044,8 @@
                     state.gameOver=true;
                     let w=null,wl=null;
                     for(const[a,b,c]of WIN_LINES){if(state.board[a]!==null&&state.board[a]===state.board[b]&&state.board[a]===state.board[c]){w=state.board[a];wl=[a,b,c];break;}}
-                    if(w!==null){wl.forEach(i=>cells[i].classList.add('win'));drawWinLine(wl);sndWin();if(navigator.vibrate)navigator.vibrate([50,30,50]);boardWrap.classList.add('pulse');setTimeout(()=>boardWrap.classList.remove('pulse'),400);
-                        resultBig.innerHTML=hasPhoto(w)?`<img src="${photos[w]}" alt="">`:`<span style="font-size:3.5rem">${emojis[w]}</span>`;
+                    if(w!==null){wl.forEach(i=>cells[i].classList.add('win'));drawWinLine(wl);sndWin();fireConfetti();if(navigator.vibrate)navigator.vibrate([50,30,50]);boardWrap.classList.add('pulse');setTimeout(()=>boardWrap.classList.remove('pulse'),400);
+                        resultBig.innerHTML=hasPhoto(w)?`<img src="${safePhotoSrc(photos[w])}" alt="">`:`<span style="font-size:3.5rem">${emojis[w]}</span>`;
                         resultText.textContent=`Player ${w+1} wins`;
                     }else{sndDraw();if(navigator.vibrate)navigator.vibrate(100);resultBig.innerHTML='<span style="font-size:3.5rem">🤝</span>';resultText.textContent='Draw';}
                     setTimeout(()=>resultOverlay.classList.add('show'),w!==null?600:300);
@@ -1033,7 +1077,7 @@
                     cell.classList.add('m');
                     const label='Player '+(v+1)+' ('+(emojis[v]||'photo')+')';
                     cell.setAttribute('aria-label','Row '+row+' Column '+col+', '+label);
-                    if(hasPhoto(v)){img.src=photos[v];img.style.display='';img.style.opacity='1';img.style.transform='scale(1) scaleX(-1)';ce.style.display='none';img.alt=label;}
+                    if(hasPhoto(v)){const sp=safePhotoSrc(photos[v]);if(sp){img.src=sp;img.style.display='';img.style.opacity='1';img.style.transform='scale(1) scaleX(-1)';ce.style.display='none';img.alt=label;}}
                     else if(hasEmoji(v)){ce.textContent=emojis[v];ce.style.display='';ce.style.opacity='1';ce.style.transform='scale(1)';img.style.display='none';}
                 }else{cell.classList.remove('m','win');img.style.display='none';ce.style.display='none';cell.setAttribute('aria-label','Row '+row+' Column '+col+', empty');}
             });
@@ -1045,7 +1089,7 @@
                 const score = $(i===0 ? 'p1-score' : 'p2-score');
                 const box = $(i===0 ? 'p1-game-box' : 'p2-game-box');
                 if (photos[i]) {
-                    icon.innerHTML = `<img src="${photos[i]}" alt="">`;
+                    icon.innerHTML = `<img src="${safePhotoSrc(photos[i])}" alt="">`;
                 } else if (emojis[i]) {
                     icon.textContent = emojis[i];
                 }
@@ -1055,7 +1099,7 @@
             $('draw-score').textContent = state.scores[2];
         }
         function updateTurn(){updatePlayerBoxes();$('aria-announcer').textContent='Player '+(state.turn+1)+' turn';}
-        function updateScores(){updatePlayerBoxes();}
+        function updateScores(){updatePlayerBoxes();if(!isOnline)saveScores();}
 
         function handleClick(i) {
             if(state.gameOver||state.board[i]!==null)return;
@@ -1076,7 +1120,8 @@
             if(roomRef){
                 moveInProgress=true;
                 const nt=(w!==null||draw)?cur:1-cur;
-                roomRef.update({board:state.board,turn:nt,scores:state.scores,gameOver:w!==null||draw}).then(()=>{moveInProgress=false;}).catch(()=>{moveInProgress=false;});
+                const moveTimeout=setTimeout(()=>{moveInProgress=false;},5000);
+                roomRef.update({board:state.board,turn:nt,scores:state.scores,gameOver:w!==null||draw}).then(()=>{clearTimeout(moveTimeout);moveInProgress=false;}).catch(()=>{clearTimeout(moveTimeout);moveInProgress=false;});
                 renderBoard();
                 if(w!==null)endGame(w,wl);else if(draw)endGame(null);else{state.turn=1-cur;updateTurn();}
             }else{
@@ -1086,11 +1131,35 @@
         }
 
         let lastWinLine=null;
+        let cachedAccent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#4ecdc4';
+        function fireConfetti() {
+            if(prefersReducedMotion) return;
+            const c=document.createElement('canvas');c.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:300';document.body.appendChild(c);
+            const ctx=c.getContext('2d'),dpr=devicePixelRatio||1;let W,H;
+            function resize(){W=innerWidth;H=innerHeight;c.width=W*dpr;c.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);}resize();
+            const colors=['#4ecdc4','#ff6b6b','#ffe66d','#a29bfe','#fd79a8','#00b894'];
+            const ps=Array.from({length:60},()=>({x:W/2+(Math.random()-0.5)*100,y:H*0.4,vx:(Math.random()-0.5)*12,vy:-Math.random()*14-4,r:Math.random()*4+2,c:colors[Math.floor(Math.random()*colors.length)],rot:Math.random()*360,rv:(Math.random()-0.5)*8,life:1}));
+            let frame=0;
+            function draw(){
+                ctx.clearRect(0,0,W,H);frame++;
+                let alive=false;
+                ps.forEach(p=>{
+                    if(p.life<=0)return;alive=true;
+                    p.x+=p.vx;p.y+=p.vy;p.vy+=0.35;p.rot+=p.rv;p.life-=0.012;p.vx*=0.99;
+                    ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot*Math.PI/180);ctx.globalAlpha=p.life;
+                    ctx.fillStyle=p.c;ctx.fillRect(-p.r,-p.r*0.6,p.r*2,p.r*1.2);
+                    ctx.restore();
+                });
+                if(alive&&frame<180)requestAnimationFrame(draw);else c.remove();
+            }
+            requestAnimationFrame(draw);
+        }
         function endGame(w,wl) {
+            if(state.gameOver) return;
             state.gameOver=true;lastWinLine=wl;
             firstTurn=1-firstTurn; // Alternate who goes first next game
-            if(w!==null&&wl){wl.forEach(i=>cells[i].classList.add('win'));drawWinLine(wl);sndWin();if(navigator.vibrate)navigator.vibrate([50,30,50]);boardWrap.classList.add('pulse');setTimeout(()=>boardWrap.classList.remove('pulse'),400);
-                resultBig.innerHTML=hasPhoto(w)?`<img src="${photos[w]}" alt="">`:`<span style="font-size:3.5rem">${emojis[w]}</span>`;
+            if(w!==null&&wl){wl.forEach(i=>cells[i].classList.add('win'));drawWinLine(wl);sndWin();fireConfetti();if(navigator.vibrate)navigator.vibrate([50,30,50]);boardWrap.classList.add('pulse');setTimeout(()=>boardWrap.classList.remove('pulse'),400);
+                resultBig.innerHTML=hasPhoto(w)?`<img src="${safePhotoSrc(photos[w])}" alt="">`:`<span style="font-size:3.5rem">${emojis[w]}</span>`;
                 resultText.textContent=`Player ${w+1} wins`;
             }else{sndDraw();if(navigator.vibrate)navigator.vibrate(100);resultBig.innerHTML='<span style="font-size:3.5rem">🤝</span>';resultText.textContent='Draw';}
             updateScores();
@@ -1118,8 +1187,82 @@
                         $('result-countdown').textContent = `Next round in ${countdownSeconds}s…`;
                     }
                 }, 1000);
+            } else {
+                // Online: show rematch UI
+                showRematchUI();
             }
         }
+
+        // ===== REMATCH HANDSHAKE =====
+        function showRematchUI() {
+            $('result-buttons').style.display = 'none';
+            $('rematch-request').style.display = 'flex';
+            $('rematch-request').style.justifyContent = 'center';
+            $('rematch-waiting').style.display = 'none';
+            $('rematch-ask').style.display = 'none';
+            // Listen for opponent's rematch request
+            if(rematchListener && roomRef) roomRef.child('rematch').off('value', rematchListener);
+            rematchListener = roomRef.child('rematch').on('value', snap => {
+                const r = snap.val();
+                if(!r) {
+                    // No rematch request — show our request buttons
+                    $('rematch-request').style.display = 'flex';
+                    $('rematch-waiting').style.display = 'none';
+                    $('rematch-ask').style.display = 'none';
+                } else if(r.from === playerIndex && !r.accepted) {
+                    // We requested — show waiting
+                    $('rematch-request').style.display = 'none';
+                    $('rematch-waiting').style.display = 'block';
+                    $('rematch-ask').style.display = 'none';
+                } else if(r.from !== playerIndex && !r.accepted) {
+                    // Opponent requested — ask us
+                    $('rematch-request').style.display = 'none';
+                    $('rematch-waiting').style.display = 'none';
+                    $('rematch-ask').style.display = 'block';
+                } else if(r.accepted) {
+                    // Both agreed — start new game
+                    cleanupRematchUI();
+                    roomRef.child('rematch').remove().catch(()=>{});
+                    state.gameOver = false;
+                    resultOverlay.classList.remove('show');
+                    clearWinLine();
+                    roomRef.update({ board: Array(9).fill(null), turn: firstTurn, gameOver: false }).catch(() => {});
+                    resetBoard();
+                }
+            });
+        }
+
+        function cleanupRematchUI() {
+            if(rematchListener && roomRef) { roomRef.child('rematch').off('value', rematchListener); rematchListener = null; }
+            $('result-buttons').style.display = 'flex';
+            $('rematch-request').style.display = 'none';
+            $('rematch-waiting').style.display = 'none';
+            $('rematch-ask').style.display = 'none';
+        }
+
+        $('rematch-btn').addEventListener('click', () => {
+            if(!roomRef) return;
+            roomRef.child('rematch').set({ from: playerIndex, accepted: false }).catch(()=>{});
+        });
+        $('rematch-cancel-btn').addEventListener('click', () => {
+            if(!roomRef) return;
+            roomRef.child('rematch').remove().catch(()=>{});
+        });
+        $('rematch-accept-btn').addEventListener('click', () => {
+            if(!roomRef) return;
+            roomRef.child('rematch').update({ accepted: true }).catch(()=>{});
+        });
+        $('rematch-decline-btn').addEventListener('click', () => {
+            if(!roomRef) return;
+            roomRef.child('rematch').remove().catch(()=>{});
+            cleanupRematchUI();
+            leaveGame();
+        });
+        $('rematch-menu-btn').addEventListener('click', () => {
+            if(roomRef) roomRef.child('rematch').remove().catch(()=>{});
+            cleanupRematchUI();
+            leaveGame();
+        });
 
         // Win line
         function drawWinLine(wl) {
@@ -1135,7 +1278,7 @@
             function anim(n){const p=Math.min((n-t)/350,1),e=1-Math.pow(1-p,3);
                 winCtx.clearRect(0,0,rect.width,rect.height);
                 winCtx.beginPath();winCtx.moveTo(x1,y1);winCtx.lineTo(x1+(x2-x1)*e,y1+(y2-y1)*e);
-                winCtx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#4ecdc4';winCtx.lineWidth=4;winCtx.lineCap='round';winCtx.stroke();
+                winCtx.strokeStyle=cachedAccent;winCtx.lineWidth=4;winCtx.lineCap='round';winCtx.stroke();
                 if(p<1)requestAnimationFrame(anim);}
             requestAnimationFrame(anim);
         }
@@ -1145,12 +1288,16 @@
         // Restart / Leave
         $('btn-restart').addEventListener('click',()=>{
             if(navigator.vibrate)navigator.vibrate(10);
-            firstTurn=0;
-            if(roomRef){state.scores=[0,0,0];roomRef.update({board:Array(9).fill(null),turn:0,scores:[0,0,0],gameOver:false}).catch(()=>{});}
+            cleanupRematchUI();
+            if(roomRef) roomRef.child('rematch').remove().catch(()=>{});
+            firstTurn=0;state.scores=[0,0,0];saveScores();
+            if(roomRef){roomRef.update({board:Array(9).fill(null),turn:0,scores:[0,0,0],gameOver:false}).catch(()=>{});}
             lastWinLine=null;state.gameOver=false;resultOverlay.classList.remove('show');resetBoard();
         });
 
         function continueGame() {
+            cleanupRematchUI();
+            if(roomRef) roomRef.child('rematch').remove().catch(()=>{});
             if (autoRematchTimeout) { clearTimeout(autoRematchTimeout); autoRematchTimeout = null; }
             if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
             $('countdown-bar').style.display = 'none';
@@ -1165,10 +1312,13 @@
         }
 
         function leaveGame() {
+            cleanupRematchUI();
             if(countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
             if(joinListener&&roomRef){roomRef.child('players/1').off('value',joinListener);joinListener=null;}
             if(gameListener&&roomRef){roomRef.off('value',gameListener);gameListener=null;}
-            if(roomRef&&playerIndex!==null)roomRef.child(`players/${1-playerIndex}`).off();
+            if(cleanupListener&&roomRef){roomRef.off('value',cleanupListener);cleanupListener=null;}
+            if(opponentListener&&roomRef){roomRef.child(`players/${1-playerIndex}`).off('value',opponentListener);opponentListener=null;}
+            else if(roomRef&&playerIndex!==null)roomRef.child(`players/${1-playerIndex}`).off();
             if(roomRef){
                 roomRef.onDisconnect().cancel();
                 // Update status and duration before leaving
@@ -1192,6 +1342,7 @@
             picks=[null,null];emojis=[null,null];photos=[null,null];pickStep=0;
             updatePickerUI();
         }
+        window.addEventListener('beforeunload', e => { if(isOnline && roomRef && !state.gameOver) { e.preventDefault(); e.returnValue = ''; } });
         $('leave-btn').addEventListener('click',continueGame);
         $('menu-btn').addEventListener('click',leaveGame);
         $('btn-leave').addEventListener('click',leaveGame);
@@ -1306,8 +1457,6 @@
             });
         });
 
-        // Reduced motion check
-        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
         // Dark mode toggle
         const themeToggle = $('theme-toggle');
@@ -1317,6 +1466,7 @@
             document.documentElement.setAttribute('data-theme', next);
             localStorage.setItem('theme', next);
             themeToggle.textContent = next === 'dark' ? '☀️ Light' : '🌙 Dark';
+            cachedAccent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#4ecdc4';
             // Redraw win line with new theme color
             if (lastWinLine && state.gameOver) drawWinLine(lastWinLine);
         }
@@ -1328,6 +1478,11 @@
         themeToggle.textContent = initialTheme === 'dark' ? '☀️ Light' : '🌙 Dark';
 
         themeToggle.addEventListener('click', toggleTheme);
+
+        // Network status banner
+        db.ref('.info/connected').on('value', snap => {
+            $('network-banner').classList.toggle('hidden', snap.val() === true);
+        });
 
     })();
     </script>
