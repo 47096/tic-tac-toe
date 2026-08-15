@@ -1291,12 +1291,43 @@
             const cw=rect.width/3,ch=rect.height/3;
             const[a,,c]=wl;
             const x1=(a%3)*cw+cw/2,y1=Math.floor(a/3)*ch+ch/2,x2=(c%3)*cw+cw/2,y2=Math.floor(c/3)*ch+ch/2;
+            // Generate hand-drawn control points
+            const dx=x2-x1,dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy);
+            const nx=-dy/len,ny=dx/len; // normal vector
+            const segs=8,pts=[{x:x1,y:y1}];
+            for(let i=1;i<segs;i++){
+                const t=i/segs;
+                pts.push({x:x1+dx*t+nx*(Math.random()-0.5)*6,y:y1+dy*t+ny*(Math.random()-0.5)*6});
+            }
+            pts.push({x:x2,y:y2});
+            // Pre-compute bezier segments
+            const curves=[];
+            for(let i=0;i<pts.length-1;i++){
+                const p0=pts[i],p1=pts[i+1];
+                const mx=(p0.x+p1.x)/2+(Math.random()-0.5)*4,my=(p0.y+p1.y)/2+(Math.random()-0.5)*4;
+                curves.push({sx:p0.x,sy:p0.y,cpx:mx,cpy:my,ex:p1.x,ey:p1.y});
+            }
             const t=performance.now();
-            function anim(n){const p=Math.min((n-t)/350,1),e=1-Math.pow(1-p,3);
+            function anim(n){
+                const p=Math.min((n-t)/400,1),e=1-Math.pow(1-p,3);
                 winCtx.clearRect(0,0,rect.width,rect.height);
-                winCtx.beginPath();winCtx.moveTo(x1,y1);winCtx.lineTo(x1+(x2-x1)*e,y1+(y2-y1)*e);
-                winCtx.strokeStyle=cachedAccent;winCtx.lineWidth=4;winCtx.lineCap='round';winCtx.stroke();
-                if(p<1)requestAnimationFrame(anim);}
+                winCtx.strokeStyle=cachedAccent;winCtx.lineCap='round';winCtx.lineJoin='round';
+                // Draw two passes for hand-drawn thickness variation
+                for(let pass=0;pass<2;pass++){
+                    winCtx.beginPath();winCtx.moveTo(x1,y1);
+                    const drawTo=e*curves.length;
+                    for(let i=0;i<Math.min(Math.ceil(drawTo),curves.length);i++){
+                        const cr=curves[i],segP=Math.min(1,drawTo-i);
+                        const cp={x:cr.sx+(cr.cpx-cr.sx)*segP,y:cr.sy+(cr.cpy-cr.sy)*segP};
+                        const ep={x:cr.sx+(cr.ex-cr.sx)*segP,y:cr.sy+(cr.ey-cr.sy)*segP};
+                        winCtx.quadraticCurveTo(cp.x+(pass?1:-1),cp.y+(pass?-1:1),ep.x,ep.y);
+                    }
+                    winCtx.lineWidth=pass?3.5:4.5;winCtx.globalAlpha=pass?0.4:0.85;
+                    winCtx.stroke();
+                }
+                winCtx.globalAlpha=1;
+                if(p<1)requestAnimationFrame(anim);
+            }
             requestAnimationFrame(anim);
         }
         function clearWinLine(){winCtx.clearRect(0,0,winCanvas.width,winCanvas.height);}
