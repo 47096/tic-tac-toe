@@ -443,7 +443,7 @@
         const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         let isOnline = false;
         let roomCode = null, playerIndex = null, roomRef = null;
-        let gameListener = null, joinListener = null, cleanupListener = null, opponentListener = null, onlineStarted = false;
+        let gameListener = null, joinListener = null, cleanupListener = null, opponentListener = null, connectedListener = null, onlineStarted = false;
         let onlinePickData = { emoji: null, photo: null };
         let autoRematchTimeout = null;
         let moveInProgress = false;
@@ -1015,12 +1015,14 @@
             roomRef.on('value', cleanupListener);
 
             // Reset disconnected flag on reconnect
-            db.ref('.info/connected').on('value', snap => {
+            if(connectedListener) db.ref('.info/connected').off('value', connectedListener);
+            connectedListener = snap => {
                 if(snap.val()===true && roomRef && playerIndex!==null) {
                     roomRef.child('players/'+playerIndex).update({disconnected:false}).catch(()=>{});
                     roomRef.child('players/'+playerIndex).onDisconnect().update({disconnected:true});
                 }
-            });
+            };
+            db.ref('.info/connected').on('value', connectedListener);
 
             gameListener = roomRef.on('value', snap => {
                 const d=snap.val();
@@ -1270,6 +1272,7 @@
             if(cleanupListener&&roomRef){roomRef.off('value',cleanupListener);cleanupListener=null;}
             if(opponentListener&&roomRef){roomRef.child(`players/${1-playerIndex}`).off('value',opponentListener);opponentListener=null;}
             else if(roomRef&&playerIndex!==null)roomRef.child(`players/${1-playerIndex}`).off();
+            if(connectedListener){db.ref('.info/connected').off('value',connectedListener);connectedListener=null;}
             if(roomRef){
                 roomRef.onDisconnect().cancel();
                 // Update status and duration before leaving
