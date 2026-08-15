@@ -530,9 +530,13 @@
             }
 
             // Update buttons: online needs P1, local needs both
-            $('play-online-link').disabled = !picks[0];
-            $('play-online-link').classList.toggle('btn-ghost', !picks[0]);
-            $('start-local-btn').disabled = !(picks[0] && picks[1]);
+            const localBtn = document.getElementById('start-local-btn');
+            const onlineBtn = document.getElementById('play-online-link');
+            const p1Ready = !!(picks[0] || photos[0]);
+            const p2Ready = !!(picks[1] || photos[1]);
+            onlineBtn.disabled = !p1Ready;
+            onlineBtn.classList.toggle('btn-ghost', !p1Ready);
+            localBtn.disabled = !(p1Ready && p2Ready);
         }
 
         buildGrid('emoji-grid', (e, btn) => {
