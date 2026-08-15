@@ -1016,10 +1016,12 @@
             };
             roomRef.child('players').on('value', cleanupListener);
 
-            // Reset disconnected flag on reconnect
+            // Reset disconnected flag on reconnect + banner
             if(connectedListener) db.ref('.info/connected').off('value', connectedListener);
             connectedListener = snap => {
-                if(snap.val()===true && roomRef && playerIndex!==null) {
+                const connected = snap.val() === true;
+                $('network-banner').classList.toggle('hidden', connected);
+                if(connected && roomRef && playerIndex!==null) {
                     roomRef.child('players/'+playerIndex).update({disconnected:false}).catch(()=>{});
                     roomRef.child('players/'+playerIndex).onDisconnect().update({disconnected:true});
                 }
@@ -1471,11 +1473,6 @@
         themeToggle.textContent = initialTheme === 'dark' ? '☀️ Light' : '🌙 Dark';
 
         themeToggle.addEventListener('click', toggleTheme);
-
-        // Network status banner
-        db.ref('.info/connected').on('value', snap => {
-            $('network-banner').classList.toggle('hidden', snap.val() === true);
-        });
 
     })();
     </script>
