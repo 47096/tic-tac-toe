@@ -1236,16 +1236,12 @@
                     $('rematch-waiting').style.display = 'none';
                     $('rematch-ask').style.display = 'block';
                 } else if(r.accepted) {
-                    // Both agreed — start new game
+                    // Both agreed — clean up UI, accept handler resets the board
                     cleanupRematchUI();
                     roomRef.child('rematch').remove().catch(()=>{});
                     state.gameOver = false;
                     resultOverlay.classList.remove('show');
                     clearWinLine();
-                    // Only the requester resets the board to avoid race condition
-                    if(r.from === playerIndex) {
-                        roomRef.update({ board: Array(9).fill(null), turn: firstTurn, gameOver: false }).catch(() => {});
-                    }
                     resetBoard();
                 }
             });
@@ -1269,8 +1265,15 @@
         });
         $('rematch-accept-btn').addEventListener('click', () => {
             if(!roomRef) return;
-            // Just accept — the requester's listener handles the board reset
-            roomRef.child('rematch').update({ accepted: true }).catch(()=>{});
+            // Accept and reset — both players do this to ensure sync
+            roomRef.child('rematch').update({ accepted: true }).then(() => {
+                cleanupRematchUI();
+                state.gameOver = false;
+                resultOverlay.classList.remove('show');
+                clearWinLine();
+                resetBoard();
+                roomRef.update({ board: Array(9).fill(null), turn: firstTurn, gameOver: false }).catch(() => {});
+            }).catch(()=>{});
         });
         $('rematch-decline-btn').addEventListener('click', () => {
             if(!roomRef) return;
