@@ -1043,15 +1043,12 @@
                 renderBoard(); updateTurn(); updateScores();
                 // Play sound for opponent's new placement
                 for(let i=0;i<9;i++){if(nb[i]!==null&&prevBoard[i]===null&&nb[i]!==playerIndex){sndPlace();break;}}
-                                if(d.gameOver&&!state.gameOver){
-                    state.gameOver=true;
+                if(d.gameOver&&!state.gameOver){
                     let w=null,wl=null;
                     for(const[a,b,c]of WIN_LINES){if(state.board[a]!==null&&state.board[a]===state.board[b]&&state.board[a]===state.board[c]){w=state.board[a];wl=[a,b,c];break;}}
-                    if(w!==null){wl.forEach(i=>cells[i].classList.add('win'));drawWinLine(wl);sndWin();fireConfetti();if(navigator.vibrate)navigator.vibrate([50,30,50]);boardWrap.classList.add('pulse');setTimeout(()=>boardWrap.classList.remove('pulse'),400);
-                        resultBig.innerHTML=hasPhoto(w)?`<img src="${safePhotoSrc(photos[w])}" alt="">`:`<span style="font-size:3.5rem">${emojis[w]}</span>`;
-                        resultText.textContent=`Player ${w+1} wins`;
-                    }else{sndDraw();if(navigator.vibrate)navigator.vibrate(100);resultBig.innerHTML='<span style="font-size:3.5rem">🤝</span>';resultText.textContent='Draw';}
-                    setTimeout(()=>resultOverlay.classList.add('show'),w!==null?600:300);
+                    const draw=w===null&&state.board.every(c=>c!==null);
+                    if(w!==null)state.scores[w]++;else if(draw)state.scores[2]++;
+                    endGame(w,wl);
                 }
             });
         }
