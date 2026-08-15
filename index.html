@@ -943,7 +943,7 @@
             const url=$('share-url-text').textContent;
             if (!url || url==='Click to copy') return;
             if (navigator.share) {
-                navigator.share({ title: '過三關 — Play with me!', text: 'Join my tic-tac-toe game:', url }).catch(()=>{});
+                navigator.share({ url }).catch(()=>{});
                 return;
             }
             const el=$('share-url-text');
