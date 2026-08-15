@@ -984,7 +984,7 @@
             roomRef.update({status:'playing',startedAt:Date.now()});
 
             if(gameListener && roomRef) roomRef.off('value',gameListener);
-            if(cleanupListener && roomRef) roomRef.off('value',cleanupListener);
+            if(cleanupListener && roomRef) roomRef.child('players').off('value',cleanupListener);
             if(opponentListener && roomRef) roomRef.child(`players/${1-playerIndex}`).off('value',opponentListener);
 
             opponentListener = snap => {
@@ -1003,8 +1003,8 @@
             // Clean up room when both players disconnect, or stale rooms
             cleanupListener = snap => {
                 const d = snap.val();
-                if (!d || !d.players) return;
-                const p0 = d.players[0], p1 = d.players[1];
+                if (!d) return;
+                const p0 = d[0], p1 = d[1];
                 // Both disconnected
                 if (p0 && p1 && p0.disconnected === true && p1.disconnected === true) {
                     setTimeout(() => { roomRef.remove().catch(()=>{}); }, 5000);
@@ -1014,7 +1014,7 @@
                     setTimeout(() => { roomRef.remove().catch(()=>{}); }, 2000);
                 }
             };
-            roomRef.on('value', cleanupListener);
+            roomRef.child('players').on('value', cleanupListener);
 
             // Reset disconnected flag on reconnect
             if(connectedListener) db.ref('.info/connected').off('value', connectedListener);
