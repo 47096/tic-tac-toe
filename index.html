@@ -291,9 +291,6 @@
 
     <!-- ONLINE -->
     <div class="screen hidden no-select" id="online-screen">
-        <svg class="logo-mark" viewBox="0 0 64 64" width="48" height="48" aria-hidden="true"><path d="M21 9 C20 20, 22 35, 21 55" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M43 8 C44 22, 42 38, 43 56" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M9 21 C20 20, 38 22, 55 21" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M8 43 C22 44, 36 42, 56 43" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
-        <h1>過三關</h1>
-        <div class="subtitle">tic tac toe</div>
         <div class="pick-header active" id="online-header">You are Player 1 — pick your avatar</div>
 
         <div class="pick-tabs" role="tablist">
@@ -342,9 +339,6 @@
 
     <!-- WAITING -->
     <div class="screen hidden no-select" id="waiting-screen">
-        <svg class="logo-mark" viewBox="0 0 64 64" width="48" height="48" aria-hidden="true"><path d="M21 9 C20 20, 22 35, 21 55" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M43 8 C44 22, 42 38, 43 56" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M9 21 C20 20, 38 22, 55 21" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M8 43 C22 44, 36 42, 56 43" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
-        <h1>過三關</h1>
-        <div class="subtitle">tic tac toe</div>
         <div class="room-box">
             <div style="font-size:0.55rem; color:var(--text-dim); letter-spacing:0.1em;">Room Code</div>
             <div class="room-code" id="room-code-display" style="letter-spacing:0.3em;">······</div>
@@ -1507,6 +1501,7 @@
         const inviteCode = urlParams.get('room');
 
         if (inviteCode) {
+            $('title-screen').classList.add('hidden');
             $('picker').classList.add('hidden');
             $('online-screen').classList.remove('hidden');
             $('create-btn').style.display = 'none';
