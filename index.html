@@ -284,7 +284,7 @@
         </div>
         <div class="ctrls" style="max-width:300px;margin-top:4px;">
             <button class="btn btn-sm" id="start-local-btn" disabled>🎮 Play Local</button>
-            <button class="btn btn-sm btn-ghost" id="play-online-link">🌐 Play Online</button>
+            <button class="btn btn-sm btn-ghost" id="play-online-link" disabled>🌐 Play Online</button>
         </div>
     </div>
 
@@ -544,9 +544,10 @@
                 $('pick-header').className = 'pick-header active';
             }
 
-            // Update start button
-            const bothPicked = picks[0] && picks[1];
-            $('start-local-btn').disabled = !bothPicked;
+            // Update buttons: online needs P1, local needs both
+            $('play-online-link').disabled = !picks[0];
+            $('play-online-link').classList.toggle('btn-ghost', !picks[0]);
+            $('start-local-btn').disabled = !(picks[0] && picks[1]);
         }
 
         buildGrid('emoji-grid', (e, btn) => {
