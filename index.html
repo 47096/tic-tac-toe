@@ -1099,6 +1099,7 @@
 
         function handleClick(i) {
             if(state.gameOver||state.board[i]!==null)return;
+            if(moveInProgress)return; // Lock board until Firebase confirms move
             if(playerIndex!==null&&state.turn!==playerIndex){
                 // Wrong turn feedback
                 cells[i].classList.add('shake');
