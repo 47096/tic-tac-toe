@@ -1062,7 +1062,17 @@
                 const img=document.createElement('img');img.alt='';img.style.display='none';
                 const ce=document.createElement('span');ce.className='ce';ce.style.display='none';
                 cell.appendChild(img);cell.appendChild(ce);
+                cell.tabIndex = i===0 ? 0 : -1;
                 cell.addEventListener('click',()=>handleClick(i));
+                cell.addEventListener('focus', () => { cells.forEach((c,j)=>c.tabIndex=j===i?0:-1); });
+                cell.addEventListener('keydown', e => {
+                    let t=-1;
+                    if(e.key==='ArrowUp'&&i>=3) t=i-3;
+                    else if(e.key==='ArrowDown'&&i<6) t=i+3;
+                    else if(e.key==='ArrowLeft'&&i%3>0) t=i-1;
+                    else if(e.key==='ArrowRight'&&i%3<2) t=i+1;
+                    if(t>=0&&cells[t]){e.preventDefault();cells[t].focus();}
+                });
                 boardEl.appendChild(cell);cells.push(cell);
             }
             resultOverlay.classList.remove('show');clearWinLine();renderBoard();updateTurn();updateScores();
