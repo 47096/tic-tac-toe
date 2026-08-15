@@ -244,7 +244,7 @@
     <div class="screen no-select" id="picker">
         <h1>過三關</h1>
         <div class="subtitle">tic tac toe</div>
-        <div class="pick-header active" id="pick-header">Player 1 — pick your symbol</div>
+        <div class="pick-header active" id="pick-header">Player 1 — pick your avatar</div>
         <div class="pick-tabs" role="tablist">
             <button class="pick-tab active" data-tab="emoji" role="tab" aria-selected="true">😀 Emoji</button>
             <button class="pick-tab" data-tab="photo" role="tab" aria-selected="false">📸 Photo</button>
@@ -289,7 +289,7 @@
     <div class="screen hidden no-select" id="online-screen">
         <h1>過三關</h1>
         <div class="subtitle">tic tac toe</div>
-        <div class="pick-header active" id="online-header">You are Player 1 — pick your emoji</div>
+        <div class="pick-header active" id="online-header">You are Player 1 — pick your avatar</div>
 
         <div class="pick-tabs" role="tablist">
             <button class="pick-tab active" data-tab="online-emoji" role="tab" aria-selected="true">😀 Emoji</button>
@@ -524,10 +524,10 @@
             });
 
             if (pickStep === 0) {
-                $('pick-header').textContent = 'Player 1 — pick your symbol';
+                $('pick-header').textContent = 'Player 1 — pick your avatar';
                 $('pick-header').className = 'pick-header active';
             } else if (!picks[1]) {
-                $('pick-header').textContent = 'Player 2 — pick your symbol';
+                $('pick-header').textContent = 'Player 2 — pick your avatar';
                 $('pick-header').className = 'pick-header active';
                 // Re-activate emoji tab for P2
                 document.querySelectorAll('#picker .pick-tab-content').forEach(t => t.classList.remove('active'));
@@ -808,7 +808,7 @@
             $('create-btn').style.display = '';
             $('create-btn').textContent = 'Create Room'; $('create-btn').disabled = true;
             $('join-btn').style.display = 'none';
-            $('online-header').textContent = 'You are Player 1 — pick your emoji';
+            $('online-header').textContent = 'You are Player 1 — pick your avatar';
             // Clear URL params
             history.replaceState(null, '', location.pathname);
             updatePickerUI();
@@ -1357,7 +1357,7 @@
             $('online-screen').classList.remove('hidden');
             $('create-btn').style.display = 'none';
             $('join-btn').style.display = '';
-            $('online-header').textContent = 'You are Player 2 — pick your emoji';
+            $('online-header').textContent = 'You are Player 2 — pick your avatar';
             buildOnlineGrids();
 
             // Fetch P1's data from Firebase
