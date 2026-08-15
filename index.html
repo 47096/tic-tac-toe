@@ -231,12 +231,22 @@
 
     <button class="theme-toggle" id="theme-toggle" title="Toggle dark mode">🌙 Dark</button>
 
-    <!-- PICKER -->
-    <div class="screen no-select" id="picker">
-        <svg class="logo-mark" viewBox="0 0 64 64" width="48" height="48" aria-hidden="true"><path d="M21 9 C20 20, 22 35, 21 55" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M43 8 C44 22, 42 38, 43 56" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M9 21 C20 20, 38 22, 55 21" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M8 43 C22 44, 36 42, 56 43" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+    <!-- TITLE SCREEN -->
+    <div class="screen no-select" id="title-screen">
+        <svg class="logo-mark" viewBox="0 0 64 64" width="64" height="64" aria-hidden="true"><path d="M21 9 C20 20, 22 35, 21 55" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M43 8 C44 22, 42 38, 43 56" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M9 21 C20 20, 38 22, 55 21" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M8 43 C22 44, 36 42, 56 43" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
         <h1>過三關</h1>
         <div class="subtitle">tic tac toe</div>
+        <div class="ctrls" style="max-width:300px;margin-top:16px;">
+            <button class="btn btn-sm" id="title-local-btn">Local</button>
+            <button class="btn btn-sm" id="title-ai-btn">Computer</button>
+            <button class="btn btn-sm btn-ghost" id="title-online-btn">Online</button>
+        </div>
+    </div>
+
+    <!-- PICKER (avatar selection) -->
+    <div class="screen hidden no-select" id="picker">
         <div class="pick-header active" id="pick-header">Player 1 — pick your avatar</div>
+        <div id="picker-mode-label" style="font-size:0.75rem; color:#666; text-align:center; margin-bottom:8px;"></div>
         <div class="pick-tabs" role="tablist">
             <button class="pick-tab active" data-tab="emoji" role="tab" aria-selected="true">😀 Emoji</button>
             <button class="pick-tab" data-tab="photo" role="tab" aria-selected="false">📸 Photo</button>
@@ -274,10 +284,9 @@
             </div>
         </div>
         <div class="ctrls" style="max-width:300px;margin-top:4px;">
-            <button class="btn btn-sm" id="start-local-btn" disabled>Local</button>
-            <button class="btn btn-sm" id="start-ai-btn" disabled>Computer</button>
-            <button class="btn btn-sm btn-ghost" id="play-online-link" disabled>Online</button>
+            <button class="btn btn-sm" id="start-game-btn" disabled>Start Game</button>
         </div>
+        <button class="btn btn-sm btn-ghost" id="picker-back-btn" style="margin-top:8px;">← Back</button>
     </div>
 
     <!-- ONLINE -->
@@ -328,7 +337,7 @@
         <button class="btn" id="create-btn" disabled style="width:100%; max-width:300px; margin-top:4px;">Create Room</button>
         <button class="btn" id="join-btn" disabled style="width:100%; max-width:300px; margin-top:4px; display:none;">Join Room</button>
 
-        <button class="online-link" id="go-local">← Back to local play</button>
+        <button class="online-link" id="go-local">← Back</button>
     </div>
 
     <!-- WAITING -->
@@ -442,6 +451,7 @@
         let moveInProgress = false;
         let opponentLeft = false;
         let firstTurn = 0; // Alternates who goes first each game
+        let selectedMode = null; // 'local', 'computer', 'online'
         const savedScores = (() => { try { const s = JSON.parse(localStorage.getItem('ttt-scores')); return Array.isArray(s) && s.length===3 ? s : [0,0,0]; } catch(e) { return [0,0,0]; } })();
         const state = { board: Array(9).fill(null), turn: 0, gameOver: false, scores: savedScores };
         function saveScores() { try { localStorage.setItem('ttt-scores', JSON.stringify(state.scores)); } catch(e) {} }
@@ -601,16 +611,17 @@
                 pickHeader.className = 'pick-header active';
             }
 
-            // Update buttons: online needs P1, local needs both, AI needs P1
-            const localBtn = document.getElementById('start-local-btn');
-            const onlineBtn = document.getElementById('play-online-link');
-            const aiBtn = document.getElementById('start-ai-btn');
+            // Update Start Game button based on selected mode
+            const startBtn = document.getElementById('start-game-btn');
             const p1Ready = !!(picks[0] || photos[0]);
             const p2Ready = !!(picks[1] || photos[1]);
-            onlineBtn.disabled = !p1Ready;
-            onlineBtn.classList.toggle('btn-ghost', !p1Ready);
-            localBtn.disabled = !(p1Ready && p2Ready);
-            aiBtn.disabled = !p1Ready;
+            if (selectedMode === 'local') {
+                startBtn.disabled = !(p1Ready && p2Ready);
+            } else if (selectedMode === 'computer') {
+                startBtn.disabled = !p1Ready;
+            } else {
+                startBtn.disabled = true;
+            }
         }
 
         buildGrid('emoji-grid', (e, btn) => {
@@ -633,49 +644,67 @@
             if (pickStep === 0 && !vsComputer) { pickStep = 1; setTimeout(updatePickerUI, 300); }
         });
 
-        // Start Game button
-        $('start-local-btn').addEventListener('click', () => {
-            if (!picks[0] || !picks[1]) return;
-            track('game_start', {mode:'local'});
-            if(navigator.vibrate)navigator.vibrate(10);
-            if(gameListener&&roomRef){roomRef.off('value',gameListener);gameListener=null;}
-            if(joinListener&&roomRef){roomRef.child('players/1').off('value',joinListener);joinListener=null;}
-            roomRef=null; roomCode=null; playerIndex=null;
-            isOnline = false; vsComputer = false;
-            $('diff-chip').style.display='none';
-            $('p2-game-box').querySelector('.gt-label').textContent = 'P2';
-            $('picker').classList.add('hidden');
-            $('game-screen').classList.remove('hidden');
-            resetBoard();
-        });
-
-        // Play Online link
-        $('play-online-link').addEventListener('click', () => {
-            $('picker').classList.add('hidden');
+        // Title screen buttons
+        function showPicker(mode) {
+            selectedMode = mode;
+            $('title-screen').classList.add('hidden');
+            $('picker').classList.remove('hidden');
+            const modeLabel = $('picker-mode-label');
+            if (mode === 'local') { modeLabel.textContent = 'Local — same device'; }
+            else if (mode === 'computer') { modeLabel.textContent = 'vs Computer'; }
+            // Reset picker state
+            picks=[null,null]; emojis=[null,null]; photos=[null,null]; pickStep=0;
+            updatePickerUI();
+        }
+        $('title-local-btn').addEventListener('click', () => { showPicker('local'); });
+        $('title-ai-btn').addEventListener('click', () => { showPicker('computer'); });
+        $('title-online-btn').addEventListener('click', () => {
+            selectedMode = 'online';
+            $('title-screen').classList.add('hidden');
             $('online-screen').classList.remove('hidden');
             onlinePickData = { emoji: null, photo: null };
             buildOnlineGrids();
             updateOnlinePickerUI();
         });
 
-        // vs Computer button
-        $('start-ai-btn').addEventListener('click', () => {
-            if (!picks[0]) return;
-            track('game_start', {mode:'ai',difficulty:aiDifficulty});
-            if(navigator.vibrate)navigator.vibrate(10);
-            vsComputer = true;
-            isOnline = false;
-            roomRef = null; roomCode = null; playerIndex = null;
-            // Auto-assign P2 as 🤖
-            picks[1] = '🤖'; emojis[1] = '🤖'; photos[1] = null;
-            pickStep = 0;
+        // Picker back button
+        $('picker-back-btn').addEventListener('click', () => {
             $('picker').classList.add('hidden');
-            $('game-screen').classList.remove('hidden');
-            $('diff-chip').style.display = 'flex';
-            // Update P2 game tab
-            $('p2-game-box').querySelector('.gt-label').textContent = 'Computer';
-            $('p2-icon').textContent = '🤖';
-            resetBoard();
+            $('title-screen').classList.remove('hidden');
+            selectedMode = null;
+        });
+
+        // Start Game button (from avatar picker)
+        $('start-game-btn').addEventListener('click', () => {
+            if (selectedMode === 'local') {
+                if (!picks[0] || !picks[1]) return;
+                track('game_start', {mode:'local'});
+                if(navigator.vibrate)navigator.vibrate(10);
+                if(gameListener&&roomRef){roomRef.off('value',gameListener);gameListener=null;}
+                if(joinListener&&roomRef){roomRef.child('players/1').off('value',joinListener);joinListener=null;}
+                roomRef=null; roomCode=null; playerIndex=null;
+                isOnline = false; vsComputer = false;
+                $('diff-chip').style.display='none';
+                $('p2-game-box').querySelector('.gt-label').textContent = 'P2';
+                $('picker').classList.add('hidden');
+                $('game-screen').classList.remove('hidden');
+                resetBoard();
+            } else if (selectedMode === 'computer') {
+                if (!picks[0]) return;
+                track('game_start', {mode:'ai',difficulty:aiDifficulty});
+                if(navigator.vibrate)navigator.vibrate(10);
+                vsComputer = true;
+                isOnline = false;
+                roomRef = null; roomCode = null; playerIndex = null;
+                picks[1] = '🤖'; emojis[1] = '🤖'; photos[1] = null;
+                pickStep = 0;
+                $('picker').classList.add('hidden');
+                $('game-screen').classList.remove('hidden');
+                $('diff-chip').style.display = 'flex';
+                $('p2-game-box').querySelector('.gt-label').textContent = 'Computer';
+                $('p2-icon').textContent = '🤖';
+                resetBoard();
+            }
         });
 
         // Difficulty chip
@@ -902,7 +931,8 @@
 
         $('go-local').addEventListener('click', () => {
             $('online-screen').classList.add('hidden');
-            $('picker').classList.remove('hidden');
+            $('title-screen').classList.remove('hidden');
+            selectedMode = null;
             picks = [null, null]; emojis = [null, null]; photos = [null, null]; pickStep = 0;
             onlinePickData = { emoji: null, photo: null };
             hostPickData = null;
@@ -1407,13 +1437,14 @@
                 }
             }
             try{sessionStorage.removeItem('ttt-session');}catch(e){}
-            roomRef=null;roomCode=null;playerIndex=null;onlineStarted=false;isOnline=false;vsComputer=false;opponentLeft=false;
+            roomRef=null;roomCode=null;playerIndex=null;onlineStarted=false;isOnline=false;vsComputer=false;opponentLeft=false;selectedMode=null;
             $('game-screen').classList.add('hidden');$('waiting-screen').classList.add('hidden');
             $('online-screen').classList.add('hidden');
+            $('picker').classList.add('hidden');
             $('diff-chip').style.display='none';
             // Reset P2 game tab
             $('p2-game-box').querySelector('.gt-label').textContent = 'P2';
-            resultOverlay.classList.remove('show');$('picker').classList.remove('hidden');
+            resultOverlay.classList.remove('show');$('title-screen').classList.remove('hidden');
             picks=[null,null];emojis=[null,null];photos=[null,null];pickStep=0;
             updatePickerUI();
         }
