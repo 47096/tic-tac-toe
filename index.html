@@ -960,11 +960,14 @@
         $('share-url-text').addEventListener('focus', function(){this.select();});
         $('share-url').addEventListener('click', () => {
             const url=$('share-url-text').value;
+            if (!url || url==='Click to copy') return;
             if (navigator.share) {
                 navigator.share({ title: '過三關 — Play with me!', text: 'Join my tic-tac-toe game:', url }).catch(()=>{});
                 return;
             }
-            const showCopied=()=>{$('share-url-text').value='✓ Copied!';setTimeout(()=>{$('share-url-text').value=url;},2500);};
+            const btn=$('share-url');
+            const orig=btn.textContent;
+            const showCopied=()=>{btn.textContent='✓';setTimeout(()=>{btn.textContent=orig;},2000);};
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(url).then(showCopied).catch(()=>{fallbackCopy(url);showCopied();});
             } else {
@@ -1239,7 +1242,10 @@
                     state.gameOver = false;
                     resultOverlay.classList.remove('show');
                     clearWinLine();
-                    roomRef.update({ board: Array(9).fill(null), turn: firstTurn, gameOver: false }).catch(() => {});
+                    // Only the requester resets the board to avoid race condition
+                    if(r.from === playerIndex) {
+                        roomRef.update({ board: Array(9).fill(null), turn: firstTurn, gameOver: false }).catch(() => {});
+                    }
                     resetBoard();
                 }
             });
@@ -1263,6 +1269,7 @@
         });
         $('rematch-accept-btn').addEventListener('click', () => {
             if(!roomRef) return;
+            // Just accept — the requester's listener handles the board reset
             roomRef.child('rematch').update({ accepted: true }).catch(()=>{});
         });
         $('rematch-decline-btn').addEventListener('click', () => {
