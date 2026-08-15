@@ -1034,8 +1034,8 @@
                 state.board=nb; state.turn=d.turn!=null?d.turn:0;
                 const rs=d.scores; state.scores=[0,0,0];
                 if(rs&&typeof rs==='object'){if(rs[0]!=null)state.scores[0]=rs[0];if(rs[1]!=null)state.scores[1]=rs[1];if(rs[2]!=null)state.scores[2]=rs[2];}
-                if(d.players&&d.players[0]){if(d.players[0].emoji)emojis[0]=d.players[0].emoji;if(d.players[0].photo)photos[0]=d.players[0].photo;}
-                if(d.players&&d.players[1]){if(d.players[1].emoji)emojis[1]=d.players[1].emoji;if(d.players[1].photo)photos[1]=d.players[1].photo;}
+                if(d.players&&d.players[0]){if(d.players[0].emoji){emojis[0]=d.players[0].emoji;photos[0]=null;}else if(d.players[0].photo){photos[0]=d.players[0].photo;emojis[0]=null;}}
+                if(d.players&&d.players[1]){if(d.players[1].emoji){emojis[1]=d.players[1].emoji;photos[1]=null;}else if(d.players[1].photo){photos[1]=d.players[1].photo;emojis[1]=null;}}
                 renderBoard(); updateTurn(); updateScores();
                 // Play sound for opponent's new placement
                 for(let i=0;i<9;i++){if(nb[i]!==null&&prevBoard[i]===null&&nb[i]!==playerIndex){sndPlace();break;}}
