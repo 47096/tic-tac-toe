@@ -1312,7 +1312,7 @@
         window.addEventListener('beforeunload', e => { if(isOnline && roomRef && !state.gameOver) { e.preventDefault(); e.returnValue = ''; } });
         $('leave-btn').addEventListener('click',continueGame);
         $('menu-btn').addEventListener('click',leaveGame);
-        $('btn-leave').addEventListener('click',leaveGame);
+        $('btn-leave').addEventListener('click',()=>{if(isOnline&&!state.gameOver&&!confirm('Leave the game?'))return;leaveGame();});
 
 
         // ===== SESSION RECOVERY =====
