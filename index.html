@@ -1317,6 +1317,15 @@
         $('leave-btn').addEventListener('click',continueGame);
         $('menu-btn').addEventListener('click',leaveGame);
         $('btn-leave').addEventListener('click',()=>{if(isOnline&&!state.gameOver&&!confirm('Leave the game?'))return;leaveGame();});
+        // Focus trap for result overlay
+        resultOverlay.addEventListener('keydown', e => {
+            if(e.key!=='Tab')return;
+            const btns=resultOverlay.querySelectorAll('button:not([style*="display:none"])');
+            if(!btns.length)return;
+            const first=btns[0],last=btns[btns.length-1];
+            if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+            else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+        });
 
 
         // ===== SESSION RECOVERY =====
