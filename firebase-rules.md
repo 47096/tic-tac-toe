@@ -26,7 +26,7 @@ Paste into **Firebase Console → Realtime Database → Rules tab**.
         },
         "board": {
           "$cellIdx": {
-            ".validate": "newData.val() == null || newData.hasChildren(['emoji', 'photo'])"
+            ".validate": "newData.val() == null || newData.isNumber()"
           }
         },
         "turn": {
@@ -76,5 +76,5 @@ Paste into **Firebase Console → Realtime Database → Rules tab**.
 - Room codes validated as 6-char alphanumeric
 - Players can only be index 0 or 1 with emoji, photo, disconnected fields
 - Photo must be a string or null (client validates `data:image/` prefix)
-- Board cells must be null or an object with emoji/photo
+- Board cells must be null (empty) or a number (player index 0 or 1)
 - Type checks on all game state fields (turn, scores, gameOver, status)
