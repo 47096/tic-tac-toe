@@ -258,25 +258,11 @@
         <div id="cat-tabs" class="cat-tabs"></div>
         <div id="emoji-grid" class="emoji-grid"></div>
         <div id="photo-wrap" style="display:none; width:100%; max-width:300px;">
-            <div id="photo-options" style="display:grid; grid-template-columns:1fr 1fr; gap:8px; width:100%;">
-                <div class="camera-area" id="camera-area" style="max-width:none;">
-                    <div class="camera-icon">📸</div>
-                    <div class="camera-text">Camera</div>
-                </div>
-                <div class="camera-area" id="upload-area" style="max-width:none;">
-                    <div class="camera-icon">🖼</div>
-                    <div class="camera-text">Upload</div>
-                </div>
+            <div class="camera-area" id="upload-area" style="max-width:none; width:100%;">
+                <div class="camera-icon">🖼</div>
+                <div class="camera-text">Upload a photo</div>
             </div>
             <input type="file" id="photo-upload" accept="image/*" style="display:none;">
-            <div class="camera-preview" id="camera-preview" style="position:relative; cursor:pointer;">
-                <video id="snap-video" playsinline autoplay></video>
-                <div class="cam-label">Tap to snap</div>
-            </div>
-            <div class="cam-instructions" id="cam-instructions" style="display:none;">
-                Tap preview to snap
-            </div>
-            <button class="btn btn-sm" id="cam-cancel" style="display:none; margin-top:4px;">Cancel</button>
             <canvas id="snap-canvas" class="snap-hidden"></canvas>
         </div>
         <div class="ready-area">
@@ -776,108 +762,6 @@
                     document.getElementById(tab.dataset.tab + '-tab').classList.add('active');
                 });
             });
-        });
-
-        // Camera snap
-        let snapStream = null;
-        let cameraActive = false;
-        let snapResolve = null;
-
-        function stopCamera() {
-            if (snapStream) { snapStream.getTracks().forEach(t => t.stop()); snapStream = null; }
-            cameraActive = false;
-            $('camera-preview').style.display = 'none';
-            $('cam-instructions').style.display = 'none';
-            $('cam-cancel').style.display = 'none';
-            $('camera-area').style.display = '';
-            $('camera-area').innerHTML = '<div class="camera-icon">📸</div><div class="camera-text">Tap to take photo</div>';
-        }
-
-        // Click on camera preview to snap
-        $('camera-preview').addEventListener('click', () => {
-            if (snapResolve) { snapResolve('confirm'); snapResolve = null; }
-        });
-
-        // Click on picker background to cancel
-        $('picker').addEventListener('click', (e) => {
-            if (snapResolve && !e.target.closest('#camera-preview') && !e.target.closest('.camera-area') && !e.target.closest('#cam-cancel')) {
-                snapResolve('cancel');
-                snapResolve = null;
-                stopCamera();
-            }
-        });
-
-        // Cancel button for camera
-        $('cam-cancel').addEventListener('click', () => {
-            if (snapResolve) {
-                snapResolve('cancel');
-                snapResolve = null;
-                stopCamera();
-                $('photo-options').style.display = '';
-            }
-        });
-
-        // Click on camera area to open camera
-        $('camera-area').addEventListener('click', async () => {
-            const area = $('camera-area');
-            const preview = $('camera-preview');
-            const video = $('snap-video');
-
-            try {
-                area.innerHTML = '<div class="camera-icon" style="font-size:1.5rem;">⏳</div><div class="camera-text">Opening camera…</div>';
-                snapStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 320 }, height: { ideal: 320 } } });
-                video.srcObject = snapStream;
-                // Wait until camera is actually playing
-                await new Promise((resolve, reject) => {
-                    video.onplaying = resolve;
-                    video.onerror = reject;
-                    setTimeout(reject, 5000);
-                });
-                // Camera is ready
-                cameraActive = true;
-                preview.style.display = 'block';
-                $('cam-instructions').style.display = 'block';
-                $('cam-cancel').style.display = 'block';
-                $('photo-options').style.display = 'none';
-
-                // Wait for Snap or Cancel
-                const action = await new Promise(resolve => { snapResolve = resolve; });
-
-                if (action === 'cancel') return;
-
-                area.innerHTML = '<div class="camera-icon" style="font-size:1.5rem;">📸</div><div class="camera-text">Capturing…</div>';
-
-                // Capture
-                const vw = video.videoWidth, vh = video.videoHeight, s = Math.min(vw, vh);
-                const canvas = $('snap-canvas');
-                canvas.width = 128; canvas.height = 128;
-                canvas.getContext('2d').drawImage(video, (vw-s)/2, (vh-s)/2, s, s, 0, 0, 128, 128);
-                const photo = canvas.toDataURL('image/jpeg', 0.6);
-                // Stop camera
-                stopCamera();
-
-                // Set as player's photo
-                photos[pickStep] = photo;
-                emojis[pickStep] = null;
-                picks[pickStep] = '📸';
-                updatePickerUI();
-                // Advance
-                if (pickStep === 0) {
-                    pickStep = 1;
-                    setTimeout(updatePickerUI, 300);
-                }
-            } catch (e) {
-                console.error('Camera error:', e);
-                stopCamera();
-                let errorMsg = 'Camera error — try again';
-                if (e.name === 'NotAllowedError') errorMsg = 'Camera blocked — allow in settings';
-                else if (e.name === 'NotFoundError') errorMsg = 'No camera found';
-                area.innerHTML = `<div class="camera-icon" style="font-size:1.5rem;">⚠️</div><div class="camera-text">${errorMsg}</div>`;
-                setTimeout(() => {
-                    area.innerHTML = '<div class="camera-icon">📸</div><div class="camera-text">Camera</div>';
-                    $('photo-options').style.display = '';
-                }, 3000);
-            }
         });
 
         // Upload photo
