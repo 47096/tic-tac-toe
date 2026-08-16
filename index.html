@@ -1263,7 +1263,7 @@
                 moveInProgress=true;
                 const nt=(w!==null||draw)?cur:1-cur;
                 const prevBoard=state.board.slice(),prevScores=state.scores.slice(),prevTurn=state.turn;
-                const moveTimeout=setTimeout(()=>{moveInProgress=false;},5000);
+                const moveTimeout=setTimeout(()=>{moveInProgress=false;state.board=prevBoard;state.scores=prevScores;state.turn=prevTurn;renderBoard();updateScores();updateTurn();},5000);
                 roomRef.update({board:state.board,turn:nt,scores:state.scores,gameOver:w!==null||draw}).then(()=>{
                     clearTimeout(moveTimeout);moveInProgress=false;
                 }).catch(()=>{clearTimeout(moveTimeout);moveInProgress=false;state.board=prevBoard;state.scores=prevScores;state.turn=prevTurn;renderBoard();updateScores();updateTurn();});
