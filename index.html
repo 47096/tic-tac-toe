@@ -178,7 +178,7 @@
         .error-msg { color: var(--error-text); font-size: 0.75rem; text-align: center; background: var(--error-bg); padding: 8px 12px; border-radius: var(--radius-sm); }
 
         /* Game — Tab Bar */
-        .game-players { width: 100%; display: flex; background: var(--surface); border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border); margin-bottom: 8px; }
+        .game-players { position: relative; width: 100%; display: flex; background: var(--surface); border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border); margin-bottom: 8px; }
         .game-tab { flex: 1; text-align: center; font-size: 0.7rem; color: var(--text-dim); border-right: 1px solid var(--border); transition: all 0.15s; padding: 0; }
         .game-tab:last-child { border-right: none; }
         .game-tab .gt-label { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; padding: 6px 0; background: var(--border); color: var(--text-dim); }
@@ -272,7 +272,7 @@
         <div style="position:relative; width:100%; max-width:300px; margin-bottom:4px; text-align:center;">
             <div class="pick-header active" id="pick-header" style="margin-bottom:0;">Player 1 — pick your avatar</div>
             <div id="picker-mode-label" style="font-size:0.65rem; color:var(--text-dim);"></div>
-            <button id="picker-close-btn" style="position:absolute; right:0; top:50%; transform:translateY(-50%); background:none; border:none; font-size:1.2rem; color:var(--text-dim); cursor:pointer; padding:4px; line-height:1;">×</button>
+            <button id="picker-close-btn" style="position:absolute; right:0; top:50%; transform:translateY(-50%); background:none; border:none; font-size:1.2rem; color:var(--text-dim); cursor:pointer; min-width:44px; min-height:44px; display:flex; align-items:center; justify-content:center;">×</button>
         </div>
         <div id="cat-tabs" class="cat-tabs"></div>
         <div id="emoji-grid" class="emoji-grid"></div>
@@ -308,7 +308,7 @@
     <div class="screen hidden no-select" id="online-screen">
         <div style="position:relative; width:100%; max-width:300px; margin-bottom:4px; text-align:center;">
             <div class="pick-header active" id="online-header" style="margin-bottom:0;">You are Player 1 — pick your avatar</div>
-            <button id="online-close-btn" style="position:absolute; right:0; top:50%; transform:translateY(-50%); background:none; border:none; font-size:1.2rem; color:var(--text-dim); cursor:pointer; padding:4px; line-height:1;">×</button>
+            <button id="online-close-btn" style="position:absolute; right:0; top:50%; transform:translateY(-50%); background:none; border:none; font-size:1.2rem; color:var(--text-dim); cursor:pointer; min-width:44px; min-height:44px; display:flex; align-items:center; justify-content:center;">×</button>
         </div>
         <div id="online-cat-tabs" class="cat-tabs"></div>
         <div id="online-emoji-grid" class="emoji-grid"></div>
@@ -377,7 +377,7 @@
                     </div>
                 </div>
             </div>
-            <button id="game-close-btn" style="position:absolute; right:0; top:-24px; background:none; border:none; font-size:1.2rem; color:var(--text-dim); cursor:pointer; padding:4px; line-height:1;">×</button>
+            <button id="game-close-btn" style="position:absolute; right:0; top:0; background:none; border:none; font-size:1.2rem; color:var(--text-dim); cursor:pointer; min-width:44px; min-height:44px; display:flex; align-items:center; justify-content:center; z-index:1;">×</button>
         </div>
         <div class="board-wrap" id="board-wrap">
             <div class="board no-select" id="board" role="grid" aria-label="Tic tac toe board">
