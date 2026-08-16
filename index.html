@@ -258,10 +258,17 @@
         <div id="cat-tabs" class="cat-tabs"></div>
         <div id="emoji-grid" class="emoji-grid"></div>
         <div id="photo-wrap" style="display:none; width:100%; max-width:300px;">
-            <div class="camera-area" id="camera-area">
-                <div class="camera-icon">📸</div>
-                <div class="camera-text">Tap to take photo</div>
+            <div id="photo-options" style="display:grid; grid-template-columns:1fr 1fr; gap:8px; width:100%;">
+                <div class="camera-area" id="camera-area" style="max-width:none;">
+                    <div class="camera-icon">📸</div>
+                    <div class="camera-text">Camera</div>
+                </div>
+                <div class="camera-area" id="upload-area" style="max-width:none;">
+                    <div class="camera-icon">🖼</div>
+                    <div class="camera-text">Upload</div>
+                </div>
             </div>
+            <input type="file" id="photo-upload" accept="image/*" style="display:none;">
             <div class="camera-preview" id="camera-preview" style="position:relative; cursor:pointer;">
                 <video id="snap-video" playsinline autoplay></video>
                 <div class="cam-label">Tap to snap</div>
@@ -806,6 +813,7 @@
                 snapResolve('cancel');
                 snapResolve = null;
                 stopCamera();
+                $('photo-options').style.display = '';
             }
         });
 
@@ -830,7 +838,7 @@
                 preview.style.display = 'block';
                 $('cam-instructions').style.display = 'block';
                 $('cam-cancel').style.display = 'block';
-                area.style.display = 'none';
+                $('photo-options').style.display = 'none';
 
                 // Wait for Snap or Cancel
                 const action = await new Promise(resolve => { snapResolve = resolve; });
@@ -866,9 +874,37 @@
                 else if (e.name === 'NotFoundError') errorMsg = 'No camera found';
                 area.innerHTML = `<div class="camera-icon" style="font-size:1.5rem;">⚠️</div><div class="camera-text">${errorMsg}</div>`;
                 setTimeout(() => {
-                    area.innerHTML = '<div class="camera-icon">📸</div><div class="camera-text">Tap to take photo</div>';
+                    area.innerHTML = '<div class="camera-icon">📸</div><div class="camera-text">Camera</div>';
+                    $('photo-options').style.display = '';
                 }, 3000);
             }
+        });
+
+        // Upload photo
+        $('upload-area').addEventListener('click', () => { $('photo-upload').click(); });
+        $('photo-upload').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = $('snap-canvas');
+                    canvas.width = 128; canvas.height = 128;
+                    const ctx = canvas.getContext('2d');
+                    const s = Math.min(img.width, img.height);
+                    ctx.drawImage(img, (img.width-s)/2, (img.height-s)/2, s, s, 0, 0, 128, 128);
+                    const photo = canvas.toDataURL('image/jpeg', 0.6);
+                    photos[pickStep] = photo;
+                    emojis[pickStep] = null;
+                    picks[pickStep] = '📸';
+                    updatePickerUI();
+                    if (pickStep === 0) { pickStep = 1; setTimeout(updatePickerUI, 300); }
+                };
+                img.src = reader.result;
+            };
+            reader.readAsDataURL(file);
+            e.target.value = '';
         });
 
         // Online camera snap - Create Room
