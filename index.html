@@ -63,6 +63,7 @@
             align-items: center; justify-content: center;
             overflow-x: hidden; overflow-y: auto;
             overscroll-behavior: none;
+            transition: background-color 0.2s, color 0.2s;
             padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
         }
 
@@ -181,7 +182,7 @@
         .error-msg { color: var(--error-text); font-size: 0.75rem; text-align: center; background: var(--error-bg); padding: 8px 12px; border-radius: var(--radius-sm); }
 
         /* Game — Tab Bar */
-        .game-players { position: relative; width: 100%; display: flex; background: var(--surface); border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border); margin-bottom: 8px; }
+        .game-players { position: relative; width: 100%; display: flex; background: var(--surface); border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border); margin-bottom: 8px; transition: background-color 0.2s, border-color 0.2s; }
         .game-tab { flex: 1; text-align: center; font-size: 0.7rem; color: var(--text-dim); border-right: 1px solid var(--border); transition: all 0.15s; padding: 0; }
         .game-tab:last-child { border-right: none; }
         .game-tab .gt-label { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; padding: 6px 0; background: var(--border); color: var(--text-dim); }
