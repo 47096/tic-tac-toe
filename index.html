@@ -70,6 +70,7 @@
         .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 
         .screen { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; max-width: 400px; padding: 20px 16px; animation: fadeIn 0.2s ease-out; }
+        .screen:focus { outline: none; }
         #title-screen { position: relative; overflow: hidden; }
         .screen.hidden, .hidden { display: none; }
         .title-bg { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
@@ -249,7 +250,7 @@
     <button class="theme-toggle" id="theme-toggle" title="Toggle dark mode">🌙 Dark</button>
 
     <!-- TITLE SCREEN -->
-    <div class="screen no-select" id="title-screen">
+    <div class="screen no-select" id="title-screen" tabindex="-1">
         <div class="title-bg">
             <span class="drift drift-a" style="top:8%; left:12%;">✕</span>
             <span class="drift drift-b" style="top:20%; right:18%;">○</span>
@@ -270,7 +271,7 @@
     </div>
 
     <!-- PICKER (avatar selection) -->
-    <div class="screen hidden no-select" id="picker">
+    <div class="screen hidden no-select" id="picker" tabindex="-1">
         <div style="position:relative; width:100%; max-width:300px; margin-bottom:4px; text-align:center;">
             <div class="pick-header active" id="pick-header" style="margin-bottom:0;">Player 1 — pick your avatar</div>
             <div id="picker-mode-label" style="font-size:0.65rem; color:var(--text-dim);"></div>
@@ -307,7 +308,7 @@
     </div>
 
     <!-- ONLINE -->
-    <div class="screen hidden no-select" id="online-screen">
+    <div class="screen hidden no-select" id="online-screen" tabindex="-1">
         <div style="position:relative; width:100%; max-width:300px; margin-bottom:4px; text-align:center;">
             <div class="pick-header active" id="online-header" style="margin-bottom:0;">You are Player 1 — pick your avatar</div>
             <button id="online-close-btn" style="position:absolute; right:0; top:50%; transform:translateY(-50%); background:none; border:none; font-size:1.2rem; color:var(--text-dim); cursor:pointer; min-width:44px; min-height:44px; display:flex; align-items:center; justify-content:center;">×</button>
@@ -346,7 +347,7 @@
     </div>
 
     <!-- WAITING -->
-    <div class="screen hidden no-select" id="waiting-screen">
+    <div class="screen hidden no-select" id="waiting-screen" tabindex="-1">
         <div class="waiting"><div class="spinner"></div><span id="waiting-text">Waiting for Player 2…</span></div>
         <button class="btn btn-sm btn-primary" id="copy-invite-btn" style="margin-top:16px;">📋 Copy Invite Link</button>
         <div style="font-size:0.65rem; color:var(--text-dim); text-align:center; margin-top:8px;">Paste it in a message to your friend</div>
@@ -354,7 +355,7 @@
     </div>
 
     <!-- GAME -->
-    <div class="screen hidden no-select" id="game-screen">
+    <div class="screen hidden no-select" id="game-screen" tabindex="-1">
         <div style="position:relative; width:100%; max-width:400px;">
             <div class="game-players">
                 <div class="game-tab active" id="p1-game-box">
@@ -460,6 +461,7 @@
         function saveScores() {}
 
         const $ = id => document.getElementById(id);
+        const showScreen = id => { document.querySelectorAll('.screen:not(.hidden)').forEach(s => s.classList.add('hidden')); $(id).classList.remove('hidden'); $(id).focus(); };
         const boardEl = $('board'), boardWrap = $('board-wrap');
                         const resultOverlay = $('result-overlay'), resultBig = $('result-big'), resultText = $('result-text');
         const winCanvas = $('win-canvas'), winCtx = winCanvas.getContext('2d');
@@ -705,8 +707,7 @@
         // Title screen buttons
         function showPicker(mode) {
             selectedMode = mode;
-            $('title-screen').classList.add('hidden');
-            $('picker').classList.remove('hidden');
+            showScreen('picker');
             const modeLabel = $('picker-mode-label');
             if (mode === 'local') { modeLabel.textContent = 'Local — same device'; }
             else if (mode === 'computer') { modeLabel.textContent = 'vs Computer'; }
@@ -722,8 +723,7 @@
         $('title-ai-btn').addEventListener('click', () => { showPicker('computer'); });
         $('title-online-btn').addEventListener('click', () => {
             selectedMode = 'online';
-            $('title-screen').classList.add('hidden');
-            $('online-screen').classList.remove('hidden');
+            showScreen('online-screen');
             onlinePickData = { emoji: null, photo: null };
             buildOnlineGrids();
             updateOnlinePickerUI();
@@ -731,8 +731,7 @@
 
         // Picker close button
         $('picker-close-btn').addEventListener('click', () => {
-            $('picker').classList.add('hidden');
-            $('title-screen').classList.remove('hidden');
+            showScreen('title-screen');
             selectedMode = null;
         });
 
@@ -748,8 +747,7 @@
                 isOnline = false; vsComputer = false;
                 $('diff-chip').style.display='none';
                 $('p2-game-box').querySelector('.gt-label').textContent = 'P2';
-                $('picker').classList.add('hidden');
-                $('game-screen').classList.remove('hidden');
+                showScreen('game-screen');
                 resetBoard();
             } else if (selectedMode === 'computer') {
                 if (!picks[0] || !picks[1]) return;
@@ -759,8 +757,7 @@
                 isOnline = false;
                 roomRef = null; roomCode = null; playerIndex = null;
                 pickStep = 0;
-                $('picker').classList.add('hidden');
-                $('game-screen').classList.remove('hidden');
+                showScreen('game-screen');
                 $('diff-chip').style.display = 'flex';
                 $('p2-game-box').querySelector('.gt-label').textContent = 'Computer';
                 firstTurn = 0; // Human always goes first in computer mode
@@ -851,8 +848,7 @@
         });
 
         $('online-close-btn').addEventListener('click', () => {
-            $('online-screen').classList.add('hidden');
-            $('title-screen').classList.remove('hidden');
+            showScreen('title-screen');
             selectedMode = null;
             picks = [null, null]; emojis = [null, null]; photos = [null, null]; pickStep = 0;
             onlinePickData = { emoji: null, photo: null };
@@ -970,8 +966,7 @@
                     }
                 });
 
-                $('online-screen').classList.add('hidden');
-                $('waiting-screen').classList.remove('hidden');
+                showScreen('waiting-screen');
                 // Store invite URL for copy
                 window._inviteUrl = location.origin+location.pathname+'?room='+roomCode;
                 // Show nudge after 30s
@@ -1022,8 +1017,7 @@
             if(joinListener && roomRef){roomRef.child('players/1').off('value',joinListener);joinListener=null;}
             if(roomRef){roomRef.onDisconnect().cancel();roomRef.remove().catch(()=>{});}
             roomRef=null; roomCode=null;
-            $('waiting-screen').classList.add('hidden');
-            $('online-screen').classList.remove('hidden');
+            showScreen('online-screen');
             $('create-btn').textContent='Create Room'; $('create-btn').disabled=true;
             updateOnlinePickerUI();
         });
@@ -1031,9 +1025,7 @@
         // Start online game
         function startOnlineGame() {
             try{sessionStorage.setItem('ttt-session',JSON.stringify({roomCode,playerIndex}));}catch(e){}
-            $('online-screen').classList.add('hidden');
-            $('waiting-screen').classList.add('hidden');
-            $('game-screen').classList.remove('hidden');
+            showScreen('game-screen');
             resetBoard();
             roomRef.update({status:'playing',startedAt:Date.now()});
 
@@ -1339,7 +1331,7 @@
 
         // Leave
         function continueGame() {
-            if (opponentLeft) { opponentLeft=false; $('leave-btn').textContent='Play Again'; leaveGame(); $('picker').classList.add('hidden'); $('online-screen').classList.remove('hidden'); return; }
+            if (opponentLeft) { opponentLeft=false; $('leave-btn').textContent='Play Again'; leaveGame(); showScreen('online-screen'); return; }
             $('leave-btn').textContent='Play Again';
             resultOverlay.classList.remove('show');
             clearWinLine();
@@ -1379,13 +1371,10 @@
             }
             try{sessionStorage.removeItem('ttt-session');}catch(e){}
             roomRef=null;roomCode=null;playerIndex=null;onlineStarted=false;isOnline=false;vsComputer=false;opponentLeft=false;selectedMode=null;
-            $('game-screen').classList.add('hidden');$('waiting-screen').classList.add('hidden');
-            $('online-screen').classList.add('hidden');
-            $('picker').classList.add('hidden');
             $('diff-chip').style.display='none';
             // Reset P2 game tab
             $('p2-game-box').querySelector('.gt-label').textContent = 'P2';
-            resultOverlay.classList.remove('show');$('title-screen').classList.remove('hidden');
+            resultOverlay.classList.remove('show'); showScreen('title-screen');
             picks=[null,null];emojis=[null,null];photos=[null,null];pickStep=0;
             updatePickerUI();
         }
@@ -1429,8 +1418,7 @@
                         // Restore game state
                         if(d.players[0]){if(d.players[0].emoji)emojis[0]=d.players[0].emoji;if(d.players[0].photo)photos[0]=d.players[0].photo;}
                         if(d.players[1]){if(d.players[1].emoji)emojis[1]=d.players[1].emoji;if(d.players[1].photo)photos[1]=d.players[1].photo;}
-                        $('picker').classList.add('hidden');
-                        $('game-screen').classList.remove('hidden');
+                        showScreen('game-screen');
                         startOnlineGame();
                     } else {
                         sessionStorage.removeItem('ttt-session');
@@ -1448,9 +1436,7 @@
         const inviteCode = urlParams.get('room');
 
         if (inviteCode) {
-            $('title-screen').classList.add('hidden');
-            $('picker').classList.add('hidden');
-            $('online-screen').classList.remove('hidden');
+            showScreen('online-screen');
             $('create-btn').style.display = 'none';
             $('join-btn').style.display = '';
             $('online-header').textContent = 'You are Player 2 — pick your avatar';
