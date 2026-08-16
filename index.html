@@ -204,10 +204,8 @@
         .theme-toggle { position: fixed; top: max(env(safe-area-inset-top, 0px), 10px); right: 10px; z-index: 100; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; font-size: 0.7rem; cursor: pointer; padding: 6px 12px; min-height: 36px; display: flex; align-items: center; gap: 4px; transition: all 0.15s; color: var(--text); }
         .theme-toggle:hover { background: var(--bg); }
 
-        .result-overlay { position: fixed; inset:0; background: var(--overlay-bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.2s; backdrop-filter: blur(6px); }
-        .result-overlay.show { opacity: 1; pointer-events: all; }
-        .result-overlay .result-content { background: var(--bg); padding: 24px; border-radius: var(--radius-md); border: 1px solid var(--border); box-shadow: 0 4px 24px rgba(0,0,0,0.25); text-align: center; width: 240px; max-width: calc(100vw - 32px); transform: scale(0.9) translateY(10px); transition: transform 0.3s ease-out; }
-        .result-overlay.show .result-content { transform: scale(1) translateY(0); }
+        .result-overlay { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%) translateY(100%); background: var(--bg); padding: 16px 24px 20px; border-radius: 16px 16px 0 0; border: 1px solid var(--border); border-bottom: none; box-shadow: 0 -4px 24px rgba(0,0,0,0.15); z-index: 200; width: 100%; max-width: 400px; text-align: center; transition: transform 0.3s ease-out; }
+        .result-overlay.show { transform: translateX(-50%) translateY(0); }
         .board-wrap.pulse { animation: boardPulse 0.4s ease-out; }
         .diff-chip { display: flex; gap: 4px; }
         .diff-chip-item { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text-dim); cursor: pointer; transition: all 0.2s; font-family: inherit; min-width: 48px; }
@@ -216,9 +214,9 @@
         .diff-text { font-size: 0.55rem; letter-spacing: 0.05em; text-transform: uppercase; font-weight: 700; }
         @keyframes boardPulse { 0%{transform:scale(1)} 50%{transform:scale(1.03)} 100%{transform:scale(1)} }
 
-        .result-overlay h2 { font-size: 1.3rem; font-weight: 400; letter-spacing: 0.15em; margin-bottom: 8px; }
-        .result-overlay .big { font-size: 3.5rem; margin-bottom: 10px; }
-        .result-overlay .big img { width: 90px; height: 90px; border-radius: 8px; object-fit: cover; transform: scaleX(-1); }
+        .result-overlay h2 { font-size: 1rem; font-weight: 600; letter-spacing: 0.1em; margin-bottom: 6px; }
+        .result-overlay .big { font-size: 2.5rem; margin-bottom: 6px; }
+        .result-overlay .big img { width: 60px; height: 60px; border-radius: 8px; object-fit: cover; transform: scaleX(-1); }
 
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
@@ -396,13 +394,12 @@
     </div>
 
     <div class="result-overlay" id="result-overlay">
-        <div class="result-content">
-            <div class="big" id="result-big"></div>
-            <h2 id="result-text"></h2>
-            <div style="margin-top:12px; display:flex; gap:8px; justify-content:center;">
-                <button class="btn btn-sm" id="leave-btn">Play Again</button>
-                <button class="btn btn-sm" id="menu-btn">Menu</button>
-            </div>
+        <div class="big" id="result-big"></div>
+        <h2 id="result-text"></h2>
+        <div id="result-line" style="font-size:0.75rem; color:var(--text-dim); margin-bottom:10px;"></div>
+        <div style="display:flex; gap:8px; justify-content:center;">
+            <button class="btn btn-sm" id="leave-btn">Play Again</button>
+            <button class="btn btn-sm btn-ghost" id="menu-btn">Menu</button>
         </div>
     </div>
 
@@ -1115,6 +1112,7 @@
                     opponentLeft=true;
                     resultBig.textContent='👋';
                     resultText.textContent='Opponent left';
+                    $('result-line').textContent='';
                     resultOverlay.classList.add('show');
                 }
             };
@@ -1314,16 +1312,22 @@
             }
             requestAnimationFrame(draw);
         }
+        function getWinLineName(wl) {
+            if(!wl) return '';
+            const lines = {'0,1,2':'Top row','3,4,5':'Middle row','6,7,8':'Bottom row','0,3,6':'Left column','1,4,7':'Centre column','2,5,8':'Right column','0,4,8':'Diagonal','2,4,6':'Diagonal'};
+            return lines[wl.join(',')] || '';
+        }
         function endGame(w,wl) {
             if(state.gameOver) return;
             track('game_end', {winner:w,mode:isOnline?'online':'local'});
             state.gameOver=true;lastWinLine=wl;
             firstTurn=1-firstTurn; // Alternate who goes first next game
             if(w!==null&&wl){wl.forEach(i=>cells[i].classList.add('win'));drawWinLine(wl);sndWin();fireConfetti();if(navigator.vibrate)navigator.vibrate([50,30,50]);boardWrap.classList.add('pulse');setTimeout(()=>boardWrap.classList.remove('pulse'),400);
-                resultBig.innerHTML=hasPhoto(w)?`<img src="${safePhotoSrc(photos[w])}" alt="">`:`<span style="font-size:3.5rem">${emojis[w]}</span>`;
+                resultBig.innerHTML=hasPhoto(w)?`<img src="${safePhotoSrc(photos[w])}" alt="">`:`<span style="font-size:2.5rem">${emojis[w]}</span>`;
                 resultText.textContent=`Player ${w+1} wins`;
+                $('result-line').textContent=getWinLineName(wl);
                 announce('Player '+(w+1)+' wins!');
-            }else{sndDraw();if(navigator.vibrate)navigator.vibrate(100);resultBig.innerHTML='<span style="font-size:3.5rem">🤝</span>';resultText.textContent='Draw';announce('Draw');}
+            }else{sndDraw();if(navigator.vibrate)navigator.vibrate(100);resultBig.innerHTML='<span style="font-size:2.5rem">🤝</span>';resultText.textContent='Draw';$('result-line').textContent='';announce('Draw');}
             updateScores();
             setTimeout(()=>resultOverlay.classList.add('show'),w!==null?600:300);
 
