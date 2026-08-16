@@ -7,22 +7,6 @@ Paste into **Firebase Console → Realtime Database → Rules tab**.
   "rules": {
     ".read": false,
     ".write": false,
-    "leaderboard": {
-      "$mode": {
-        ".read": true,
-        ".write": true,
-        "$deviceId": {
-          "name": { ".validate": "newData.isString() && newData.val().length <= 20" },
-          "wins": { ".validate": "newData.isNumber()" },
-          "losses": { ".validate": "newData.isNumber()" },
-          "draws": { ".validate": "newData.isNumber()" },
-          "easy": { ".validate": "newData.isNumber()" },
-          "medium": { ".validate": "newData.isNumber()" },
-          "hard": { ".validate": "newData.isNumber()" },
-          "updatedAt": { ".validate": "newData.isNumber()" }
-        }
-      }
-    },
     "rooms": {
       "$roomCode": {
         ".read": true,
