@@ -277,7 +277,7 @@
         <div id="cat-tabs" class="cat-tabs"></div>
         <div id="emoji-grid" class="emoji-grid"></div>
         <div id="photo-wrap" style="display:none; width:100%; max-width:300px;">
-            <div id="upload-area" style="width:100%; aspect-ratio:1; border:2px dashed var(--border); border-radius:var(--radius-sm); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; cursor:pointer; background:var(--surface); transition:border-color 0.2s;">
+            <div id="upload-area" tabindex="0" role="button" aria-label="Upload a photo" style="width:100%; aspect-ratio:1; border:2px dashed var(--border); border-radius:var(--radius-sm); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; cursor:pointer; background:var(--surface); transition:border-color 0.2s;">
                 <div style="font-size:2rem; opacity:0.4;">+</div>
                 <div style="font-size:0.8rem; color:var(--text-dim);">Upload a photo</div>
                 <div style="font-size:0.65rem; color:var(--text-dim); opacity:0.6;">Tap or drop an image</div>
@@ -313,7 +313,7 @@
         <div id="online-cat-tabs" class="cat-tabs"></div>
         <div id="online-emoji-grid" class="emoji-grid"></div>
         <div id="online-photo-wrap" style="display:none; width:100%; max-width:300px;">
-            <div id="online-upload-area" style="width:100%; aspect-ratio:1; border:2px dashed var(--border); border-radius:var(--radius-sm); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; cursor:pointer; background:var(--surface); transition:border-color 0.2s;">
+            <div id="online-upload-area" tabindex="0" role="button" aria-label="Upload a photo" style="width:100%; aspect-ratio:1; border:2px dashed var(--border); border-radius:var(--radius-sm); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; cursor:pointer; background:var(--surface); transition:border-color 0.2s;">
                 <div style="font-size:2rem; opacity:0.4;">+</div>
                 <div style="font-size:0.8rem; color:var(--text-dim);">Upload a photo</div>
                 <div style="font-size:0.65rem; color:var(--text-dim); opacity:0.6;">Tap or drop an image</div>
@@ -794,6 +794,7 @@
 
         // Upload photo
         $('upload-area').addEventListener('click', () => { $('photo-upload').click(); });
+        $('upload-area').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('photo-upload').click(); } });
         $('photo-upload').addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
@@ -821,6 +822,7 @@
 
         // Online upload photo
         $('online-upload-area').addEventListener('click', () => { $('online-photo-upload').click(); });
+        $('online-upload-area').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('online-photo-upload').click(); } });
         $('online-photo-upload').addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
