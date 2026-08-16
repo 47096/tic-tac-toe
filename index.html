@@ -167,8 +167,7 @@
 
         .room-box { padding: 14px; border: 1px solid var(--border); border-radius: var(--radius-md); text-align: center; width: 100%; max-width: 260px; }
         .room-code { font-size: 1.6rem; font-weight: 300; letter-spacing: 0.3em; margin: 4px 0; }
-        .share-url { padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.75rem; color: var(--text-dim); background: var(--surface); cursor: pointer; text-align: center; transition: all 0.15s; word-break: break-all; }
-        .share-url:hover { border-color: var(--text); color: var(--text); }
+        #share-url:hover { border-color: var(--text-dim); }
         .waiting { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--text-dim); margin-top: 8px; }
         .spinner { width: 12px; height: 12px; border: 1.5px solid var(--border); border-top-color: var(--text); border-radius: 50%; animation: spin 0.8s linear infinite; }
 
@@ -346,7 +345,10 @@
         <div class="room-box">
             <div style="font-size:0.55rem; color:var(--text-dim); letter-spacing:0.1em;">Room Code</div>
             <div class="room-code" id="room-code-display" style="letter-spacing:0.3em;">······</div>
-            <div class="share-url" id="share-url" title="Click to copy"><span id="share-url-text">Click to copy</span></div>
+            <div id="share-url" style="display:flex; align-items:center; gap:8px; padding:8px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--surface); cursor:pointer; transition:all 0.15s; word-break:break-all;" title="Click to copy">
+            <span id="share-url-text" style="flex:1; font-size:0.75rem; color:var(--text-dim); font-family:monospace; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Click to copy</span>
+            <span style="font-size:0.85rem; opacity:0.5; flex-shrink:0;">📋</span>
+        </div>
         </div>
         <div class="waiting"><div class="spinner"></div><span id="waiting-text">Waiting for Player 2…</span></div>
         <div id="waiting-nudge" style="display:none; font-size:0.75rem; color:var(--text-dim); text-align:center; margin-top:4px;">No one joined yet — try sharing the link!</div>
@@ -975,7 +977,8 @@
                 return;
             }
             const el=$('share-url-text');
-            const showCopied=()=>{el.textContent='✓ Copied!';setTimeout(()=>{el.textContent=url;},2000);};
+            const icon=$('share-url').querySelector('span:last-child');
+            const showCopied=()=>{el.textContent='✓ Copied!';icon.textContent='✅';setTimeout(()=>{el.textContent=url;icon.textContent='📋';},2000);};
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(url).then(showCopied).catch(()=>{fallbackCopy(url);showCopied();});
             } else {
