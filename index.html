@@ -1021,8 +1021,8 @@
             }
             roomRef = db.ref('rooms/'+roomCode);
 
-            // If P1 disconnects before P2 joins, delete the whole room
-            roomRef.onDisconnect().remove();
+            // If P1 disconnects before P2 joins, mark as finished (cleaned up later)
+            roomRef.onDisconnect().update({status:'finished',endedAt:Date.now()});
 
             roomRef.set({
                 players:{0:{emoji:myPhoto ? null : myEmoji, photo:myPhoto, disconnected:false},1:null},
@@ -1526,7 +1526,7 @@
                     $('online-error').classList.remove('hidden');
                     return;
                 }
-                if (data.players[0].disconnected === true) {
+                if (data.players[0].disconnected === true || data.status === 'finished') {
                     $('online-error').textContent = 'Host has left. Try another room.';
                     $('online-error').classList.remove('hidden');
                     return;
@@ -1566,7 +1566,7 @@
                     btn.innerHTML = 'Join Room'; btn.disabled = false;
                     return null;
                 }
-                if (data.players[0].disconnected === true) {
+                if (data.players[0].disconnected === true || data.status === 'finished') {
                     $('online-error').textContent = 'Host has left. Try another room.';
                     $('online-error').classList.remove('hidden');
                     btn.innerHTML = 'Join Room'; btn.disabled = false;
