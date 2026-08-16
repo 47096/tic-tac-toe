@@ -209,8 +209,6 @@
         .result-overlay .result-content { background: var(--bg); padding: 24px; border-radius: var(--radius-md); border: 1px solid var(--border); box-shadow: 0 4px 24px rgba(0,0,0,0.25); text-align: center; width: 240px; max-width: calc(100vw - 32px); transform: scale(0.9) translateY(10px); transition: transform 0.3s ease-out; }
         .result-overlay.show .result-content { transform: scale(1) translateY(0); }
         .board-wrap.pulse { animation: boardPulse 0.4s ease-out; }
-        .board-wrap.turn-0 { box-shadow: 0 0 20px 2px rgba(162,155,254,0.25); }
-        .board-wrap.turn-1 { box-shadow: 0 0 20px 2px rgba(78,205,196,0.25); }
         .diff-chip { display: flex; gap: 4px; }
         .diff-chip-item { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text-dim); cursor: pointer; transition: all 0.2s; font-family: inherit; min-width: 48px; }
         .diff-chip-item.active { background: var(--accent-bg); color: var(--accent); border-color: var(--accent); }
@@ -1238,7 +1236,7 @@
             });
             drawScore.textContent = state.scores[2];
         }
-        function updateTurn(){updatePlayerBoxes();ariaAnnouncer.textContent='Player '+(state.turn+1)+"'s turn";boardWrap.className='board-wrap turn-'+state.turn;}
+        function updateTurn(){updatePlayerBoxes();ariaAnnouncer.textContent='Player '+(state.turn+1)+"'s turn";}
         function announce(text){ariaAnnouncer.textContent='';setTimeout(()=>{ariaAnnouncer.textContent=text;},50);}
         function updateScores(){updatePlayerBoxes();if(!isOnline)saveScores();}
 
@@ -1326,7 +1324,6 @@
         }
         function endGame(w,wl) {
             if(state.gameOver) return;
-            boardWrap.className='board-wrap';
             track('game_end', {winner:w,mode:isOnline?'online':'local'});
             state.gameOver=true;lastWinLine=wl;
             firstTurn=1-firstTurn; // Alternate who goes first next game
