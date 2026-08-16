@@ -272,7 +272,11 @@
         <div id="cat-tabs" class="cat-tabs"></div>
         <div id="emoji-grid" class="emoji-grid"></div>
         <div id="photo-wrap" style="display:none; width:100%; max-width:300px;">
-            <button class="btn btn-sm" id="upload-area" style="width:100%; padding:16px; font-size:0.85rem;">Upload a photo</button>
+            <div id="upload-area" style="width:100%; aspect-ratio:1; border:2px dashed var(--border); border-radius:var(--radius-sm); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; cursor:pointer; background:var(--surface); transition:border-color 0.2s;">
+                <div style="font-size:2rem; opacity:0.4;">+</div>
+                <div style="font-size:0.8rem; color:var(--text-dim);">Upload a photo</div>
+                <div style="font-size:0.65rem; color:var(--text-dim); opacity:0.6;">Tap or drop an image</div>
+            </div>
             <input type="file" id="photo-upload" accept="image/*" capture="environment" style="display:none;">
             <canvas id="snap-canvas" class="snap-hidden"></canvas>
         </div>
