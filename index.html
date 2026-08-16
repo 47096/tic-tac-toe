@@ -357,28 +357,31 @@
 
     <!-- GAME -->
     <div class="screen hidden no-select" id="game-screen">
-        <div class="game-players">
-            <div class="game-tab active" id="p1-game-box">
-                <div class="gt-label">P1</div>
-                <div class="gt-body">
-                    <span class="gt-emoji" id="p1-icon">😎</span>
-                    <span class="gt-val"><span id="p1-score">0</span></span>
+        <div style="position:relative; width:100%; max-width:300px;">
+            <div class="game-players">
+                <div class="game-tab active" id="p1-game-box">
+                    <div class="gt-label">P1</div>
+                    <div class="gt-body">
+                        <span class="gt-emoji" id="p1-icon">😎</span>
+                        <span class="gt-val"><span id="p1-score">0</span></span>
+                    </div>
+                </div>
+                <div class="game-tab" id="draw-game-box">
+                    <div class="gt-label">Draw</div>
+                    <div class="gt-body">
+                        <span class="gt-emoji">🤝</span>
+                        <span class="gt-val"><span id="draw-score">0</span></span>
+                    </div>
+                </div>
+                <div class="game-tab" id="p2-game-box">
+                    <div class="gt-label">P2</div>
+                    <div class="gt-body">
+                        <span class="gt-emoji" id="p2-icon">🐱</span>
+                        <span class="gt-val"><span id="p2-score">0</span></span>
+                    </div>
                 </div>
             </div>
-            <div class="game-tab" id="draw-game-box">
-                <div class="gt-label">Draw</div>
-                <div class="gt-body">
-                    <span class="gt-emoji">🤝</span>
-                    <span class="gt-val"><span id="draw-score">0</span></span>
-                </div>
-            </div>
-            <div class="game-tab" id="p2-game-box">
-                <div class="gt-label">P2</div>
-                <div class="gt-body">
-                    <span class="gt-emoji" id="p2-icon">🐱</span>
-                    <span class="gt-val"><span id="p2-score">0</span></span>
-                </div>
-            </div>
+            <button id="game-close-btn" style="position:absolute; right:0; top:-24px; background:none; border:none; font-size:1.2rem; color:var(--text-dim); cursor:pointer; padding:4px; line-height:1;">×</button>
         </div>
         <div class="board-wrap" id="board-wrap">
             <div class="board no-select" id="board" role="grid" aria-label="Tic tac toe board">
@@ -392,7 +395,6 @@
                 <button class="diff-chip-item active" data-diff="medium" title="Medium"><span class="diff-emoji">🤔</span><span class="diff-text">Med</span></button>
                 <button class="diff-chip-item" data-diff="hard" title="Hard"><span class="diff-emoji">😈</span><span class="diff-text">Hard</span></button>
             </div>
-            <button class="btn btn-sm btn-ghost" id="btn-leave">Back</button>
         </div>
         <div id="aria-announcer" aria-live="polite" class="sr-only"></div>
     </div>
@@ -1384,7 +1386,7 @@
         window.addEventListener('beforeunload', e => { if(isOnline && roomRef && !state.gameOver) { e.preventDefault(); e.returnValue = ''; } });
         $('leave-btn').addEventListener('click',continueGame);
         $('menu-btn').addEventListener('click',leaveGame);
-        $('btn-leave').addEventListener('click',()=>{if(isOnline&&!state.gameOver&&!confirm('Leave the game?'))return;leaveGame();});
+        $('game-close-btn').addEventListener('click',()=>{if(isOnline&&!state.gameOver&&!confirm('Leave the game?'))return;leaveGame();});
         // Focus trap for result overlay
         resultOverlay.addEventListener('keydown', e => {
             if(e.key!=='Tab')return;
