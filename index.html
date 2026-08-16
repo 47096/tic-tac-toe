@@ -339,8 +339,6 @@
 
         <button class="btn" id="create-btn" disabled style="width:100%; max-width:300px; margin-top:4px;">Create Room</button>
         <button class="btn" id="join-btn" disabled style="width:100%; max-width:300px; margin-top:4px; display:none;">Join Room</button>
-
-        <button class="online-link" id="go-local">← Back</button>
     </div>
 
     <!-- WAITING -->
@@ -829,23 +827,19 @@
             e.target.value = '';
         });
 
-        $('go-local').addEventListener('click', () => {
+        $('online-close-btn').addEventListener('click', () => {
             $('online-screen').classList.add('hidden');
             $('title-screen').classList.remove('hidden');
             selectedMode = null;
             picks = [null, null]; emojis = [null, null]; photos = [null, null]; pickStep = 0;
             onlinePickData = { emoji: null, photo: null };
             hostPickData = null;
-            // Reset to create flow
             $('create-btn').style.display = '';
             $('create-btn').textContent = 'Create Room'; $('create-btn').disabled = true;
             $('join-btn').style.display = 'none';
             $('online-header').textContent = 'You are Player 1 — pick your avatar';
-            // Clear URL params
             history.replaceState(null, '', location.pathname);
-            updatePickerUI();
         });
-        $('online-close-btn').addEventListener('click', () => { $('go-local').click(); });
 
         // ===== ONLINE =====
         function buildOnlineGrids() {
