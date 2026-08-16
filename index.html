@@ -267,15 +267,12 @@
 
     <!-- PICKER (avatar selection) -->
     <div class="screen hidden no-select" id="picker">
-        <div style="display:flex; align-items:center; width:100%; margin-bottom:4px;">
-            <div style="flex:1;"></div>
-            <div style="text-align:center;">
+        <div style="display:flex; align-items:center; justify-content:space-between; width:100%; margin-bottom:4px;">
+            <div>
                 <div class="pick-header active" id="pick-header" style="margin-bottom:0;">Player 1 — pick your avatar</div>
                 <div id="picker-mode-label" style="font-size:0.65rem; color:var(--text-dim);"></div>
             </div>
-            <div style="flex:1; display:flex; justify-content:flex-end;">
-                <button class="btn btn-sm btn-ghost" id="picker-close-btn" style="font-size:1.1rem; font-weight:300; padding:4px 8px; min-width:auto;">×</button>
-            </div>
+            <button class="btn btn-sm btn-ghost" id="picker-close-btn" style="font-size:1.1rem; font-weight:300; padding:4px 8px; min-width:auto;">×</button>
         </div>
         <div id="cat-tabs" class="cat-tabs"></div>
         <div id="emoji-grid" class="emoji-grid"></div>
