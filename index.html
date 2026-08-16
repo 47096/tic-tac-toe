@@ -1273,7 +1273,7 @@
                 announce('Player '+(w+1)+' wins!');
             }else{sndDraw();if(navigator.vibrate)navigator.vibrate(100);resultBig.innerHTML='<span style="font-size:2.5rem">🤝</span>';resultText.textContent='Draw';$('result-line').textContent='';announce('Draw');}
             updateScores();
-            setTimeout(()=>resultOverlay.classList.add('show'),w!==null?600:300);
+            setTimeout(()=>resultOverlay.classList.add('show'),w!==null?1000:300);
 
         }
 
