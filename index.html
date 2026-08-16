@@ -253,18 +253,13 @@
     <div class="screen hidden no-select" id="picker">
         <div class="pick-header active" id="pick-header">Player 1 — pick your avatar</div>
         <div id="picker-mode-label" style="font-size:0.75rem; color:#666; text-align:center; margin-bottom:8px;"></div>
-        <div class="pick-tabs" role="tablist">
-            <button class="pick-tab active" data-tab="emoji" role="tab" aria-selected="true">😀 Emoji</button>
-            <button class="pick-tab" data-tab="photo" role="tab" aria-selected="false">📸 Photo</button>
+        <div id="cat-cards" class="cat-cards"></div>
+        <div id="emoji-grid-wrap" style="display:none;">
+            <button class="btn btn-sm btn-ghost" id="cat-back-btn" style="margin-bottom:8px;">← Back</button>
+            <div class="emoji-grid" id="emoji-grid"></div>
         </div>
-        <div class="pick-tab-content active" id="emoji-tab">
-            <div id="cat-cards" class="cat-cards"></div>
-            <div id="emoji-grid-wrap" style="display:none;">
-                <button class="btn btn-sm btn-ghost" id="cat-back-btn" style="margin-bottom:8px;">← Back</button>
-                <div class="emoji-grid" id="emoji-grid"></div>
-            </div>
-        </div>
-        <div class="pick-tab-content" id="photo-tab">
+        <div id="photo-wrap" style="display:none;">
+            <button class="btn btn-sm btn-ghost" id="photo-back-btn" style="margin-bottom:8px;">← Back</button>
             <div class="camera-area" id="camera-area">
                 <div class="camera-icon">📸</div>
                 <div class="camera-text">Tap to take photo</div>
@@ -573,6 +568,15 @@
                 });
                 container.appendChild(card);
             });
+            // Photo card
+            const photoCard = document.createElement('div');
+            photoCard.className = 'cat-card';
+            photoCard.innerHTML = '<div class="cat-icon">📷</div><div class="cat-name">Photo</div>';
+            photoCard.addEventListener('click', () => {
+                $('cat-cards').style.display = 'none';
+                $('photo-wrap').style.display = '';
+            });
+            container.appendChild(photoCard);
         }
 
         function updatePickerUI() {
@@ -624,11 +628,10 @@
             } else if (!picks[1]) {
                 pickHeader.textContent = selectedMode === 'computer' ? 'Computer — pick their avatar' : 'Player 2 — pick your avatar';
                 pickHeader.className = 'pick-header active';
-                // Re-activate emoji tab for P2
-                document.querySelectorAll('#picker .pick-tab-content').forEach(t => t.classList.remove('active'));
-                document.querySelector('#picker #emoji-tab').classList.add('active');
-                document.querySelectorAll('#picker .pick-tab').forEach(t => t.classList.remove('active'));
-                document.querySelector('#picker .pick-tab[data-tab="emoji"]').classList.add('active');
+                // Show category cards for P2
+                $('cat-cards').style.display = '';
+                $('emoji-grid-wrap').style.display = 'none';
+                $('photo-wrap').style.display = 'none';
             } else {
                 pickHeader.textContent = 'Ready to play!';
                 pickHeader.className = 'pick-header active';
@@ -677,6 +680,12 @@
             $('emoji-grid-wrap').style.display = 'none';
             $('cat-cards').style.display = '';
         });
+        // Back button from photo to category cards
+        $('photo-back-btn').addEventListener('click', () => {
+            stopCamera();
+            $('photo-wrap').style.display = 'none';
+            $('cat-cards').style.display = '';
+        });
 
         // Title screen buttons
         function showPicker(mode) {
@@ -690,6 +699,7 @@
             picks=[null,null]; emojis=[null,null]; photos=[null,null]; pickStep=0;
             $('cat-cards').style.display = '';
             $('emoji-grid-wrap').style.display = 'none';
+            $('photo-wrap').style.display = 'none';
             updatePickerUI();
         }
         $('title-local-btn').addEventListener('click', () => { showPicker('local'); });
