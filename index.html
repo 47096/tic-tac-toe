@@ -447,9 +447,8 @@
         let opponentLeft = false;
         let firstTurn = 0; // Alternates who goes first each game
         let selectedMode = null; // 'local', 'computer', 'online'
-        const savedScores = (() => { try { const s = JSON.parse(localStorage.getItem('ttt-scores')); return Array.isArray(s) && s.length===3 ? s : [0,0,0]; } catch(e) { return [0,0,0]; } })();
-        const state = { board: Array(9).fill(null), turn: 0, gameOver: false, scores: savedScores };
-        function saveScores() { try { localStorage.setItem('ttt-scores', JSON.stringify(state.scores)); } catch(e) {} }
+        const state = { board: Array(9).fill(null), turn: 0, gameOver: false, scores: [0,0,0] };
+        function saveScores() {}
 
         const $ = id => document.getElementById(id);
         const boardEl = $('board'), boardWrap = $('board-wrap');
