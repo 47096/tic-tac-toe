@@ -96,11 +96,13 @@
         .emoji-grid .e:hover { border-color: var(--text-dim); }
         .emoji-grid .e:active { transform: scale(0.9); }
         .emoji-grid .e.sel { border-color: var(--text); background: var(--surface); }
-        .cat-cards { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; width: 100%; max-width: 300px; }
-        .cat-card { text-align: center; padding: 14px 8px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg); cursor: pointer; transition: all 0.2s; }
-        .cat-card:hover { border-color: var(--text-dim); }
-        .cat-card .cat-icon { font-size: 1.5rem; margin-bottom: 4px; }
-        .cat-card .cat-name { font-size: 0.65rem; color: var(--text-dim); font-weight: 600; letter-spacing: 0.05em; }
+        .cat-tabs { display: flex; gap: 4px; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-bottom: 10px; padding-bottom: 2px; width: 100%; max-width: 300px; }
+        .cat-tab { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); cursor: pointer; transition: all 0.2s; font-family: inherit; min-width: 44px; }
+        .cat-tab:hover { border-color: var(--text-dim); }
+        .cat-tab.active { background: var(--accent-bg); border-color: var(--accent); }
+        .cat-tab .cat-icon { font-size: 0.9rem; line-height: 1; }
+        .cat-tab .cat-name { font-size: 0.45rem; color: var(--text-dim); font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+        .cat-tab.active .cat-name { color: var(--accent); }
         .camera-area { width: 100%; max-width: 300px; aspect-ratio: 1; border: 2px dashed var(--border); border-radius: var(--radius-md); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; background: var(--surface); cursor: pointer; transition: all 0.15s; }
         .camera-area:hover { border-color: var(--text-dim); }
         .camera-area .camera-icon { font-size: 3rem; }
@@ -253,13 +255,9 @@
     <div class="screen hidden no-select" id="picker">
         <div class="pick-header active" id="pick-header">Player 1 — pick your avatar</div>
         <div id="picker-mode-label" style="font-size:0.75rem; color:#666; text-align:center; margin-bottom:8px;"></div>
-        <div id="cat-cards" class="cat-cards"></div>
-        <div id="emoji-grid-wrap" style="display:none;">
-            <button class="btn btn-sm btn-ghost" id="cat-back-btn" style="margin-bottom:8px;">← Back</button>
-            <div class="emoji-grid" id="emoji-grid"></div>
-        </div>
+        <div id="cat-tabs" class="cat-tabs"></div>
+        <div id="emoji-grid" class="emoji-grid"></div>
         <div id="photo-wrap" style="display:none;">
-            <button class="btn btn-sm btn-ghost" id="photo-back-btn" style="margin-bottom:8px;">← Back</button>
             <div class="camera-area" id="camera-area">
                 <div class="camera-icon">📸</div>
                 <div class="camera-text">Tap to take photo</div>
@@ -555,28 +553,34 @@
                 grid.appendChild(btn);
             });
         }
-        function buildCatCards(containerId, onPick) {
+        function buildCatTabs(containerId, onPick) {
             const container = $(containerId); container.innerHTML = '';
-            EMOJI_CATS.forEach(cat => {
-                const card = document.createElement('div');
-                card.className = 'cat-card';
-                card.innerHTML = `<div class="cat-icon">${cat.icon}</div><div class="cat-name">${cat.name}</div>`;
-                card.addEventListener('click', () => {
-                    $('cat-cards').style.display = 'none';
-                    $('emoji-grid-wrap').style.display = '';
+            EMOJI_CATS.forEach((cat, idx) => {
+                const tab = document.createElement('button');
+                tab.className = 'cat-tab' + (idx === 0 ? ' active' : '');
+                tab.innerHTML = `<span class="cat-icon">${cat.icon}</span><span class="cat-name">${cat.name}</span>`;
+                tab.addEventListener('click', () => {
+                    container.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    $('photo-wrap').style.display = 'none';
+                    $('emoji-grid').style.display = '';
                     buildGrid('emoji-grid', onPick, cat.emojis);
                 });
-                container.appendChild(card);
+                container.appendChild(tab);
             });
-            // Photo card
-            const photoCard = document.createElement('div');
-            photoCard.className = 'cat-card';
-            photoCard.innerHTML = '<div class="cat-icon">📷</div><div class="cat-name">Photo</div>';
-            photoCard.addEventListener('click', () => {
-                $('cat-cards').style.display = 'none';
+            // Photo tab
+            const photoTab = document.createElement('button');
+            photoTab.className = 'cat-tab';
+            photoTab.innerHTML = '<span class="cat-icon">📷</span><span class="cat-name">Photo</span>';
+            photoTab.addEventListener('click', () => {
+                container.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+                photoTab.classList.add('active');
+                $('emoji-grid').style.display = 'none';
                 $('photo-wrap').style.display = '';
             });
-            container.appendChild(photoCard);
+            container.appendChild(photoTab);
+            // Build default grid (first category)
+            buildGrid('emoji-grid', onPick, EMOJI_CATS[0].emojis);
         }
 
         function updatePickerUI() {
@@ -628,10 +632,9 @@
             } else if (!picks[1]) {
                 pickHeader.textContent = selectedMode === 'computer' ? 'Computer — pick their avatar' : 'Player 2 — pick your avatar';
                 pickHeader.className = 'pick-header active';
-                // Show category cards for P2
-                $('cat-cards').style.display = '';
-                $('emoji-grid-wrap').style.display = 'none';
-                $('photo-wrap').style.display = 'none';
+                // Reset to first category tab for P2
+                const firstTab = $('cat-tabs').querySelector('.cat-tab');
+                if (firstTab) firstTab.click();
             } else {
                 pickHeader.textContent = 'Ready to play!';
                 pickHeader.className = 'pick-header active';
@@ -664,28 +667,17 @@
 
             picks[pickStep] = e; emojis[pickStep] = e; photos[pickStep] = null;
             updatePickerUI();
-            // Go back to category cards for P2 pick
+            // Reset to first tab for P2 pick
             if (pickStep === 0) {
                 pickStep = 1;
                 setTimeout(() => {
-                    $('emoji-grid-wrap').style.display = 'none';
-                    $('cat-cards').style.display = '';
+                    const firstTab = $('cat-tabs').querySelector('.cat-tab');
+                    if (firstTab) firstTab.click();
                     updatePickerUI();
                 }, 300);
             }
         };
-        buildCatCards('cat-cards', emojiPickHandler);
-        // Back button from emoji grid to category cards
-        $('cat-back-btn').addEventListener('click', () => {
-            $('emoji-grid-wrap').style.display = 'none';
-            $('cat-cards').style.display = '';
-        });
-        // Back button from photo to category cards
-        $('photo-back-btn').addEventListener('click', () => {
-            stopCamera();
-            $('photo-wrap').style.display = 'none';
-            $('cat-cards').style.display = '';
-        });
+        buildCatTabs('cat-tabs', emojiPickHandler);
 
         // Title screen buttons
         function showPicker(mode) {
@@ -697,9 +689,10 @@
             else if (mode === 'computer') { modeLabel.textContent = 'vs Computer'; }
             // Reset picker state
             picks=[null,null]; emojis=[null,null]; photos=[null,null]; pickStep=0;
-            $('cat-cards').style.display = '';
-            $('emoji-grid-wrap').style.display = 'none';
             $('photo-wrap').style.display = 'none';
+            $('emoji-grid').style.display = '';
+            const firstTab = $('cat-tabs').querySelector('.cat-tab');
+            if (firstTab) firstTab.click();
             updatePickerUI();
         }
         $('title-local-btn').addEventListener('click', () => { showPicker('local'); });
