@@ -212,8 +212,10 @@
         .board-wrap.turn-0 { box-shadow: 0 0 20px 2px rgba(162,155,254,0.25); }
         .board-wrap.turn-1 { box-shadow: 0 0 20px 2px rgba(78,205,196,0.25); }
         .diff-chip { display: flex; gap: 4px; }
-        .diff-chip-item { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; cursor: pointer; border: 1px solid var(--border); background: var(--bg); color: var(--text); transition: all 0.2s; }
-        .diff-chip-item.active { background: var(--accent-bg); border-color: var(--accent); }
+        .diff-chip-item { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text-dim); cursor: pointer; transition: all 0.2s; font-family: inherit; min-width: 48px; }
+        .diff-chip-item.active { background: var(--accent-bg); color: var(--accent); border-color: var(--accent); }
+        .diff-emoji { font-size: 0.9rem; line-height: 1; }
+        .diff-text { font-size: 0.55rem; letter-spacing: 0.05em; text-transform: uppercase; font-weight: 700; }
         @keyframes boardPulse { 0%{transform:scale(1)} 50%{transform:scale(1.03)} 100%{transform:scale(1)} }
 
         .result-overlay h2 { font-size: 1.3rem; font-weight: 400; letter-spacing: 0.15em; margin-bottom: 8px; }
@@ -384,9 +386,9 @@
         </div>
         <div class="ctrls">
             <div class="diff-chip" id="diff-chip" style="display:none;">
-                <button class="diff-chip-item" data-diff="easy" title="Easy">😊</button>
-                <button class="diff-chip-item active" data-diff="medium" title="Medium">🤔</button>
-                <button class="diff-chip-item" data-diff="hard" title="Hard">😈</button>
+                <button class="diff-chip-item" data-diff="easy" title="Easy"><span class="diff-emoji">😊</span><span class="diff-text">Easy</span></button>
+                <button class="diff-chip-item active" data-diff="medium" title="Medium"><span class="diff-emoji">🤔</span><span class="diff-text">Med</span></button>
+                <button class="diff-chip-item" data-diff="hard" title="Hard"><span class="diff-emoji">😈</span><span class="diff-text">Hard</span></button>
             </div>
             <button class="btn btn-sm" id="btn-restart">Reset</button>
             <button class="btn btn-sm btn-ghost" id="btn-leave">Back</button>
