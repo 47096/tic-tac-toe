@@ -176,7 +176,13 @@
 
         .board-wrap { position: relative; width: min(85vw, 55dvh, 55vh, 400px); height: min(85vw, 55dvh, 55vh, 400px); }
         .board { display: grid; grid-template-columns: repeat(3,1fr); grid-template-rows: repeat(3,1fr); gap: 0; width: 100%; height: 100%; position: relative; overflow: visible; }
-        .board-lines { position: absolute; inset: -10px; width: calc(100% + 20px); height: calc(100% + 20px); pointer-events: none; z-index: 0; color: var(--text); }
+        .board-lines { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
+        .board-lines .v { position: absolute; width: 2px; background: var(--border); top: -10px; bottom: -10px; }
+        .board-lines .v:nth-child(1) { left: 33.33%; transform: translateX(-50%); }
+        .board-lines .v:nth-child(2) { left: 66.66%; transform: translateX(-50%); }
+        .board-lines .h { position: absolute; height: 2px; background: var(--border); left: -10px; right: -10px; }
+        .board-lines .h:nth-child(3) { top: 33.33%; transform: translateY(-50%); }
+        .board-lines .h:nth-child(4) { top: 66.66%; transform: translateY(-50%); }
         .cell { background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.12s; -webkit-tap-highlight-color: transparent; overflow: hidden; z-index: 1; border-radius: 4px; border: none; outline: none; font-family: inherit; color: inherit; padding: 0; touch-action: manipulation; }
         .cell:hover:not(.m) { background: rgba(var(--text-rgb), 0.06); }
         .cell.shake { animation: shake 0.3s ease-in-out; }
@@ -373,7 +379,7 @@
         </div>
         <div class="board-wrap" id="board-wrap">
             <div class="board no-select" id="board" role="grid" aria-label="Tic tac toe board">
-                <svg class="board-lines" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M67 0 Q69 33, 66 67 Q68 100, 67 133 Q66 167, 68 200"/><path d="M133 0 Q131 33, 134 67 Q132 100, 133 133 Q134 167, 132 200"/><path d="M0 67 Q33 69, 67 66 Q100 68, 133 67 Q167 66, 200 68"/><path d="M0 133 Q33 131, 67 134 Q100 132, 133 133 Q167 134, 200 132"/></svg>
+                <div class="board-lines"><div class="v"></div><div class="v"></div><div class="h"></div><div class="h"></div></div>
             </div>
             <canvas id="win-canvas"></canvas>
         </div>
@@ -547,11 +553,14 @@
                 const icon = $(i===0?'pick-p1-icon':'pick-p2-icon');
                 const status = $(i===0?'pick-p1-status':'pick-p2-status');
                 const ready = $(i===0?'p1-ready':'p2-ready');
-                // Update P2 label for Computer mode
-                if(i===1 && selectedMode==='computer') {
-                    ready.querySelector('.rp-label').textContent = 'Computer';
-                } else if(i===1) {
-                    ready.querySelector('.rp-label').textContent = 'P2';
+                // vs Computer mode: P2 is always auto-assigned
+                if(i===1 && vsComputer) {
+                    icon.textContent = '🤖';
+                    status.textContent = '✓ Computer';
+                    status.className = 'rp-status ready';
+                    ready.classList.add('ready');
+                    ready.classList.remove('active');
+                    return;
                 }
                 if (photos[i]) {
                     icon.innerHTML = `<img src="${safePhotoSrc(photos[i])}" style="width:100%;height:100%;object-fit:cover;border-radius:5px;transform:scaleX(-1);" alt="">`;
@@ -584,11 +593,11 @@
             if (pickStep === 0 && !picks[0] && !photos[0]) {
                 pickHeader.textContent = 'Player 1 — pick your avatar';
                 pickHeader.className = 'pick-header active';
-            } else if (pickStep === 0 && selectedMode === 'computer') {
+            } else if (pickStep === 0 && vsComputer) {
                 pickHeader.textContent = 'Ready to play!';
                 pickHeader.className = 'pick-header active';
             } else if (!picks[1]) {
-                pickHeader.textContent = selectedMode === 'computer' ? 'Computer — pick their avatar' : 'Player 2 — pick your avatar';
+                pickHeader.textContent = 'Player 2 — pick your avatar';
                 pickHeader.className = 'pick-header active';
                 // Re-activate emoji tab for P2
                 document.querySelectorAll('#picker .pick-tab-content').forEach(t => t.classList.remove('active'));
@@ -604,8 +613,10 @@
             const startBtn = document.getElementById('start-game-btn');
             const p1Ready = !!(picks[0] || photos[0]);
             const p2Ready = !!(picks[1] || photos[1]);
-            if (selectedMode === 'local' || selectedMode === 'computer') {
+            if (selectedMode === 'local') {
                 startBtn.disabled = !(p1Ready && p2Ready);
+            } else if (selectedMode === 'computer') {
+                startBtn.disabled = !p1Ready;
             } else {
                 startBtn.disabled = true;
             }
@@ -627,7 +638,8 @@
 
             picks[pickStep] = e; emojis[pickStep] = e; photos[pickStep] = null;
             updatePickerUI();
-            if (pickStep === 0) { pickStep = 1; setTimeout(updatePickerUI, 300); }
+            // In vs Computer mode, don't advance to P2 pick
+            if (pickStep === 0 && !vsComputer) { pickStep = 1; setTimeout(updatePickerUI, 300); }
         });
 
         // Title screen buttons
@@ -676,17 +688,19 @@
                 $('game-screen').classList.remove('hidden');
                 resetBoard();
             } else if (selectedMode === 'computer') {
-                if (!picks[0] || !picks[1]) return;
+                if (!picks[0]) return;
                 track('game_start', {mode:'ai',difficulty:aiDifficulty});
                 if(navigator.vibrate)navigator.vibrate(10);
                 vsComputer = true;
                 isOnline = false;
                 roomRef = null; roomCode = null; playerIndex = null;
+                picks[1] = '🤖'; emojis[1] = '🤖'; photos[1] = null;
                 pickStep = 0;
                 $('picker').classList.add('hidden');
                 $('game-screen').classList.remove('hidden');
                 $('diff-chip').style.display = 'flex';
                 $('p2-game-box').querySelector('.gt-label').textContent = 'Computer';
+                $('p2-icon').textContent = '🤖';
                 resetBoard();
             }
         });
@@ -801,8 +815,8 @@
                 emojis[pickStep] = null;
                 picks[pickStep] = '📸';
                 updatePickerUI();
-                // Advance
-                if (pickStep === 0) {
+                // Advance (not in vs Computer mode)
+                if (pickStep === 0 && !vsComputer) {
                     pickStep = 1;
                     setTimeout(updatePickerUI, 300);
                 }
@@ -1170,7 +1184,7 @@
         // ===== BOARD =====
         function resetBoard() {
             state.board=Array(9).fill(null);state.turn=firstTurn;state.gameOver=false;lastWinLine=null;
-            boardEl.innerHTML='<svg class="board-lines" viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M67 0 Q69 33, 66 67 Q68 100, 67 133 Q66 167, 68 200"/><path d="M133 0 Q131 33, 134 67 Q132 100, 133 133 Q134 167, 132 200"/><path d="M0 67 Q33 69, 67 66 Q100 68, 133 67 Q167 66, 200 68"/><path d="M0 133 Q33 131, 67 134 Q100 132, 133 133 Q167 134, 200 132"/></svg>';
+            boardEl.innerHTML='<div class="board-lines"><div class="v"></div><div class="v"></div><div class="h"></div><div class="h"></div></div>';
             cells.length=0;
             for(let i=0;i<9;i++){
                 const cell=document.createElement('button');cell.className='cell';cell.setAttribute('role','gridcell');cell.setAttribute('aria-label','Row '+Math.floor(i/3+1)+' Column '+(i%3+1)+', empty');
