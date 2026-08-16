@@ -484,49 +484,66 @@
         function track(event, data) { try { console.log('[analytics]', event, data||''); } catch(e) {} }
         function genCode() { return Math.random().toString(36).substring(2,8).toUpperCase(); }
 
-        // ===== AI (Minimax) =====
+        // ===== AI =====
         function aiBestMove(board, aiPlayer) {
             const human = 1 - aiPlayer;
-            function checkWinner(b) {
-                for (const [a,bb,c] of WIN_LINES) if (b[a]!==null && b[a]===b[bb] && b[a]===b[c]) return b[a];
-                return b.every(c=>c!==null) ? -1 : null;
+            const empty = [];
+            for (let i = 0; i < 9; i++) if (board[i] === null) empty.push(i);
+
+            // Find immediate win or block for a given player
+            function findThreat(player) {
+                for (const [a, b, c] of WIN_LINES) {
+                    const line = [board[a], board[b], board[c]];
+                    const count = line.filter(v => v === player).length;
+                    const emptyIdx = [a, b, c].find(i => board[i] === null);
+                    if (count === 2 && emptyIdx !== undefined) return emptyIdx;
+                }
+                return -1;
             }
+
+            // Easy: random. Never blocks, never takes wins (unless luck)
+            if (aiDifficulty === 'easy') {
+                return empty[Math.floor(Math.random() * empty.length)];
+            }
+
+            // Medium: blocks wins and takes wins, but otherwise random
+            if (aiDifficulty === 'medium') {
+                // Take win if available
+                const win = findThreat(aiPlayer);
+                if (win !== -1) return win;
+                // Block opponent's win
+                const block = findThreat(human);
+                if (block !== -1) return block;
+                // Otherwise random
+                return empty[Math.floor(Math.random() * empty.length)];
+            }
+
+            // Hard: full minimax (perfect play)
             function minimax(b, depth, isMax) {
-                const result = checkWinner(b);
-                if (result === aiPlayer) return 10 - depth;
-                if (result === human) return depth - 10;
-                if (result === -1) return 0;
+                for (const [a, bb, c] of WIN_LINES) {
+                    if (b[a] !== null && b[a] === b[bb] && b[a] === b[c]) {
+                        return b[a] === aiPlayer ? 10 - depth : depth - 10;
+                    }
+                }
+                if (b.every(c => c !== null)) return 0;
                 if (isMax) {
                     let best = -Infinity;
-                    for (let i = 0; i < 9; i++) { if (b[i]===null) { b[i]=aiPlayer; best=Math.max(best,minimax(b,depth+1,false)); b[i]=null; } }
+                    for (let i = 0; i < 9; i++) { if (b[i] === null) { b[i] = aiPlayer; best = Math.max(best, minimax(b, depth + 1, false)); b[i] = null; } }
                     return best;
                 } else {
                     let best = Infinity;
-                    for (let i = 0; i < 9; i++) { if (b[i]===null) { b[i]=human; best=Math.min(best,minimax(b,depth+1,true)); b[i]=null; } }
+                    for (let i = 0; i < 9; i++) { if (b[i] === null) { b[i] = human; best = Math.min(best, minimax(b, depth + 1, true)); b[i] = null; } }
                     return best;
                 }
             }
-            // Score all empty moves
-            const moves = [];
-            for (let i = 0; i < 9; i++) {
-                if (board[i]===null) {
-                    board[i] = aiPlayer;
-                    moves.push({ i, score: minimax(board, 0, false) });
-                    board[i] = null;
-                }
+            let bestScore = -Infinity, bestMove = empty[0];
+            for (const i of empty) {
+                board[i] = aiPlayer;
+                const score = minimax(board, 0, false);
+                board[i] = null;
+                if (score > bestScore) { bestScore = score; bestMove = i; }
             }
-            moves.sort((a, b) => b.score - a.score);
-            // Easy: random from all moves
-            if (aiDifficulty === 'easy') {
-                return moves[Math.floor(Math.random() * moves.length)].i;
-            }
-            // Medium: pick from top 2-3 moves (natural mistakes)
-            if (aiDifficulty === 'medium') {
-                const top = Math.min(3, moves.length);
-                return moves[Math.floor(Math.random() * top)].i;
-            }
-            // Hard: always best move
-            return moves[0].i;
+            return bestMove;
         }
 
         // ===== LOCAL PICKER =====
