@@ -1016,16 +1016,31 @@
             if(cleanupListener && roomRef) roomRef.child('players').off('value',cleanupListener);
             if(opponentListener && roomRef) roomRef.child(`players/${1-playerIndex}`).off('value',opponentListener);
 
+            let opponentLeaveTimer = null;
             opponentListener = snap => {
                 const p=snap.val();
                 const gone=!p||p.disconnected===true;
                 if(gone&&!state.gameOver&&onlineStarted){
-                    state.gameOver=true;
-                    opponentLeft=true;
-                    resultBig.textContent='👋';
-                    resultText.textContent='Opponent left';
-                    $('result-line').textContent='';
-                    resultOverlay.classList.add('show');
+                    // Grace period: wait 10s before declaring opponent left
+                    if(opponentLeaveTimer) return;
+                    opponentLeaveTimer = setTimeout(() => {
+                        opponentLeaveTimer = null;
+                        if(state.gameOver) return;
+                        state.gameOver=true;
+                        opponentLeft=true;
+                        // Record win for remaining player
+                        state.scores[playerIndex]++;
+                        updateScores();
+                        resultBig.textContent='🏆';
+                        resultText.textContent='You win!';
+                        $('result-line').textContent='Opponent left';
+                        $('leave-btn').textContent='New Game';
+                        resultOverlay.classList.add('show');
+                    }, 10000);
+                } else if(!gone && opponentLeaveTimer) {
+                    // Opponent reconnected within grace period
+                    clearTimeout(opponentLeaveTimer);
+                    opponentLeaveTimer = null;
                 }
             };
             roomRef.child(`players/${1-playerIndex}`).on('value', opponentListener);
@@ -1306,7 +1321,8 @@
         });
 
         function continueGame() {
-            if (opponentLeft) { opponentLeft=false; leaveGame(); $('picker').classList.add('hidden'); $('online-screen').classList.remove('hidden'); return; }
+            if (opponentLeft) { opponentLeft=false; $('leave-btn').textContent='Play Again'; leaveGame(); $('picker').classList.add('hidden'); $('online-screen').classList.remove('hidden'); return; }
+            $('leave-btn').textContent='Play Again';
             resultOverlay.classList.remove('show');
             clearWinLine();
             state.gameOver = false;
