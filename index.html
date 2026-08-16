@@ -1308,7 +1308,7 @@
             function anim(n){
                 const p=Math.min((n-t)/400,1),e=1-Math.pow(1-p,3);
                 winCtx.clearRect(0,0,rect.width,rect.height);
-                winCtx.strokeStyle=cachedAccent;winCtx.lineCap='round';winCtx.lineJoin='round';
+                winCtx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--text').trim()||'#1a1a1a';winCtx.lineCap='round';winCtx.lineJoin='round';
                 // Draw two passes for hand-drawn thickness variation
                 for(let pass=0;pass<2;pass++){
                     winCtx.beginPath();winCtx.moveTo(x1,y1);
