@@ -267,8 +267,14 @@
 
     <!-- PICKER (avatar selection) -->
     <div class="screen hidden no-select" id="picker">
-        <div class="pick-header active" id="pick-header">Player 1 — pick your avatar</div>
-        <div id="picker-mode-label" style="font-size:0.75rem; color:#666; text-align:center; margin-bottom:8px;"></div>
+        <div style="display:flex; align-items:center; width:100%; margin-bottom:4px;">
+            <button class="btn btn-sm btn-ghost" id="picker-close-btn" style="font-size:1.1rem; font-weight:300; padding:4px 8px; min-width:auto;">×</button>
+            <div style="flex:1; text-align:center;">
+                <div class="pick-header active" id="pick-header" style="margin-bottom:0;">Player 1 — pick your avatar</div>
+                <div id="picker-mode-label" style="font-size:0.65rem; color:var(--text-dim);"></div>
+            </div>
+            <div style="width:36px;"></div>
+        </div>
         <div id="cat-tabs" class="cat-tabs"></div>
         <div id="emoji-grid" class="emoji-grid"></div>
         <div id="photo-wrap" style="display:none; width:100%; max-width:300px;">
@@ -297,7 +303,6 @@
         <div class="ctrls" style="max-width:300px;margin-top:4px;">
             <button class="btn btn-sm" id="start-game-btn" disabled>Start Game</button>
         </div>
-        <button class="btn btn-sm btn-ghost" id="picker-back-btn" style="margin-top:8px;">← Back</button>
     </div>
 
     <!-- ONLINE -->
@@ -706,8 +711,8 @@
             updateOnlinePickerUI();
         });
 
-        // Picker back button
-        $('picker-back-btn').addEventListener('click', () => {
+        // Picker close button
+        $('picker-close-btn').addEventListener('click', () => {
             $('picker').classList.add('hidden');
             $('title-screen').classList.remove('hidden');
             selectedMode = null;
