@@ -96,12 +96,12 @@
         .emoji-grid .e:hover { border-color: var(--text-dim); }
         .emoji-grid .e:active { transform: scale(0.9); }
         .emoji-grid .e.sel { border-color: var(--text); background: var(--surface); }
-        .cat-tabs { display: flex; gap: 4px; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-bottom: 10px; padding-bottom: 2px; width: 100%; max-width: 300px; }
-        .cat-tab { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); cursor: pointer; transition: all 0.2s; font-family: inherit; min-width: 48px; }
+        .cat-tabs { display: grid; grid-template-columns: repeat(6,1fr); gap: 6px; width: 100%; max-width: 300px; margin-bottom: 10px; }
+        .cat-tab { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; aspect-ratio: 1; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg); cursor: pointer; transition: all 0.2s; font-family: inherit; padding: 4px 2px; }
         .cat-tab:hover { border-color: var(--text-dim); }
         .cat-tab.active { background: var(--accent-bg); border-color: var(--accent); }
         .cat-tab .cat-icon { font-size: 1.4rem; line-height: 1; }
-        .cat-tab .cat-name { font-size: 0.45rem; color: var(--text-dim); font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+        .cat-tab .cat-name { font-size: 0.4rem; color: var(--text-dim); font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
         .cat-tab.active .cat-name { color: var(--accent); }
         .camera-area { width: 100%; max-width: 300px; aspect-ratio: 1; border: 2px dashed var(--border); border-radius: var(--radius-md); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; background: var(--surface); cursor: pointer; transition: all 0.15s; }
         .camera-area:hover { border-color: var(--text-dim); }
