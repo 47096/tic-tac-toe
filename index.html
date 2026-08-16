@@ -745,6 +745,7 @@
                 $('game-screen').classList.remove('hidden');
                 $('diff-chip').style.display = 'flex';
                 $('p2-game-box').querySelector('.gt-label').textContent = 'Computer';
+                firstTurn = 0; // Human always goes first in computer mode
                 resetBoard();
             }
         });
@@ -1248,7 +1249,7 @@
             if(state.gameOver) return;
             track('game_end', {winner:w,mode:isOnline?'online':'local'});
             state.gameOver=true;lastWinLine=wl;
-            firstTurn=1-firstTurn; // Alternate who goes first next game
+            if(!vsComputer) firstTurn=1-firstTurn; // Alternate who goes first (local/online only)
             if(w!==null&&wl){wl.forEach(i=>cells[i].classList.add('win'));drawWinLine(wl);sndWin();fireConfetti();if(navigator.vibrate)navigator.vibrate([50,30,50]);boardWrap.classList.add('pulse');setTimeout(()=>boardWrap.classList.remove('pulse'),400);
                 resultBig.innerHTML=hasPhoto(w)?`<img src="${safePhotoSrc(photos[w])}" alt="">`:`<span style="font-size:2.5rem">${emojis[w]}</span>`;
                 resultText.textContent=`Player ${w+1} wins`;
