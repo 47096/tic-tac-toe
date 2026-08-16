@@ -553,14 +553,11 @@
                 const icon = $(i===0?'pick-p1-icon':'pick-p2-icon');
                 const status = $(i===0?'pick-p1-status':'pick-p2-status');
                 const ready = $(i===0?'p1-ready':'p2-ready');
-                // vs Computer mode: P2 is always auto-assigned
-                if(i===1 && vsComputer) {
-                    icon.textContent = '🤖';
-                    status.textContent = '✓ Computer';
-                    status.className = 'rp-status ready';
-                    ready.classList.add('ready');
-                    ready.classList.remove('active');
-                    return;
+                // Update P2 label for Computer mode
+                if(i===1 && selectedMode==='computer') {
+                    ready.querySelector('.rp-label').textContent = 'Computer';
+                } else if(i===1) {
+                    ready.querySelector('.rp-label').textContent = 'P2';
                 }
                 if (photos[i]) {
                     icon.innerHTML = `<img src="${safePhotoSrc(photos[i])}" style="width:100%;height:100%;object-fit:cover;border-radius:5px;transform:scaleX(-1);" alt="">`;
@@ -593,11 +590,11 @@
             if (pickStep === 0 && !picks[0] && !photos[0]) {
                 pickHeader.textContent = 'Player 1 — pick your avatar';
                 pickHeader.className = 'pick-header active';
-            } else if (pickStep === 0 && vsComputer) {
+            } else if (pickStep === 0 && selectedMode === 'computer') {
                 pickHeader.textContent = 'Ready to play!';
                 pickHeader.className = 'pick-header active';
             } else if (!picks[1]) {
-                pickHeader.textContent = 'Player 2 — pick your avatar';
+                pickHeader.textContent = selectedMode === 'computer' ? 'Computer — pick their avatar' : 'Player 2 — pick your avatar';
                 pickHeader.className = 'pick-header active';
                 // Re-activate emoji tab for P2
                 document.querySelectorAll('#picker .pick-tab-content').forEach(t => t.classList.remove('active'));
@@ -613,10 +610,8 @@
             const startBtn = document.getElementById('start-game-btn');
             const p1Ready = !!(picks[0] || photos[0]);
             const p2Ready = !!(picks[1] || photos[1]);
-            if (selectedMode === 'local') {
+            if (selectedMode === 'local' || selectedMode === 'computer') {
                 startBtn.disabled = !(p1Ready && p2Ready);
-            } else if (selectedMode === 'computer') {
-                startBtn.disabled = !p1Ready;
             } else {
                 startBtn.disabled = true;
             }
@@ -638,8 +633,7 @@
 
             picks[pickStep] = e; emojis[pickStep] = e; photos[pickStep] = null;
             updatePickerUI();
-            // In vs Computer mode, don't advance to P2 pick
-            if (pickStep === 0 && !vsComputer) { pickStep = 1; setTimeout(updatePickerUI, 300); }
+            if (pickStep === 0) { pickStep = 1; setTimeout(updatePickerUI, 300); }
         });
 
         // Title screen buttons
@@ -688,19 +682,17 @@
                 $('game-screen').classList.remove('hidden');
                 resetBoard();
             } else if (selectedMode === 'computer') {
-                if (!picks[0]) return;
+                if (!picks[0] || !picks[1]) return;
                 track('game_start', {mode:'ai',difficulty:aiDifficulty});
                 if(navigator.vibrate)navigator.vibrate(10);
                 vsComputer = true;
                 isOnline = false;
                 roomRef = null; roomCode = null; playerIndex = null;
-                picks[1] = '🤖'; emojis[1] = '🤖'; photos[1] = null;
                 pickStep = 0;
                 $('picker').classList.add('hidden');
                 $('game-screen').classList.remove('hidden');
                 $('diff-chip').style.display = 'flex';
                 $('p2-game-box').querySelector('.gt-label').textContent = 'Computer';
-                $('p2-icon').textContent = '🤖';
                 resetBoard();
             }
         });
@@ -815,8 +807,8 @@
                 emojis[pickStep] = null;
                 picks[pickStep] = '📸';
                 updatePickerUI();
-                // Advance (not in vs Computer mode)
-                if (pickStep === 0 && !vsComputer) {
+                // Advance
+                if (pickStep === 0) {
                     pickStep = 1;
                     setTimeout(updatePickerUI, 300);
                 }
