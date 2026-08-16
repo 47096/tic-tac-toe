@@ -115,6 +115,8 @@
         .camera-area .camera-icon { font-size: 3rem; }
         .camera-area .camera-text { font-size: 0.8rem; color: var(--text-dim); }
         .emoji-grid .e.used { opacity: 0.35; cursor: not-allowed; }
+        .emoji-grid .e.just-picked { animation: pick-pulse 0.25s ease-out; }
+        @keyframes pick-pulse { 0% { transform: scale(1); } 50% { transform: scale(1.25); } 100% { transform: scale(1); } }
 
         .pick-preview { display: flex; gap: 20px; align-items: center; justify-content: center; margin-top: 4px; }
         .ready-area { width: 100%; max-width: 300px; }
@@ -685,6 +687,8 @@
             if ((pickStep === 0 && picks[1] === e) || (pickStep === 1 && picks[0] === e)) return;
 
             picks[pickStep] = e; emojis[pickStep] = e; photos[pickStep] = null;
+            btn.classList.add('just-picked');
+            setTimeout(() => btn.classList.remove('just-picked'), 250);
             updatePickerUI();
             // Reset to first tab for P2 pick
             if (pickStep === 0) {
