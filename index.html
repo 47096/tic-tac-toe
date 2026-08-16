@@ -364,6 +364,7 @@
                         <span class="gt-emoji" id="p1-icon">😎</span>
                         <span class="gt-val"><span id="p1-score">0</span></span>
                     </div>
+                    <div id="streak-display" style="font-size:0.55rem; color:var(--accent); min-height:0.7rem;"></div>
                 </div>
                 <div class="game-tab" id="draw-game-box">
                     <div class="gt-label">Draw</div>
@@ -458,7 +459,8 @@
         let firstTurn = 0; // Alternates who goes first each game
         let selectedMode = null; // 'local', 'computer', 'online'
         const state = { board: Array(9).fill(null), turn: 0, gameOver: false, scores: [0,0,0] };
-        function saveScores() {}
+        let streak = parseInt(localStorage.getItem('ttt-streak') || '0', 10);
+        function saveScores() { if (vsComputer) localStorage.setItem('ttt-streak', streak); }
 
         const $ = id => document.getElementById(id);
         const showScreen = id => { document.querySelectorAll('.screen:not(.hidden)').forEach(s => s.classList.add('hidden')); $(id).classList.remove('hidden'); $(id).focus(); };
@@ -1138,7 +1140,7 @@
                 });
                 boardEl.appendChild(cell);cells.push(cell);
             }
-            resultOverlay.classList.remove('show');clearWinLine();renderBoard();updateTurn();updateScores();
+            resultOverlay.classList.remove('show');clearWinLine();renderBoard();updateTurn();updateScores();updateStreakDisplay();
         }
 
         function renderBoard() {
@@ -1173,6 +1175,7 @@
         function updateTurn(){updatePlayerBoxes();ariaAnnouncer.textContent='Player '+(state.turn+1)+"'s turn";}
         function announce(text){ariaAnnouncer.textContent='';setTimeout(()=>{ariaAnnouncer.textContent=text;},50);}
         function updateScores(){updatePlayerBoxes();if(!isOnline)saveScores();}
+        function updateStreakDisplay(){const el=$('streak-display');if(!el)return;el.textContent=vsComputer&&streak>1?`${streak}🔥 streak`:'';}
 
         function handleClick(i) {
             if(state.gameOver||state.board[i]!==null)return;
@@ -1272,6 +1275,7 @@
                 $('result-line').textContent=getWinLineName(wl);
                 announce('Player '+(w+1)+' wins!');
             }else{sndDraw();if(navigator.vibrate)navigator.vibrate(100);resultBig.innerHTML='<span style="font-size:2.5rem">🤝</span>';resultText.textContent='Draw';$('result-line').textContent='';announce('Draw');}
+            if (vsComputer) { if (w === 0) streak++; else streak = 0; updateStreakDisplay(); }
             updateScores();
             setTimeout(()=>resultOverlay.classList.add('show'),w!==null?1000:300);
 
