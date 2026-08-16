@@ -96,7 +96,7 @@
         .emoji-grid .e:hover { border-color: var(--text-dim); }
         .emoji-grid .e:active { transform: scale(0.9); }
         .emoji-grid .e.sel { border-color: var(--text); background: var(--surface); }
-        .cat-tabs { display: grid; grid-template-columns: repeat(6,1fr); gap: 6px; width: 100%; max-width: 300px; margin-bottom: 10px; }
+        .cat-tabs { display: grid; grid-template-columns: repeat(5,1fr); gap: 6px; width: 100%; max-width: 300px; margin-bottom: 10px; }
         .cat-tab { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; aspect-ratio: 1; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg); cursor: pointer; transition: all 0.2s; font-family: inherit; padding: 4px 2px; }
         .cat-tab:hover { border-color: var(--text-dim); }
         .cat-tab.active { background: var(--accent-bg); border-color: var(--accent); }
@@ -426,7 +426,6 @@
             { name:'Faces', icon:'😄', emojis:['😄','😍','🥰','😎','🥳','🤩','😇','🤗','😋','😜','🤪','🤔','😏','🙄','😬','😌','😴','🤧','😈','💀','👻','🤡','👽','🤖','💩'] },
             { name:'Animals', icon:'🐱', emojis:['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🐔','🐧','🐦','🐝','🐛','🦋','🐙','🦈','🐢','🐍'] },
             { name:'Cars', icon:'🚗', emojis:['🚗','🚕','🏎','🚓','🚑','🚒','🚐','🚚','🚜','🏍','🛵','🚲','🛴','✈','🚀','🛸','🚁','⛵','🚂','🚤','🛺','🚔','🚍','🚡','🛰'] },
-            { name:'Food', icon:'🍕', emojis:['🍕','🍔','🍟','🌮','🌭','🍩','🍦','🍰','🧁','🍪','🍫','🍬','🍭','🥤','🍿','🍎','🍌','🍉','🍇','🍓','🥑','🍳','🥞','🧇','🥝'] },
             { name:'Nature', icon:'🌈', emojis:['🌟','⭐','🌈','☀','🌙','🌍','🪐','🔥','💧','❄','🌊','🌴','🌺','🌻','🌲','🍀','☄','🌪','⚡','🌸','🍂','🍁','🌾','🍄','💎'] }
         ];
         const EMOJIS = EMOJI_CATS.flatMap(c => c.emojis);
