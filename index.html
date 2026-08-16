@@ -134,6 +134,9 @@
         .btn-sm { padding: 8px 16px; font-size: 0.75rem; }
         .btn-ghost { border-color: var(--border); color: var(--text-dim); }
         .btn-ghost:hover { background: var(--surface); color: var(--text); border-color: var(--text-dim); }
+        .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-success { background: #00b894; color: #fff; border-color: #00b894; }
         .btn .spinner { width: 12px; height: 12px; border: 1.5px solid var(--border); border-top-color: var(--text); border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 6px; }
 
         .online-link { font-size: 0.75rem; color: var(--text-dim); cursor: pointer; letter-spacing: 0.05em; margin-top: 4px; background: none; border: none; padding: 8px 16px; min-height: 44px; display: flex; align-items: center; }
@@ -167,7 +170,6 @@
 
         .room-box { padding: 14px; border: 1px solid var(--border); border-radius: var(--radius-md); text-align: center; width: 100%; max-width: 260px; }
         .room-code { font-size: 1.6rem; font-weight: 300; letter-spacing: 0.3em; margin: 4px 0; }
-        #share-url:hover { border-color: var(--text-dim); }
         .waiting { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--text-dim); margin-top: 8px; }
         .spinner { width: 12px; height: 12px; border: 1.5px solid var(--border); border-top-color: var(--text); border-radius: 50%; animation: spin 0.8s linear infinite; }
 
@@ -342,17 +344,10 @@
 
     <!-- WAITING -->
     <div class="screen hidden no-select" id="waiting-screen">
-        <div class="room-box">
-            <div style="font-size:0.55rem; color:var(--text-dim); letter-spacing:0.1em;">Room Code</div>
-            <div class="room-code" id="room-code-display" style="letter-spacing:0.3em;">······</div>
-            <div id="share-url" style="display:flex; align-items:center; gap:8px; padding:8px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--surface); cursor:pointer; transition:all 0.15s; word-break:break-all;" title="Click to copy">
-            <span id="share-url-text" style="flex:1; font-size:0.75rem; color:var(--text-dim); font-family:monospace; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Click to copy</span>
-            <span style="font-size:0.85rem; opacity:0.5; flex-shrink:0;">📋</span>
-        </div>
-        </div>
         <div class="waiting"><div class="spinner"></div><span id="waiting-text">Waiting for Player 2…</span></div>
-        <div id="waiting-nudge" style="display:none; font-size:0.75rem; color:var(--text-dim); text-align:center; margin-top:4px;">No one joined yet — try sharing the link!</div>
-        <button class="btn btn-sm" id="cancel-btn">Cancel</button>
+        <button class="btn btn-sm btn-primary" id="copy-invite-btn" style="margin-top:16px;">📋 Copy Invite Link</button>
+        <div style="font-size:0.65rem; color:var(--text-dim); text-align:center; margin-top:8px;">Paste it in a message to your friend</div>
+        <button class="btn btn-sm btn-ghost" id="cancel-btn" style="margin-top:12px;">Cancel</button>
     </div>
 
     <!-- GAME -->
@@ -970,12 +965,12 @@
 
                 $('online-screen').classList.add('hidden');
                 $('waiting-screen').classList.remove('hidden');
-                $('room-code-display').textContent=roomCode;
-                $('share-url-text').textContent=location.origin+location.pathname+'?room='+roomCode;
+                // Store invite URL for copy
+                window._inviteUrl = location.origin+location.pathname+'?room='+roomCode;
                 // Show nudge after 30s
                 setTimeout(() => {
                     if ($('waiting-screen').classList.contains('hidden') === false) {
-                        $('waiting-nudge').style.display = 'block';
+                        $('waiting-text').textContent = 'Still waiting — share the link!';
                     }
                 }, 30000);
             }).catch(err => {
@@ -987,21 +982,25 @@
             });
         });
 
-        $('share-url').addEventListener('click', () => {
+        $('copy-invite-btn').addEventListener('click', () => {
             track('share_click');
-            const url=$('share-url-text').textContent;
-            if (!url || url==='Click to copy') return;
-            if (navigator.share) {
-                navigator.share({ url }).catch(()=>{});
-                return;
-            }
-            const el=$('share-url-text');
-            const icon=$('share-url').querySelector('span:last-child');
-            const showCopied=()=>{el.textContent='✓ Copied!';icon.textContent='✅';setTimeout(()=>{el.textContent=url;icon.textContent='📋';},2000);};
+            const url = window._inviteUrl;
+            if (!url) return;
+            const btn = $('copy-invite-btn');
+            const showCopied = () => {
+                btn.textContent = '✅ Link Copied!';
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-success');
+                setTimeout(() => {
+                    btn.textContent = '📋 Copy Invite Link';
+                    btn.classList.remove('btn-success');
+                    btn.classList.add('btn-primary');
+                }, 2000);
+            };
             if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(url).then(showCopied).catch(()=>{fallbackCopy(url);showCopied();});
+                navigator.clipboard.writeText(url).then(showCopied).catch(() => { fallbackCopy(url); showCopied(); });
             } else {
-                fallbackCopy(url);showCopied();
+                fallbackCopy(url); showCopied();
             }
         });
         function fallbackCopy(text) {
