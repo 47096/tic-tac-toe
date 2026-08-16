@@ -303,25 +303,15 @@
     <!-- ONLINE -->
     <div class="screen hidden no-select" id="online-screen">
         <div class="pick-header active" id="online-header">You are Player 1 — pick your avatar</div>
-
-        <div class="pick-tabs" role="tablist">
-            <button class="pick-tab active" data-tab="online-emoji" role="tab" aria-selected="true">😀 Emoji</button>
-            <button class="pick-tab" data-tab="online-photo" role="tab" aria-selected="false">📸 Photo</button>
-        </div>
-        <div class="pick-tab-content active" id="online-emoji-tab">
-            <div class="emoji-grid" id="online-emoji-grid"></div>
-        </div>
-        <div class="pick-tab-content" id="online-photo-tab">
-            <div class="camera-area" id="online-camera-area">
-                <div class="camera-icon">📸</div>
-                <div class="camera-text">Tap to take photo</div>
+        <div id="online-cat-tabs" class="cat-tabs"></div>
+        <div id="online-emoji-grid" class="emoji-grid"></div>
+        <div id="online-photo-wrap" style="display:none; width:100%; max-width:300px;">
+            <div id="online-upload-area" style="width:100%; aspect-ratio:1; border:2px dashed var(--border); border-radius:var(--radius-sm); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; cursor:pointer; background:var(--surface); transition:border-color 0.2s;">
+                <div style="font-size:2rem; opacity:0.4;">+</div>
+                <div style="font-size:0.8rem; color:var(--text-dim);">Upload a photo</div>
+                <div style="font-size:0.65rem; color:var(--text-dim); opacity:0.6;">Tap or drop an image</div>
             </div>
-            <div class="camera-preview" id="online-camera-preview" style="position:relative; cursor:pointer;">
-                <video id="online-snap-video" playsinline autoplay></video>
-                <div class="cam-label">Tap to snap</div>
-            </div>
-            <div class="cam-instructions" id="online-cam-instructions" style="display:none;">Tap preview to snap</div>
-            <button class="btn btn-sm online-cam-cancel" data-target="create" style="display:none; margin-top:4px;">Cancel</button>
+            <input type="file" id="online-photo-upload" accept="image/*" capture="environment" style="display:none;">
             <canvas id="online-snap-canvas" class="snap-hidden"></canvas>
         </div>
 
@@ -559,7 +549,11 @@
                 grid.appendChild(btn);
             });
         }
-        function buildCatTabs(containerId, onPick) {
+        function buildCatTabs(containerId, onPick, prefix) {
+            const p = prefix || '';
+            const gridId = p ? p + '-emoji-grid' : 'emoji-grid';
+            const photoId = p ? p + '-photo-wrap' : 'photo-wrap';
+            const uploadId = p ? p + '-upload-area' : 'upload-area';
             const container = $(containerId); container.innerHTML = '';
             EMOJI_CATS.forEach((cat, idx) => {
                 const tab = document.createElement('button');
@@ -568,9 +562,9 @@
                 tab.addEventListener('click', () => {
                     container.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
                     tab.classList.add('active');
-                    $('photo-wrap').style.display = 'none';
-                    $('emoji-grid').style.display = '';
-                    buildGrid('emoji-grid', onPick, cat.emojis);
+                    $(photoId).style.display = 'none';
+                    $(gridId).style.display = '';
+                    buildGrid(gridId, onPick, cat.emojis);
                 });
                 container.appendChild(tab);
             });
@@ -581,12 +575,12 @@
             photoTab.addEventListener('click', () => {
                 container.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
                 photoTab.classList.add('active');
-                $('emoji-grid').style.display = 'none';
-                $('photo-wrap').style.display = '';
+                $(gridId).style.display = 'none';
+                $(photoId).style.display = '';
             });
             container.appendChild(photoTab);
             // Build default grid (first category)
-            buildGrid('emoji-grid', onPick, EMOJI_CATS[0].emojis);
+            buildGrid(gridId, onPick, EMOJI_CATS[0].emojis);
         }
 
         function updatePickerUI() {
@@ -805,6 +799,31 @@
             e.target.value = '';
         });
 
+        // Online upload photo
+        $('online-upload-area').addEventListener('click', () => { $('online-photo-upload').click(); });
+        $('online-photo-upload').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = $('online-snap-canvas');
+                    canvas.width = 128; canvas.height = 128;
+                    const ctx = canvas.getContext('2d');
+                    const s = Math.min(img.width, img.height);
+                    ctx.drawImage(img, (img.width-s)/2, (img.height-s)/2, s, s, 0, 0, 128, 128);
+                    const photo = canvas.toDataURL('image/jpeg', 0.6);
+                    onlinePickData = { emoji: null, photo: photo };
+                    document.querySelectorAll('#online-emoji-grid .e').forEach(b=>b.classList.remove('sel'));
+                    updateOnlinePickerUI();
+                };
+                img.src = reader.result;
+            };
+            reader.readAsDataURL(file);
+            e.target.value = '';
+        });
+
         // Online camera snap - Create Room
         function setupOnlineCamera(areaId, previewId, videoId, canvasId, instructionsId, target) {
             let localStream = null;
@@ -918,12 +937,13 @@
 
         // ===== ONLINE =====
         function buildOnlineGrids() {
-            buildGrid('online-emoji-grid', (e, btn) => {
+            const onPick = (e, btn) => {
                 document.querySelectorAll('#online-emoji-grid .e').forEach(b=>b.classList.remove('sel'));
                 btn.classList.add('sel');
                 onlinePickData = { emoji: e, photo: null };
                 updateOnlinePickerUI();
-            });
+            };
+            buildCatTabs('online-cat-tabs', onPick, 'online');
         }
 
 
