@@ -498,26 +498,27 @@
                     return best;
                 }
             }
-            // Easy: random move
-            if (aiDifficulty === 'easy') {
-                const empty = []; for (let i=0;i<9;i++) if (board[i]===null) empty.push(i);
-                return empty[Math.floor(Math.random()*empty.length)];
-            }
-            // Hard: always best move. Medium: 50% best, 50% random.
-            if (aiDifficulty === 'medium' && Math.random() < 0.5) {
-                const empty = []; for (let i=0;i<9;i++) if (board[i]===null) empty.push(i);
-                return empty[Math.floor(Math.random()*empty.length)];
-            }
-            let bestScore = -Infinity, bestMove = -1;
+            // Score all empty moves
+            const moves = [];
             for (let i = 0; i < 9; i++) {
                 if (board[i]===null) {
                     board[i] = aiPlayer;
-                    const score = minimax(board, 0, false);
+                    moves.push({ i, score: minimax(board, 0, false) });
                     board[i] = null;
-                    if (score > bestScore) { bestScore = score; bestMove = i; }
                 }
             }
-            return bestMove;
+            moves.sort((a, b) => b.score - a.score);
+            // Easy: random from all moves
+            if (aiDifficulty === 'easy') {
+                return moves[Math.floor(Math.random() * moves.length)].i;
+            }
+            // Medium: pick from top 2-3 moves (natural mistakes)
+            if (aiDifficulty === 'medium') {
+                const top = Math.min(3, moves.length);
+                return moves[Math.floor(Math.random() * top)].i;
+            }
+            // Hard: always best move
+            return moves[0].i;
         }
 
         // ===== LOCAL PICKER =====
