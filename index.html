@@ -96,6 +96,11 @@
         .emoji-grid .e:hover { border-color: var(--text-dim); }
         .emoji-grid .e:active { transform: scale(0.9); }
         .emoji-grid .e.sel { border-color: var(--text); background: var(--surface); }
+        .cat-cards { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; width: 100%; max-width: 300px; }
+        .cat-card { text-align: center; padding: 14px 8px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg); cursor: pointer; transition: all 0.2s; }
+        .cat-card:hover { border-color: var(--text-dim); }
+        .cat-card .cat-icon { font-size: 1.5rem; margin-bottom: 4px; }
+        .cat-card .cat-name { font-size: 0.65rem; color: var(--text-dim); font-weight: 600; letter-spacing: 0.05em; }
         .camera-area { width: 100%; max-width: 300px; aspect-ratio: 1; border: 2px dashed var(--border); border-radius: var(--radius-md); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; background: var(--surface); cursor: pointer; transition: all 0.15s; }
         .camera-area:hover { border-color: var(--text-dim); }
         .camera-area .camera-icon { font-size: 3rem; }
@@ -253,7 +258,11 @@
             <button class="pick-tab" data-tab="photo" role="tab" aria-selected="false">📸 Photo</button>
         </div>
         <div class="pick-tab-content active" id="emoji-tab">
-            <div class="emoji-grid" id="emoji-grid"></div>
+            <div id="cat-cards" class="cat-cards"></div>
+            <div id="emoji-grid-wrap" style="display:none;">
+                <button class="btn btn-sm btn-ghost" id="cat-back-btn" style="margin-bottom:8px;">← Back</button>
+                <div class="emoji-grid" id="emoji-grid"></div>
+            </div>
         </div>
         <div class="pick-tab-content" id="photo-tab">
             <div class="camera-area" id="camera-area">
@@ -420,7 +429,14 @@
             const db = firebase.database();
             document.getElementById('loading-screen').style.display = 'none';
 
-        const EMOJIS = ['😀','😂','😎','🥳','🤩','🥰','🐱','🐶','🦊','🐸','🐻','🐼','🐰','🦄','🐙','🌟','🌈','⭐','🍕','🍩','🚀','🎮','🎲','🎪','🎨'];
+        const EMOJI_CATS = [
+            { name:'Faces', icon:'😄', emojis:['😄','😍','🥰','😎','🥳','🤩','😇','🤗','😋','😜','🤪','🤔','😏','🙄','😬','😌','😴','🤧','😈','💀','👻','🤡','👽','🤖','💩'] },
+            { name:'Animals', icon:'🐱', emojis:['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🐔','🐧','🐦','🐝','🐛','🦋','🐙','🦈','🐢','🐍'] },
+            { name:'Cars', icon:'🚗', emojis:['🚗','🚕','🏎','🚓','🚑','🚒','🚐','🚚','🚜','🏍','🛵','🚲','🛴','✈','🚀','🛸','🚁','⛵','🚂','🚤','🛺','🚔','🚍','🚡','🛰'] },
+            { name:'Food', icon:'🍕', emojis:['🍕','🍔','🍟','🌮','🌭','🍩','🍦','🍰','🧁','🍪','🍫','🍬','🍭','🥤','🍿','🍎','🍌','🍉','🍇','🍓','🥑','🍳','🥞','🧇','🥝'] },
+            { name:'Nature', icon:'🌈', emojis:['🌟','⭐','🌈','☀','🌙','🌍','🪐','🔥','💧','❄','🌊','🌴','🌺','🌻','🌲','🍀','☄','🌪','⚡','🌸','🍂','🍁','🌾','🍄','💎'] }
+        ];
+        const EMOJIS = EMOJI_CATS.flatMap(c => c.emojis);
         const WIN_LINES = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
 
         let picks = [null, null]; // [p1, p2]
@@ -520,10 +536,11 @@
         }
 
         // ===== LOCAL PICKER =====
-        function buildGrid(gridId, onPick) {
+        function buildGrid(gridId, onPick, emojis) {
             const grid = $(gridId); grid.innerHTML = '';
             const COLS = 5;
-            EMOJIS.forEach((e, i) => {
+            const list = emojis || EMOJIS;
+            list.forEach((e, i) => {
                 const btn = document.createElement('button');
                 btn.className = 'e'; btn.textContent = e; btn.setAttribute('aria-label', 'Select '+e);
                 btn.tabIndex = i === 0 ? 0 : -1;
@@ -536,11 +553,25 @@
                     let t = -1;
                     if (ev.key === 'ArrowRight' && i % COLS < COLS - 1) t = i + 1;
                     else if (ev.key === 'ArrowLeft' && i % COLS > 0) t = i - 1;
-                    else if (ev.key === 'ArrowDown' && i + COLS < EMOJIS.length) t = i + COLS;
+                    else if (ev.key === 'ArrowDown' && i + COLS < list.length) t = i + COLS;
                     else if (ev.key === 'ArrowUp' && i - COLS >= 0) t = i - COLS;
                     if (t >= 0 && btns[t]) { ev.preventDefault(); btns[t].focus(); }
                 });
                 grid.appendChild(btn);
+            });
+        }
+        function buildCatCards(containerId, onPick) {
+            const container = $(containerId); container.innerHTML = '';
+            EMOJI_CATS.forEach(cat => {
+                const card = document.createElement('div');
+                card.className = 'cat-card';
+                card.innerHTML = `<div class="cat-icon">${cat.icon}</div><div class="cat-name">${cat.name}</div>`;
+                card.addEventListener('click', () => {
+                    $('cat-cards').style.display = 'none';
+                    $('emoji-grid-wrap').style.display = '';
+                    buildGrid('emoji-grid', onPick, cat.emojis);
+                });
+                container.appendChild(card);
             });
         }
 
@@ -614,7 +645,7 @@
             }
         }
 
-        buildGrid('emoji-grid', (e, btn) => {
+        const emojiPickHandler = (e, btn) => {
             // Toggle: if clicking same emoji, deselect it
             if (picks[0] === e) {
                 picks[0] = null; emojis[0] = null; photos[0] = null; pickStep = 0;
@@ -630,7 +661,21 @@
 
             picks[pickStep] = e; emojis[pickStep] = e; photos[pickStep] = null;
             updatePickerUI();
-            if (pickStep === 0) { pickStep = 1; setTimeout(updatePickerUI, 300); }
+            // Go back to category cards for P2 pick
+            if (pickStep === 0) {
+                pickStep = 1;
+                setTimeout(() => {
+                    $('emoji-grid-wrap').style.display = 'none';
+                    $('cat-cards').style.display = '';
+                    updatePickerUI();
+                }, 300);
+            }
+        };
+        buildCatCards('cat-cards', emojiPickHandler);
+        // Back button from emoji grid to category cards
+        $('cat-back-btn').addEventListener('click', () => {
+            $('emoji-grid-wrap').style.display = 'none';
+            $('cat-cards').style.display = '';
         });
 
         // Title screen buttons
@@ -643,6 +688,8 @@
             else if (mode === 'computer') { modeLabel.textContent = 'vs Computer'; }
             // Reset picker state
             picks=[null,null]; emojis=[null,null]; photos=[null,null]; pickStep=0;
+            $('cat-cards').style.display = '';
+            $('emoji-grid-wrap').style.display = 'none';
             updatePickerUI();
         }
         $('title-local-btn').addEventListener('click', () => { showPicker('local'); });
