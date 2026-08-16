@@ -258,11 +258,8 @@
         <div id="cat-tabs" class="cat-tabs"></div>
         <div id="emoji-grid" class="emoji-grid"></div>
         <div id="photo-wrap" style="display:none; width:100%; max-width:300px;">
-            <div class="camera-area" id="upload-area" style="max-width:none; width:100%;">
-                <div class="camera-icon">🖼</div>
-                <div class="camera-text">Upload a photo</div>
-            </div>
-            <input type="file" id="photo-upload" accept="image/*" style="display:none;">
+            <button class="btn btn-sm" id="upload-area" style="width:100%; padding:16px; font-size:0.85rem;">Upload a photo</button>
+            <input type="file" id="photo-upload" accept="image/*" capture="environment" style="display:none;">
             <canvas id="snap-canvas" class="snap-hidden"></canvas>
         </div>
         <div class="ready-area">
