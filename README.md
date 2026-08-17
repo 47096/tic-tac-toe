@@ -11,12 +11,21 @@ A polished, mobile-first tic-tac-toe game with local and online multiplayer.
 - **Online mode** — real-time multiplayer via Firebase Realtime Database
 - **Invite links** — share a URL to invite someone to your game
 - **Emoji avatars** — 5 categories (Faces, Animals, Cars, Nature, Photo) or upload your own
-- **Dark mode** — automatic (system preference) or manual toggle
-- **Win effects** — purple glow on winning cells + confetti
+- **Dark mode** — automatic (system preference) or manual toggle with smooth transition
+- **Win effects** — purple glow on winning cells, near-win glow on threatening cells, confetti
+- **Win streak** — tracks consecutive wins against the computer (persisted in localStorage)
 - **PWA** — install to home screen, play offline in local/computer mode
-- **Session recovery** — refresh mid-game without losing your spot
-- **Keyboard accessible** — arrow keys navigate the 3×3 board
-- **Accessible** — ARIA labels, focus traps, reduced motion support
+- **Session recovery** — refresh mid-game without losing your spot (online mode)
+- **Room cleanup** — Firebase rooms auto-delete when both players disconnect
+
+## Accessibility
+
+- **Keyboard accessible** — arrow keys navigate the 3×3 board and emoji grid
+- **Screen reader support** — ARIA labels, live announcements for turns and results
+- **Focus management** — focus moves between screens, traps in result dialog
+- **Reduced motion** — respects `prefers-reduced-motion`, disables confetti and animations
+- **Touch targets** — all interactive elements meet 44×44px minimum
+- **Safe areas** — respects `safe-area-inset` for notched devices
 
 ## How to play
 
@@ -42,17 +51,19 @@ A polished, mobile-first tic-tac-toe game with local and online multiplayer.
 - Single HTML file (~1,600 lines)
 - Vanilla JavaScript (no frameworks, no dependencies)
 - Firebase Realtime Database (online multiplayer)
-- CSS custom properties (theming)
+- CSS custom properties (theming with `--accent` and `--accent-primary`)
 - Canvas API (win line animation, confetti)
+- Web Share API (mobile sharing)
 
 ## Customisation
 
 | What | Where | Default |
 |------|-------|---------|
-| Accent colour | `--accent` and `--accent-bg` in `:root` CSS | Violet `#a29bfe` |
+| Accent colour | `--accent` in `:root` CSS | Violet `#a29bfe` |
+| Primary accent | `--accent-primary` in `:root` CSS | Purple `#7c6fde` |
 | Emoji categories | `EMOJI_CATS` array in JavaScript | Faces, Animals, Cars, Nature |
-| Photo upload | `MAX_PHOTO_BYTES` in JavaScript | 50 KB |
-| Auto-rematch timer | `countdownSeconds` in `endGame()` | 8 seconds |
+| Photo upload limit | file size check in upload handler | 10 MB |
+| AI difficulty | `aiDifficulty` variable | medium |
 
 ## Browser support
 
