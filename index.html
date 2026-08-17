@@ -393,9 +393,9 @@
         </div>
         <div class="ctrls">
             <div class="diff-chip" id="diff-chip" style="display:none;">
-                <button class="diff-chip-item" data-diff="easy" title="Easy"><span class="diff-emoji">😊</span><span class="diff-text">Easy</span></button>
-                <button class="diff-chip-item active" data-diff="medium" title="Medium"><span class="diff-emoji">🤔</span><span class="diff-text">Med</span></button>
-                <button class="diff-chip-item" data-diff="hard" title="Hard"><span class="diff-emoji">😈</span><span class="diff-text">Hard</span></button>
+                <button class="diff-chip-item" data-diff="easy" title="Easy" aria-pressed="false"><span class="diff-emoji">😊</span><span class="diff-text">Easy</span></button>
+                <button class="diff-chip-item active" data-diff="medium" title="Medium" aria-pressed="true"><span class="diff-emoji">🤔</span><span class="diff-text">Med</span></button>
+                <button class="diff-chip-item" data-diff="hard" title="Hard" aria-pressed="false"><span class="diff-emoji">😈</span><span class="diff-text">Hard</span></button>
             </div>
         </div>
         <div id="aria-announcer" aria-live="polite" class="sr-only"></div>
@@ -773,8 +773,9 @@
         document.querySelectorAll('#diff-chip .diff-chip-item').forEach(btn => {
             btn.addEventListener('click', () => {
                 aiDifficulty = btn.dataset.diff;
-                document.querySelectorAll('#diff-chip .diff-chip-item').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('#diff-chip .diff-chip-item').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-pressed', 'false'); });
                 btn.classList.add('active');
+                btn.setAttribute('aria-pressed', 'true');
             });
         });
 
