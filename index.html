@@ -279,7 +279,7 @@
             <div id="picker-mode-label" style="font-size:0.65rem; color:var(--text-dim);"></div>
             <button id="picker-close-btn" style="position:absolute; right:0; top:50%; transform:translateY(-50%); background:none; border:none; font-size:1.2rem; color:var(--text-dim); cursor:pointer; min-width:44px; min-height:44px; display:flex; align-items:center; justify-content:center;">×</button>
         </div>
-        <div id="cat-tabs" class="cat-tabs"></div>
+        <div id="cat-tabs" class="cat-tabs" role="tablist"></div>
         <div id="emoji-grid" class="emoji-grid"></div>
         <div id="photo-wrap" style="display:none; width:100%; max-width:300px;">
             <div id="upload-area" tabindex="0" role="button" aria-label="Upload a photo" style="width:100%; aspect-ratio:1; border:2px dashed var(--border); border-radius:var(--radius-sm); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; cursor:pointer; background:var(--surface); transition:border-color 0.2s;">
@@ -315,7 +315,7 @@
             <div class="pick-header active" id="online-header" style="margin-bottom:0;">You are Player 1 — pick your avatar</div>
             <button id="online-close-btn" style="position:absolute; right:0; top:50%; transform:translateY(-50%); background:none; border:none; font-size:1.2rem; color:var(--text-dim); cursor:pointer; min-width:44px; min-height:44px; display:flex; align-items:center; justify-content:center;">×</button>
         </div>
-        <div id="online-cat-tabs" class="cat-tabs"></div>
+        <div id="online-cat-tabs" class="cat-tabs" role="tablist"></div>
         <div id="online-emoji-grid" class="emoji-grid"></div>
         <div id="online-photo-wrap" style="display:none; width:100%; max-width:300px;">
             <div id="online-upload-area" tabindex="0" role="button" aria-label="Upload a photo" style="width:100%; aspect-ratio:1; border:2px dashed var(--border); border-radius:var(--radius-sm); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; cursor:pointer; background:var(--surface); transition:border-color 0.2s;">
@@ -582,13 +582,19 @@
             const photoId = p ? p + '-photo-wrap' : 'photo-wrap';
             const uploadId = p ? p + '-upload-area' : 'upload-area';
             const container = $(containerId); container.innerHTML = '';
+            function selectTab(tab) {
+                container.querySelectorAll('.cat-tab').forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); });
+                tab.classList.add('active');
+                tab.setAttribute('aria-selected', 'true');
+            }
             EMOJI_CATS.forEach((cat, idx) => {
                 const tab = document.createElement('button');
                 tab.className = 'cat-tab' + (idx === 0 ? ' active' : '');
+                tab.setAttribute('role', 'tab');
+                tab.setAttribute('aria-selected', idx === 0 ? 'true' : 'false');
                 tab.innerHTML = `<span class="cat-icon">${cat.icon}</span><span class="cat-name">${cat.name}</span>`;
                 tab.addEventListener('click', () => {
-                    container.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
-                    tab.classList.add('active');
+                    selectTab(tab);
                     $(photoId).style.display = 'none';
                     $(gridId).style.display = '';
                     buildGrid(gridId, onPick, cat.emojis);
@@ -598,10 +604,11 @@
             // Photo tab
             const photoTab = document.createElement('button');
             photoTab.className = 'cat-tab';
+            photoTab.setAttribute('role', 'tab');
+            photoTab.setAttribute('aria-selected', 'false');
             photoTab.innerHTML = '<span class="cat-icon">📷</span><span class="cat-name">Photo</span>';
             photoTab.addEventListener('click', () => {
-                container.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
-                photoTab.classList.add('active');
+                selectTab(photoTab);
                 $(gridId).style.display = 'none';
                 $(photoId).style.display = '';
             });
