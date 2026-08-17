@@ -1121,8 +1121,6 @@
                 if(d.gameOver&&!state.gameOver){
                     let w=null,wl=null;
                     for(const[a,b,c]of WIN_LINES){if(state.board[a]!==null&&state.board[a]===state.board[b]&&state.board[a]===state.board[c]){w=state.board[a];wl=[a,b,c];break;}}
-                    const draw=w===null&&state.board.every(c=>c!==null);
-                    if(w!==null)state.scores[w]++;else if(draw)state.scores[2]++;
                     endGame(w,wl);
                 }
             });
