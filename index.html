@@ -455,7 +455,7 @@
         let vsComputer = false;
         let aiDifficulty = 'medium'; // easy, medium, hard
         let roomCode = null, playerIndex = null, roomRef = null;
-        let gameListener = null, joinListener = null, cleanupListener = null, opponentListener = null, connectedListener = null, onlineStarted = false;
+        let gameListener = null, joinListener = null, cleanupListener = null, opponentListener = null, connectedListener = null, onlineStarted = false, opponentLeaveTimer = null;
         let onlinePickData = { emoji: null, photo: null };
         let moveInProgress = false;
         let opponentLeft = false;
@@ -1046,7 +1046,7 @@
             if(cleanupListener && roomRef) roomRef.child('players').off('value',cleanupListener);
             if(opponentListener && roomRef) roomRef.child(`players/${1-playerIndex}`).off('value',opponentListener);
 
-            let opponentLeaveTimer = null;
+            opponentLeaveTimer = null;
             opponentListener = snap => {
                 const p=snap.val();
                 const gone=!p||p.disconnected===true;
@@ -1394,6 +1394,7 @@
             if(opponentListener&&roomRef){roomRef.child(`players/${1-playerIndex}`).off('value',opponentListener);opponentListener=null;}
             else if(roomRef&&playerIndex!==null)roomRef.child(`players/${1-playerIndex}`).off();
             if(connectedListener){db.ref('.info/connected').off('value',connectedListener);connectedListener=null;}
+            if(opponentLeaveTimer){clearTimeout(opponentLeaveTimer);opponentLeaveTimer=null;}
             if(roomRef){
                 roomRef.onDisconnect().cancel();
                 // Update status and duration before leaving
