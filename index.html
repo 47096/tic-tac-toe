@@ -955,8 +955,8 @@
             }
             roomRef = db.ref('rooms/'+roomCode);
 
-            // If P1 disconnects before P2 joins, remove the room entirely
-            roomRef.onDisconnect().remove();
+            // If P1 disconnects before P2 joins, mark as disconnected (cleanup listener handles removal)
+            roomRef.child('players/0').onDisconnect().update({disconnected:true});
 
             roomRef.set({
                 players:{0:{emoji:myPhoto ? null : myEmoji, photo:myPhoto, disconnected:false},1:null},
@@ -971,9 +971,9 @@
                         onlineStarted=true;
                         if(p2.photo){photos[1]=p2.photo;emojis[1]=null;}else{emojis[1]=p2.emoji;photos[1]=null;}
                         roomRef.child('players/1').off('value',joinListener); joinListener=null;
-                        // P2 joined — host disconnect removes room, guest disconnect marks as left
+                        // P2 joined — both mark as disconnected on disconnect
                         roomRef.onDisconnect().cancel();
-                        roomRef.onDisconnect().remove();
+                        roomRef.child('players/0').onDisconnect().update({disconnected:true});
                         roomRef.child('players/1').onDisconnect().update({disconnected:true});
                         startOnlineGame();
                     }
