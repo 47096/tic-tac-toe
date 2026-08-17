@@ -814,6 +814,7 @@
         $('photo-upload').addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
+            if (file.size > 10 * 1024 * 1024) { alert('Photo must be under 10 MB'); e.target.value = ''; return; }
             const reader = new FileReader();
             reader.onload = () => {
                 const img = new Image();
@@ -842,6 +843,7 @@
         $('online-photo-upload').addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
+            if (file.size > 10 * 1024 * 1024) { alert('Photo must be under 10 MB'); e.target.value = ''; return; }
             const reader = new FileReader();
             reader.onload = () => {
                 const img = new Image();
