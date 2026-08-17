@@ -91,14 +91,6 @@
         .pick-section { width: 100%; display: flex; flex-direction: column; align-items: center; }
         .pick-header { font-size: 0.8rem; color: var(--text-dim); letter-spacing: 0.1em; margin-bottom: 8px; text-align: center; }
         .pick-header.active { color: var(--text); font-weight: 600; }
-        .pick-tabs { display: flex; width: 100%; max-width: 300px; margin-bottom: 10px; }
-        .pick-tab { flex: 1; padding: 10px; text-align: center; font-size: 0.75rem; background: var(--surface); border: 1px solid var(--border); cursor: pointer; letter-spacing: 0.05em; transition: all 0.15s; min-height: 44px; display: flex; align-items: center; justify-content: center; color: var(--text); touch-action: manipulation; }
-        .pick-tab:active { transform: scale(0.97); }
-        .pick-tab.active { background: var(--bg); border-color: var(--text); font-weight: 600; }
-        .pick-tab:first-child { border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
-        .pick-tab:last-child { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
-        .pick-tab-content { display: none; width: 100%; flex-direction: column; align-items: center; gap: 8px; }
-        .pick-tab-content.active { display: flex; }
         .emoji-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; width: 100%; max-width: 300px; }
         .emoji-grid .e { width: 100%; aspect-ratio: 1; min-height: 44px; font-size: 1.4rem; border: 1px solid var(--border); background: var(--bg); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; border-radius: var(--radius-sm); color: var(--text); touch-action: manipulation; }
         .emoji-grid .e:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
@@ -112,10 +104,6 @@
         .cat-tab .cat-icon { font-size: 1.4rem; line-height: 1; }
         .cat-tab .cat-name { font-size: 0.4rem; color: var(--text-dim); font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
         .cat-tab.active .cat-name { color: #7c6fde; }
-        .camera-area { width: 100%; max-width: 300px; aspect-ratio: 1; border: 2px dashed var(--border); border-radius: var(--radius-md); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; background: var(--surface); cursor: pointer; transition: all 0.15s; }
-        .camera-area:hover { border-color: var(--text-dim); }
-        .camera-area .camera-icon { font-size: 3rem; }
-        .camera-area .camera-text { font-size: 0.8rem; color: var(--text-dim); }
         .emoji-grid .e.used { opacity: 0.35; cursor: not-allowed; }
         .emoji-grid .e.just-picked { animation: pick-pulse 0.25s ease-out; }
         @keyframes pick-pulse { 0% { transform: scale(1); } 50% { transform: scale(1.25); } 100% { transform: scale(1); } }
@@ -148,33 +136,6 @@
         .online-link:hover { color: var(--text); }
         .online-link:active { opacity: 0.7; }
 
-        .play-tabs { display: flex; width: 100%; border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; margin-top: 4px; }
-        .play-tab { flex: 1; padding: 10px; background: var(--surface); color: var(--text-dim); cursor: pointer; font-size: 0.75rem; letter-spacing: 0.05em; text-align: center; transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; }
-        .play-tab:active { transform: scale(0.97); }
-        .play-tab.active { background: var(--bg); color: var(--text); font-weight: 600; }
-        .play-tab:first-child { border-right: 1px solid var(--border); }
-        .play-tab .pt-icon { font-size: 0.9rem; }
-
-        .snap-btn { display: flex; align-items: center; gap: 4px; padding: 8px 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text-dim); font-size: 0.75rem; cursor: pointer; letter-spacing: 0.05em; margin-top: 2px; min-height: 44px; }
-        .snap-btn:hover { border-color: var(--text-dim); color: var(--text); }
-
-        .camera-preview { width: 100%; max-width: 300px; aspect-ratio: 1; border-radius: var(--radius-sm); border: 1px solid var(--border); overflow: hidden; display: none; margin-bottom: 6px; cursor: pointer; transition: border-color 0.15s; }
-        .camera-preview:hover { border-color: var(--text-dim); }
-        .camera-preview video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); pointer-events: none; }
-        .camera-preview .cam-label { position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); font-size: 0.7rem; padding: 4px 10px; background: rgba(0,0,0,0.6); color: #fff; border-radius: var(--radius-sm); pointer-events: none; }
-        .cam-instructions { font-size: 0.75rem; color: var(--text-dim); text-align: center; margin-top: 4px; }
-
-        .snap-hidden { position: absolute; left: -9999px; top: -9999px; width: 320px; height: 320px; opacity: 0; pointer-events: none; }
-
-        /* Online */
-        .online-tabs { display: flex; width: 100%; border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; margin-bottom: 10px; }
-        .online-tab { flex: 1; padding: 10px; background: var(--surface); color: var(--text-dim); cursor: pointer; font-size: 0.75rem; letter-spacing: 0.05em; text-align: center; transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 6px; border: none; min-height: 44px; }
-        .online-tab.active { background: var(--bg); color: var(--text); font-weight: 600; }
-        .online-tab:first-child { border-right: 1px solid var(--border); }
-        .online-tab .ot-icon { font-size: 0.9rem; }
-
-        .room-box { padding: 14px; border: 1px solid var(--border); border-radius: var(--radius-md); text-align: center; width: 100%; max-width: 260px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
-        .room-code { font-size: 1.6rem; font-weight: 300; letter-spacing: 0.3em; margin: 4px 0; }
         .waiting { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--text-dim); margin-top: 8px; }
         .spinner { width: 12px; height: 12px; border: 1.5px solid var(--border); border-top-color: var(--text); border-radius: 50%; animation: spin 0.8s linear infinite; }
 
