@@ -1390,7 +1390,7 @@
         function leaveGame() {
             if(joinListener&&roomRef){roomRef.child('players/1').off('value',joinListener);joinListener=null;}
             if(gameListener&&roomRef){roomRef.off('value',gameListener);gameListener=null;}
-            if(cleanupListener&&roomRef){roomRef.off('value',cleanupListener);cleanupListener=null;}
+            if(cleanupListener&&roomRef){roomRef.child('players').off('value',cleanupListener);cleanupListener=null;}
             if(opponentListener&&roomRef){roomRef.child(`players/${1-playerIndex}`).off('value',opponentListener);opponentListener=null;}
             else if(roomRef&&playerIndex!==null)roomRef.child(`players/${1-playerIndex}`).off();
             if(connectedListener){db.ref('.info/connected').off('value',connectedListener);connectedListener=null;}
