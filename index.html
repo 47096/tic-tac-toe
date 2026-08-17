@@ -1061,6 +1061,7 @@
                         // Record win for remaining player
                         state.scores[playerIndex]++;
                         updateScores();
+                        if(roomRef) roomRef.update({gameOver:true, scores:state.scores}).catch(()=>{});
                         resultBig.textContent='🏆';
                         resultText.textContent='You win!';
                         $('result-line').textContent='Opponent left';
