@@ -443,8 +443,9 @@
         let photos = [null, null];
         let emojis = [null, null];
         // Device ID — persists across sessions to identify your rooms
-        let deviceId = localStorage.getItem('ttt-device-id');
-        if (!deviceId) { deviceId = Math.random().toString(36).substring(2, 10); localStorage.setItem('ttt-device-id', deviceId); }
+        let deviceId;
+        try { deviceId = localStorage.getItem('ttt-device-id'); } catch(e) {}
+        if (!deviceId) { deviceId = Math.random().toString(36).substring(2, 10); try { localStorage.setItem('ttt-device-id', deviceId); } catch(e) {} }
         // Device & browser detection
         const ua = navigator.userAgent;
         const deviceType = /Mobi|Android|iPhone|iPad/i.test(ua) ? 'mobile' : 'desktop';
@@ -462,8 +463,9 @@
         let firstTurn = 0; // Alternates who goes first each game
         let selectedMode = null; // 'local', 'computer', 'online'
         const state = { board: Array(9).fill(null), turn: 0, gameOver: false, scores: [0,0,0] };
-        let streak = parseInt(localStorage.getItem('ttt-streak') || '0', 10);
-        function saveScores() { if (vsComputer) localStorage.setItem('ttt-streak', streak); }
+        let streak = 0;
+        try { streak = parseInt(localStorage.getItem('ttt-streak') || '0', 10); } catch(e) {}
+        function saveScores() { if (vsComputer) { try { localStorage.setItem('ttt-streak', streak); } catch(e) {} } }
 
         const $ = id => document.getElementById(id);
         const showScreen = id => { document.querySelectorAll('.screen:not(.hidden)').forEach(s => s.classList.add('hidden')); $(id).classList.remove('hidden'); $(id).focus(); };
@@ -1591,14 +1593,15 @@
             const current = document.documentElement.getAttribute('data-theme');
             const next = current === 'dark' ? 'light' : 'dark';
             document.documentElement.setAttribute('data-theme', next);
-            localStorage.setItem('theme', next);
+            try { localStorage.setItem('theme', next); } catch(e) {}
             themeToggle.textContent = next === 'dark' ? '☀️ Light' : '🌙 Dark';
             cachedAccent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#a29bfe';
             // Redraw win line with new theme color
             if (lastWinLine && state.gameOver) drawWinLine(lastWinLine);
         }
 
-        const savedTheme = localStorage.getItem('theme');
+        let savedTheme = null;
+        try { savedTheme = localStorage.getItem('theme'); } catch(e) {}
         const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         const initialTheme = savedTheme || (systemDark ? 'dark' : 'light');
         document.documentElement.setAttribute('data-theme', initialTheme);
