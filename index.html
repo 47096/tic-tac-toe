@@ -958,7 +958,7 @@
             roomRef = db.ref('rooms/'+roomCode);
 
             // If P1 disconnects before P2 joins, mark as disconnected (cleanup listener handles removal)
-            roomRef.child('players/0').onDisconnect().update({disconnected:true});
+            roomRef.child('players/0').onDisconnect().update({disconnected:true}).catch(()=>{});
 
             roomRef.set({
                 players:{0:{emoji:myPhoto ? null : myEmoji, photo:myPhoto, disconnected:false},1:null},
@@ -975,8 +975,8 @@
                         roomRef.child('players/1').off('value',joinListener); joinListener=null;
                         // P2 joined — both mark as disconnected on disconnect
                         roomRef.onDisconnect().cancel();
-                        roomRef.child('players/0').onDisconnect().update({disconnected:true});
-                        roomRef.child('players/1').onDisconnect().update({disconnected:true});
+                        roomRef.child('players/0').onDisconnect().update({disconnected:true}).catch(()=>{});
+                        roomRef.child('players/1').onDisconnect().update({disconnected:true}).catch(()=>{});
                         startOnlineGame();
                     }
                 });
@@ -1118,7 +1118,7 @@
                 $('network-banner').classList.toggle('hidden', connected);
                 if(connected && roomRef && playerIndex!==null) {
                     roomRef.child('players/'+playerIndex).update({disconnected:false}).catch(()=>{});
-                    roomRef.child('players/'+playerIndex).onDisconnect().update({disconnected:true});
+                    roomRef.child('players/'+playerIndex).onDisconnect().update({disconnected:true}).catch(()=>{});
                 }
             };
             db.ref('.info/connected').on('value', connectedListener);
@@ -1574,7 +1574,7 @@
                     emoji: myPhoto ? null : myEmoji, photo: myPhoto, disconnected: false
                 }).then(() => {
                     track('room_join', {code});
-                    roomRef.child('players/1').onDisconnect().update({disconnected:true});
+                    roomRef.child('players/1').onDisconnect().update({disconnected:true}).catch(()=>{});
                     startOnlineGame();
                 });
             }).catch(err => {
