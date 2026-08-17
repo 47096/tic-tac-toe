@@ -189,11 +189,12 @@
         .result-overlay { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%) translateY(100%); background: var(--bg); padding: 16px 24px max(20px, env(safe-area-inset-bottom, 0px)); border-radius: 16px 16px 0 0; border: 1px solid var(--border); border-bottom: none; box-shadow: 0 -4px 24px rgba(0,0,0,0.15); z-index: 200; width: 100%; max-width: 400px; text-align: center; transition: transform 0.3s ease-out; }
         .result-overlay.show { transform: translateX(-50%) translateY(0); }
         .board-wrap.pulse { animation: boardPulse 0.4s ease-out; }
-        .diff-chip { display: flex; gap: 4px; }
-        .diff-chip-item { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text-dim); cursor: pointer; transition: all 0.2s; font-family: inherit; min-width: 48px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
-        .diff-chip-item.active { background: var(--accent-bg); color: var(--accent); border-color: var(--accent); }
-        .diff-emoji { font-size: 0.9rem; line-height: 1; }
-        .diff-text { font-size: 0.55rem; letter-spacing: 0.05em; text-transform: uppercase; font-weight: 700; }
+        .diff-chip { display: flex; width: 100%; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+        .diff-chip-item { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 12px; border: none; border-right: 1px solid var(--border); background: var(--bg); color: var(--text-dim); cursor: pointer; transition: all 0.2s; font-family: inherit; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.05em; }
+        .diff-chip-item:last-child { border-right: none; }
+        .diff-chip-item.active { background: var(--accent-primary); color: #fff; }
+        .diff-emoji { font-size: 1rem; line-height: 1; }
+        .diff-text { letter-spacing: 0.05em; }
         @keyframes boardPulse { 0%{transform:scale(1)} 50%{transform:scale(1.03)} 100%{transform:scale(1)} }
 
         .result-overlay h2 { font-size: 1rem; font-weight: 600; letter-spacing: 0.1em; margin-bottom: 6px; }
