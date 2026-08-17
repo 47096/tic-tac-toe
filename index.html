@@ -1077,17 +1077,34 @@
             roomRef.child(`players/${1-playerIndex}`).on('value', opponentListener);
 
             // Clean up room when both players disconnect, or stale rooms
+            let cleanupTimers = [];
             cleanupListener = snap => {
                 const d = snap.val();
                 if (!d) return;
                 const p0 = d[0], p1 = d[1];
                 // Both disconnected
                 if (p0 && p1 && p0.disconnected === true && p1.disconnected === true) {
-                    setTimeout(() => { roomRef.remove().catch(()=>{}); }, 5000);
+                    const t = setTimeout(() => {
+                        roomRef.once('value', s => {
+                            const v = s.val();
+                            if (v && v.players && v.players[0] && v.players[1] && v.players[0].disconnected === true && v.players[1].disconnected === true) {
+                                roomRef.remove().catch(()=>{});
+                            }
+                        });
+                    }, 5000);
+                    cleanupTimers.push(t);
                 }
                 // P1 disconnected, P2 never joined (stale room)
                 if (p0 && p0.disconnected === true && !p1) {
-                    setTimeout(() => { roomRef.remove().catch(()=>{}); }, 2000);
+                    const t = setTimeout(() => {
+                        roomRef.once('value', s => {
+                            const v = s.val();
+                            if (v && v.players && v.players[0] && v.players[0].disconnected === true && !v.players[1]) {
+                                roomRef.remove().catch(()=>{});
+                            }
+                        });
+                    }, 2000);
+                    cleanupTimers.push(t);
                 }
             };
             roomRef.child('players').on('value', cleanupListener);
