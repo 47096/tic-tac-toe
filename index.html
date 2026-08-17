@@ -1209,7 +1209,7 @@
             });
             drawScore.textContent = state.scores[2];
         }
-        function updateTurn(){updatePlayerBoxes();ariaAnnouncer.textContent='Player '+(state.turn+1)+"'s turn";}
+        function updateTurn(){updatePlayerBoxes();setTimeout(()=>{ariaAnnouncer.textContent='Player '+(state.turn+1)+"'s turn";},350);}
         function announce(text){ariaAnnouncer.textContent='';setTimeout(()=>{ariaAnnouncer.textContent=text;},50);}
         function updateScores(){updatePlayerBoxes();if(!isOnline)saveScores();}
         function updateStreakDisplay(){const el=$('streak-display');if(!el)return;el.textContent=vsComputer&&streak>1?`${streak}🔥 streak`:'';}
