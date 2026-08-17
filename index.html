@@ -312,7 +312,7 @@
     <!-- ONLINE -->
     <div class="screen hidden no-select" id="online-screen" tabindex="-1">
         <div style="position:relative; width:100%; max-width:300px; margin-bottom:4px; text-align:center;">
-            <div class="pick-header active" id="online-header" style="margin-bottom:0;">You are Player 1 — pick your avatar</div>
+            <div class="pick-header active" id="online-header" style="margin-bottom:0;">Player 1 — pick your avatar</div>
             <div style="font-size:0.65rem; color:var(--text-dim);">Play with a friend via link</div>
             <button id="online-close-btn" style="position:absolute; right:0; top:50%; transform:translateY(-50%); background:none; border:none; font-size:1.2rem; color:var(--text-dim); cursor:pointer; min-width:44px; min-height:44px; display:flex; align-items:center; justify-content:center;">×</button>
         </div>
@@ -869,7 +869,7 @@
             $('create-btn').style.display = '';
             $('create-btn').textContent = 'Create Room'; $('create-btn').disabled = true;
             $('join-btn').style.display = 'none';
-            $('online-header').textContent = 'You are Player 1 — pick your avatar';
+            $('online-header').textContent = 'Player 1 — pick your avatar';
             history.replaceState(null, '', location.pathname);
         });
 
@@ -1464,7 +1464,7 @@
             showScreen('online-screen');
             $('create-btn').style.display = 'none';
             $('join-btn').style.display = '';
-            $('online-header').textContent = 'You are Player 2 — pick your avatar';
+            $('online-header').textContent = 'Player 2 — pick your avatar';
             buildOnlineGrids();
 
             // Fetch P1's data from Firebase
