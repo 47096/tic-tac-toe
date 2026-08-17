@@ -1443,7 +1443,7 @@
                 }, 250);
             } else {
                 // Return focus to board when overlay closes
-                boardEl.focus();
+                if (cells[0]) cells[0].focus();
             }
         }).observe(resultOverlay, { attributes: true, attributeFilter: ['class'] });
 
