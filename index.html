@@ -18,16 +18,7 @@
 
     <link rel="preconnect" href="https://www.gstatic.com">
     <script>try{const t=localStorage.getItem('theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
     <style>
-        #loading-screen { position: fixed; inset: 0; background: #fafafa; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; gap: 12px; }
-        #loading-screen .spinner { width: 20px; height: 20px; border: 2px solid #e0e0e0; border-top-color: #1a1a1a; border-radius: 50%; animation: spin 0.8s linear infinite; }
-        #loading-screen p { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 0.8rem; color: #767676; }
-        @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) #loading-screen { background: #1a1a1a; } :root:not([data-theme="light"]) #loading-screen .spinner { border-color: #444; border-top-color: #f0f0f0; } :root:not([data-theme="light"]) #loading-screen p { color: #aaa; } }
-        [data-theme="dark"] #loading-screen { background: #1a1a1a; } [data-theme="dark"] #loading-screen .spinner { border-color: #444; border-top-color: #f0f0f0; } [data-theme="dark"] #loading-screen p { color: #aaa; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-    </style>
 
     <style>
         :root {
@@ -210,8 +201,6 @@
 <body>
     <noscript><div style="text-align:center;padding:40px;font-family:system-ui;"><h2>JavaScript Required</h2><p>This game needs JavaScript to run. Please enable it in your browser settings.</p></div></noscript>
 
-    <div id="loading-screen"><div class="spinner"></div><p>Loading…</p></div>
-
     <button class="theme-toggle" id="theme-toggle" title="Toggle dark mode" aria-label="Toggle dark mode">🌙 Dark</button>
 
     <!-- TITLE SCREEN -->
@@ -379,18 +368,46 @@
 
     <script>
     (() => {
-        try {
-            firebase.initializeApp({
-                apiKey: "AIzaSyDLfe9pFWxU0K-BXKeSPXXMd3fwMEvGelw",
-                authDomain: "tic-tac-toe-dd488.firebaseapp.com",
-                databaseURL: "https://tic-tac-toe-dd488-default-rtdb.asia-southeast1.firebasedatabase.app",
-                projectId: "tic-tac-toe-dd488",
-                storageBucket: "tic-tac-toe-dd488.firebasestorage.app",
-                messagingSenderId: "366226840426",
-                appId: "1:366226840426:web:32f9a7ab26cb4fa0466313"
+        // Lazy Firebase — only initialized when entering Online mode
+        const FIREBASE_CONFIG = {
+            apiKey: "AIzaSyDLfe9pFWxU0K-BXKeSPXXMd3fwMEvGelw",
+            authDomain: "tic-tac-toe-dd488.firebaseapp.com",
+            databaseURL: "https://tic-tac-toe-dd488-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "tic-tac-toe-dd488",
+            storageBucket: "tic-tac-toe-dd488.firebasestorage.app",
+            messagingSenderId: "366226840426",
+            appId: "1:366226840426:web:32f9a7ab26cb4fa0466313"
+        };
+        let db = null;
+        function initFirebase() {
+            if (db) return Promise.resolve(db);
+            if (!navigator.onLine) return Promise.reject(new Error('offline'));
+            return new Promise((resolve, reject) => {
+                function doInit() {
+                    try {
+                        if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+                        db = firebase.database();
+                        resolve(db);
+                    } catch(e) { reject(e); }
+                }
+                if (window.firebase && firebase.database) {
+                    doInit();
+                } else {
+                    const s1 = document.createElement('script');
+                    s1.src = 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js';
+                    s1.onload = () => {
+                        const s2 = document.createElement('script');
+                        s2.src = 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js';
+                        s2.onload = doInit;
+                        s2.onerror = () => reject(new Error('Failed to load Firebase'));
+                        document.head.appendChild(s2);
+                    };
+                    s1.onerror = () => reject(new Error('Failed to load Firebase'));
+                    document.head.appendChild(s1);
+                }
             });
-            const db = firebase.database();
-            document.getElementById('loading-screen').style.display = 'none';
+        }
+        function showOnlineError(msg) { const el = $('online-error'); if (el) { el.textContent = msg; el.classList.remove('hidden'); } }
 
         const EMOJI_CATS = [
             { name:'Faces', icon:'😂', emojis:['😂','🤣','😭','😍','😊','😁','😅','😆','😘','🥺','🤗','😉','😏','😔','😌','😎','🤔','😇','😋','😢','😜','🥰','😩','🤭','😱'] },
@@ -711,9 +728,11 @@
         $('title-online-btn').addEventListener('click', () => {
             selectedMode = 'online';
             showScreen('online-screen');
+            $('online-error').classList.add('hidden');
             onlinePickData = { emoji: null, photo: null };
             buildOnlineGrids();
             updateOnlinePickerUI();
+            initFirebase().catch(() => showOnlineError('You need an internet connection to play online.'));
         });
 
         // Picker close button
@@ -930,6 +949,7 @@
             } else {
                 emojis=[myEmoji,null]; photos=[null,null];
             }
+            initFirebase().then(d => { db = d;
             roomRef = db.ref('rooms/'+roomCode);
 
             // If P1 disconnects before P2 joins, mark as disconnected (cleanup listener handles removal)
@@ -972,6 +992,7 @@
                 btn.innerHTML='Create Room'; btn.disabled=false;
                 isOnline = false;
             });
+            }).catch(() => { btn.innerHTML='Create Room'; btn.disabled=false; isOnline = false; showOnlineError('You need an internet connection to play online.'); });
         });
 
         $('copy-invite-btn').addEventListener('click', () => {
@@ -1429,8 +1450,9 @@
         // ===== SESSION RECOVERY =====
         try {
             const saved = JSON.parse(sessionStorage.getItem('ttt-session'));
-            if (saved && saved.roomCode && saved.playerIndex !== null) {
+            if (saved && saved.roomCode && saved.playerIndex !== null && navigator.onLine) {
                 roomCode = saved.roomCode; playerIndex = saved.playerIndex; isOnline = true; vsComputer = false;
+                initFirebase().then(d => { db = d;
                 roomRef = db.ref('rooms/' + roomCode);
                 roomRef.once('value', snap => {
                     if (snap.exists() && snap.val().players && snap.val().players[playerIndex]) {
@@ -1448,6 +1470,7 @@
                     sessionStorage.removeItem('ttt-session');
                     roomRef = null; roomCode = null; playerIndex = null; isOnline = false;
                 });
+                }).catch(() => { sessionStorage.removeItem('ttt-session'); roomRef = null; roomCode = null; playerIndex = null; isOnline = false; });
             }
         } catch(e) { sessionStorage.removeItem('ttt-session'); }
 
@@ -1462,6 +1485,7 @@
             $('online-header').textContent = 'Player 2 — pick your avatar';
             buildOnlineGrids();
 
+            initFirebase().then(d => { db = d;
             // Fetch P1's data from Firebase
             const inviteRef = db.ref('rooms/' + inviteCode.toUpperCase());
             let inviteData = null;
@@ -1492,6 +1516,7 @@
                 $('online-error').textContent = 'Failed to load room: ' + err.message;
                 $('online-error').classList.remove('hidden');
             });
+            }).catch(() => showOnlineError('You need an internet connection to play online.'));
         }
 
         // Join Room button
@@ -1502,6 +1527,7 @@
             const myEmoji = onlinePickData.emoji || EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
             const myPhoto = onlinePickData.photo;
 
+            initFirebase().then(d => { db = d;
             const joinRef = db.ref('rooms/' + code);
             joinRef.once('value').then(snap => {
                 if (!snap.exists()) {
@@ -1560,6 +1586,7 @@
                 btn.innerHTML = 'Join Room'; btn.disabled = false;
                 isOnline = false;
             });
+            }).catch(() => { btn.innerHTML = 'Join Room'; btn.disabled = false; showOnlineError('You need an internet connection to play online.'); });
         });
 
 
@@ -1585,11 +1612,6 @@
 
         themeToggle.addEventListener('click', toggleTheme);
 
-        } catch (e) {
-            const ls = document.getElementById('loading-screen');
-            ls.innerHTML = '<div style="text-align:center;padding:20px;"><p style="font-size:1.2em;margin-bottom:12px;">⚠️ Could not connect to game server</p><p style="opacity:0.7;font-size:0.9em;">Please check your internet connection or disable your ad blocker, then refresh.</p><button onclick="location.reload()" style="margin-top:16px;padding:8px 24px;border-radius:8px;border:none;background:#a29bfe;color:#fff;font-size:1em;cursor:pointer;">Retry</button></div>';
-            ls.style.display = 'flex';
-        }
     })();
     </script>
     <script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}</script>
