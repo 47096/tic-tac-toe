@@ -1174,6 +1174,7 @@
                 const row=Math.floor(i/3)+1,col=i%3+1;
                 if(v!==null){
                     cell.classList.add('m');
+                    cell.classList.remove('threat');
                     const label='Player '+(v+1)+' ('+(emojis[v]||'photo')+')';
                     cell.setAttribute('aria-label','Row '+row+' Column '+col+', '+label);
                     if(hasPhoto(v)){const sp=safePhotoSrc(photos[v]);if(sp){img.src=sp;img.style.display='';img.style.opacity='1';img.style.transform='scale(1) scaleX(-1)';ce.style.display='none';img.alt=label;}}
