@@ -469,7 +469,6 @@
         function hasEmoji(i) { return emojis[i]!==null; }
         function safePhotoSrc(src) { return src && typeof src==='string' && src.startsWith('data:image/') ? src : ''; }
         function safeEmoji(e) { return (typeof e === 'string' && e.length <= 8 && !/[<>&"']/.test(e)) ? e : '❓'; }
-        function track(event, data) { try { console.log('[analytics]', event, data||''); } catch(e) {} }
         function genCode() { return Math.random().toString(36).substring(2,8).toUpperCase(); }
 
         // ===== AI =====
@@ -745,7 +744,6 @@
         $('start-game-btn').addEventListener('click', () => {
             if (selectedMode === 'local') {
                 if (!picks[0] || !picks[1]) return;
-                track('game_start', {mode:'local'});
                 if(navigator.vibrate)navigator.vibrate(10);
                 if(gameListener&&roomRef){roomRef.off('value',gameListener);gameListener=null;}
                 if(joinListener&&roomRef){roomRef.child('players/1').off('value',joinListener);joinListener=null;}
@@ -757,7 +755,6 @@
                 resetBoard();
             } else if (selectedMode === 'computer') {
                 if (!picks[0] || !picks[1]) return;
-                track('game_start', {mode:'ai',difficulty:aiDifficulty});
                 if(navigator.vibrate)navigator.vibrate(10);
                 vsComputer = true;
                 isOnline = false;
@@ -922,7 +919,6 @@
                 board:Array(9).fill(null),turn:0,scores:[0,0,0],gameOver:false,
                 created:Date.now(),host:deviceId,status:'waiting',deviceType,browser,referrer
             }).then(() => {
-                track('room_create', {code:roomCode});
                 // Listen for player 2 joining
                 joinListener = roomRef.child('players/1').on('value', snap => {
                     const p2=snap.val();
@@ -958,7 +954,6 @@
         });
 
         $('copy-invite-btn').addEventListener('click', () => {
-            track('share_click');
             const url = window._inviteUrl;
             if (!url) return;
             const btn = $('copy-invite-btn');
@@ -1263,7 +1258,6 @@
         }
         function endGame(w,wl) {
             if(state.gameOver) return;
-            track('game_end', {winner:w,mode:isOnline?'online':'local'});
             state.gameOver=true;lastWinLine=wl;
             if(!vsComputer) firstTurn=1-firstTurn; // Alternate who goes first (local/online only)
             if(w!==null&&wl){wl.forEach(i=>cells[i].classList.add('win'));drawWinLine(wl);sndWin();fireConfetti();if(navigator.vibrate)navigator.vibrate([50,30,50]);boardWrap.classList.add('pulse');setTimeout(()=>boardWrap.classList.remove('pulse'),400);
@@ -1551,7 +1545,6 @@
                 return roomRef.child('players/1').set({
                     emoji: myPhoto ? null : myEmoji, photo: myPhoto, disconnected: false
                 }).then(() => {
-                    track('room_join', {code});
                     roomRef.child('players/1').onDisconnect().update({disconnected:true}).catch(()=>{});
                     startOnlineGame();
                 });
