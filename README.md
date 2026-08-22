@@ -6,7 +6,7 @@ A polished, mobile-first tic-tac-toe game with local and online multiplayer.
 
 ## Features
 
-- **Local mode** — two players on the same device, auto-rematch with countdown
+- **Local mode** — two players on the same device
 - **Computer mode** — play against AI with Easy, Medium (blocks/takes wins), or Hard (minimax) difficulty
 - **Online mode** — real-time multiplayer via Firebase Realtime Database
 - **Invite links** — share a URL to invite someone to your game
@@ -33,7 +33,7 @@ A polished, mobile-first tic-tac-toe game with local and online multiplayer.
 1. Choose **Local** mode from the title screen
 2. Pick avatars for Player 1 and Player 2
 3. Take turns tapping cells
-4. Game auto-starts next round after 8 seconds
+4. Tap **Play Again** to start the next round
 
 ### Computer
 1. Choose **Computer** mode from the title screen
