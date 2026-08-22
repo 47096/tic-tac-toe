@@ -784,59 +784,38 @@
         updatePickerUI();
 
         // Upload photo
-        $('upload-area').addEventListener('click', () => { $('photo-upload').click(); });
-        $('upload-area').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('photo-upload').click(); } });
-        $('photo-upload').addEventListener('change', (e) => {
-            const file = e.target.files[0];
+        function processPhoto(file, canvasId, onDone) {
             if (!file) return;
-            if (file.size > 10 * 1024 * 1024) { alert('Photo must be under 10 MB'); e.target.value = ''; return; }
+            if (file.size > 10 * 1024 * 1024) { alert('Photo must be under 10 MB'); return; }
             const reader = new FileReader();
             reader.onload = () => {
                 const img = new Image();
                 img.onload = () => {
-                    const canvas = $('snap-canvas');
+                    const canvas = $(canvasId);
                     canvas.width = 128; canvas.height = 128;
                     const ctx = canvas.getContext('2d');
                     const s = Math.min(img.width, img.height);
                     ctx.drawImage(img, (img.width-s)/2, (img.height-s)/2, s, s, 0, 0, 128, 128);
-                    const photo = canvas.toDataURL('image/jpeg', 0.6);
-                    photos[pickStep] = photo;
-                    emojis[pickStep] = null;
-                    picks[pickStep] = '📸';
-                    updatePickerUI();
-                    if (pickStep === 0) { pickStep = 1; setTimeout(updatePickerUI, 300); }
+                    onDone(canvas.toDataURL('image/jpeg', 0.6));
                 };
                 img.src = reader.result;
             };
             reader.readAsDataURL(file);
-            e.target.value = '';
+        }
+        function wireUpload(areaId, inputId, canvasId, onDone) {
+            $(areaId).addEventListener('click', () => { $(inputId).click(); });
+            $(areaId).addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $(inputId).click(); } });
+            $(inputId).addEventListener('change', (e) => { processPhoto(e.target.files[0], canvasId, onDone); e.target.value = ''; });
+        }
+        wireUpload('upload-area', 'photo-upload', 'snap-canvas', (photo) => {
+            photos[pickStep] = photo; emojis[pickStep] = null; picks[pickStep] = '📸';
+            updatePickerUI();
+            if (pickStep === 0) { pickStep = 1; setTimeout(updatePickerUI, 300); }
         });
-
-        // Online upload photo
-        $('online-upload-area').addEventListener('click', () => { $('online-photo-upload').click(); });
-        $('online-upload-area').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('online-photo-upload').click(); } });
-        $('online-photo-upload').addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            if (file.size > 10 * 1024 * 1024) { alert('Photo must be under 10 MB'); e.target.value = ''; return; }
-            const reader = new FileReader();
-            reader.onload = () => {
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = $('online-snap-canvas');
-                    canvas.width = 128; canvas.height = 128;
-                    const ctx = canvas.getContext('2d');
-                    const s = Math.min(img.width, img.height);
-                    ctx.drawImage(img, (img.width-s)/2, (img.height-s)/2, s, s, 0, 0, 128, 128);
-                    const photo = canvas.toDataURL('image/jpeg', 0.6);
-                    onlinePickData = { emoji: null, photo: photo };
-                    document.querySelectorAll('#online-emoji-grid .e').forEach(b=>b.classList.remove('sel'));
-                    updateOnlinePickerUI();
-                };
-                img.src = reader.result;
-            };
-            reader.readAsDataURL(file);
-            e.target.value = '';
+        wireUpload('online-upload-area', 'online-photo-upload', 'online-snap-canvas', (photo) => {
+            onlinePickData = { emoji: null, photo };
+            document.querySelectorAll('#online-emoji-grid .e').forEach(b=>b.classList.remove('sel'));
+            updateOnlinePickerUI();
         });
 
         $('online-close-btn').addEventListener('click', () => {
