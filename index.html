@@ -778,7 +778,7 @@
         // Upload photo
         function processPhoto(file, canvasId, onDone) {
             if (!file) return;
-            if (file.size > 10 * 1024 * 1024) { alert('Photo must be under 10 MB'); return; }
+            if (file.size > 10 * 1024 * 1024) { showOnlineError('Photo must be under 10 MB'); return; }
             const reader = new FileReader();
             reader.onload = () => {
                 const img = new Image();
@@ -1374,7 +1374,7 @@
         window.addEventListener('beforeunload', e => { if(isOnline && roomRef && !state.gameOver) { e.preventDefault(); e.returnValue = ''; } });
         $('leave-btn').addEventListener('click',continueGame);
         $('menu-btn').addEventListener('click',leaveGame);
-        $('game-close-btn').addEventListener('click',()=>{if(isOnline&&!state.gameOver&&!confirm('Leave the game?'))return;leaveGame();});
+        $('game-close-btn').addEventListener('click',leaveGame);
         // Focus trap for result overlay
         resultOverlay.addEventListener('keydown', e => {
             if(e.key==='Escape'){e.preventDefault();if(isOnline&&!state.gameOver)return;leaveGame();return;}
