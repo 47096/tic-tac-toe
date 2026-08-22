@@ -1509,6 +1509,12 @@
                     $('online-error').classList.remove('hidden');
                     return;
                 }
+                if (data.players[1] && data.players[1].disconnected !== true) {
+                    $('online-error').textContent = 'Room is full. Another player is already in.';
+                    $('online-error').classList.remove('hidden');
+                    $('join-btn').disabled = true;
+                    return;
+                }
 
                 // Show P1's emoji/photo
                 inviteData = data;
@@ -1548,6 +1554,12 @@
                 }
                 if (data.players[0].disconnected === true || data.status === 'finished') {
                     $('online-error').textContent = 'Host has left. Try another room.';
+                    $('online-error').classList.remove('hidden');
+                    btn.innerHTML = 'Join Room'; btn.disabled = false;
+                    return null;
+                }
+                if (data.players[1] && data.players[1].disconnected !== true) {
+                    $('online-error').textContent = 'Room is full. Another player is already in.';
                     $('online-error').classList.remove('hidden');
                     btn.innerHTML = 'Join Room'; btn.disabled = false;
                     return null;
