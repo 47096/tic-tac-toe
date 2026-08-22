@@ -1255,7 +1255,6 @@
         }
 
         let lastWinLine=null;
-        let cachedAccent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#a29bfe';
         function fireConfetti() {
             if(prefersReducedMotion) return;
             const c=document.createElement('canvas');c.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:300';document.body.appendChild(c);
@@ -1596,7 +1595,6 @@
             document.documentElement.setAttribute('data-theme', next);
             try { localStorage.setItem('theme', next); } catch(e) {}
             themeToggle.textContent = next === 'dark' ? '☀️ Light' : '🌙 Dark';
-            cachedAccent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#a29bfe';
             // Redraw win line with new theme color
             if (lastWinLine && state.gameOver) drawWinLine(lastWinLine);
         }
