@@ -468,6 +468,7 @@
         function hasPhoto(i) { return photos[i]!==null; }
         function hasEmoji(i) { return emojis[i]!==null; }
         function safePhotoSrc(src) { return src && typeof src==='string' && src.startsWith('data:image/') ? src : ''; }
+        function safeEmoji(e) { return (typeof e === 'string' && e.length <= 8 && !/[<>&"']/.test(e)) ? e : '❓'; }
         function track(event, data) { try { console.log('[analytics]', event, data||''); } catch(e) {} }
         function genCode() { return Math.random().toString(36).substring(2,8).toUpperCase(); }
 
@@ -1304,7 +1305,9 @@
             state.gameOver=true;lastWinLine=wl;
             if(!vsComputer) firstTurn=1-firstTurn; // Alternate who goes first (local/online only)
             if(w!==null&&wl){wl.forEach(i=>cells[i].classList.add('win'));drawWinLine(wl);sndWin();fireConfetti();if(navigator.vibrate)navigator.vibrate([50,30,50]);boardWrap.classList.add('pulse');setTimeout(()=>boardWrap.classList.remove('pulse'),400);
-                resultBig.innerHTML=hasPhoto(w)?`<img src="${safePhotoSrc(photos[w])}" alt="">`:`<span style="font-size:2.5rem">${emojis[w]}</span>`;
+                resultBig.innerHTML='';
+                if(hasPhoto(w)){const img=document.createElement('img');img.src=safePhotoSrc(photos[w]);img.alt='';resultBig.appendChild(img);}
+                else{const sp=document.createElement('span');sp.style.fontSize='2.5rem';sp.textContent=safeEmoji(emojis[w]);resultBig.appendChild(sp);}
                 resultText.textContent=`Player ${w+1} wins`;
                 $('result-line').textContent=getWinLineName(wl);
                 announce('Player '+(w+1)+' wins!');
