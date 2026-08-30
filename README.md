@@ -2,7 +2,7 @@
 
 A polished, mobile-first tic-tac-toe game with local and online multiplayer.
 
-**[▶ Play now](https://wsamuelw.github.io/tic-tac-toe/)**
+**[▶ Play now](https://47096.github.io/tic-tac-toe/)**
 
 ## Features
 
