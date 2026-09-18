@@ -9,6 +9,7 @@ A polished, mobile-first tic-tac-toe game with local and online multiplayer.
 - **Local mode** — two players on the same device
 - **Computer mode** — play against AI with Easy, Medium (blocks/takes wins), or Hard (minimax) difficulty
 - **Online mode** — real-time multiplayer via Firebase Realtime Database
+- **Offline-first** — loads instantly, Local and Computer modes work with no internet; Firebase loads only when entering Online mode
 - **Invite links** — share a URL to invite someone to your game
 - **Emoji avatars** — 5 categories (Faces, Animals, Cars, Nature, Photo) or upload your own
 - **Dark mode** — automatic (system preference) or manual toggle with smooth transition
@@ -48,9 +49,9 @@ A polished, mobile-first tic-tac-toe game with local and online multiplayer.
 
 ## Tech stack
 
-- Single HTML file (~1,600 lines)
+- Single HTML file (~1,580 lines)
 - Vanilla JavaScript (no frameworks, no dependencies)
-- Firebase Realtime Database (online multiplayer)
+- Firebase Realtime Database (lazy-loaded, online multiplayer only)
 - CSS custom properties (theming with `--accent` and `--accent-primary`)
 - Canvas API (win line animation, confetti)
 - Web Share API (mobile sharing)
@@ -81,9 +82,11 @@ A polished, mobile-first tic-tac-toe game with local and online multiplayer.
 ```
 index.html          # The entire game (HTML + CSS + JS)
 manifest.json       # PWA manifest
-sw.js               # Service worker (cache-first for offline play)
+sw.js               # Service worker (network-first for HTML, cache-first for assets)
 icon-192.png        # PWA icon (192×192)
 icon-512.png        # PWA icon (512×512)
+firebase-rules.md   # Firebase Realtime Database security rules
+.gitignore          # Git ignore rules
 README.md           # This file
 ```
 
