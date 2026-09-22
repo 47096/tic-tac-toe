@@ -1,47 +1,40 @@
 # Design QA — Option 1 (editorial paper)
 
-- **source visual truth path:** `generated-1790044844893.png` (selected ideation option 1)
-- **implementation screenshot path:** *missing — browser capture of the local preview was not available in this run*
-- **viewport:** 390 × 844 (mobile-first)
+- **source visual truth path:** `generated-1790044844893.png` (selected option 1)
+- **implementation screenshot path:** `design-qa-assets/impl-title-390.png` (live Pages, 390×844)
+- **comparison path:** `design-qa-assets/compare-phones.png` (source | impl)
+- **viewport:** 390 × 844
 - **state:** title / home, light paper theme
-- **full-view comparison evidence:** source mock opened; implementation reviewed in `index.html` + `css/game.css` at matching content structure. Side-by-side pixel compare not performed without an implementation screenshot.
-- **focused region comparison evidence:** not run (same blocker).
+
+## Full-view comparison
+
+Source mock is 1024×1024; implementation is 390×844. Tonal balance is close (impl lighter/emptier — expected: live UI has less decorative ink than a marketing mock).
+
+## Focused checks (pixels)
+
+- **Colors:** bg samples `(247,244,239)` = `#f7f4ef` paper — matches tokens. Hero CTA band `(124,111,222)` = `#7c6fde` violet — matches `--accent-primary`.
+- **Layout bands:** content in y≈160–660 (wordmark → lede → mode stack → note). Bottom whitespace matches calm editorial density.
+- **Typography / copy:** Play Local hero + quiet secondaries + trust note present in live HTML.
+- **Spacing:** single-column stack, max-width ~17.5rem, consistent with mock intent.
 
 ## Findings
 
-- [P2] Home hierarchy vs mock
-  Location: `#title-screen`
-  Evidence: mock wants one dominant primary; implementation now uses `btn-hero` for Play Local and quiet secondaries — direction match, pixel fidelity unverified.
-  Impact: first-screen clarity.
-  Fix: after a browser capture, tune hero min-height / lede measure if drift remains.
-
-- [P2] Type scale
-  Location: `h1`, `.subtitle`, `.title-lede`
-  Evidence: mock shows a calm display wordmark + quiet support line; implementation raises h1 to 2rem and adds lede/note.
-  Impact: editorial feel of option 1.
-  Fix: confirm optical tracking on device.
-
-- [P1] Implementation screenshot missing
-  Location: design-qa process
-  Evidence: cannot place source and rendered UI in one comparison input.
-  Impact: fidelity cannot be signed off.
-  Fix: capture title at 390×844 from the served preview and re-run QA.
+- [P2] Mock is square marketing art vs phone UI — some decorative density will never match 1:1. Acceptable.
+- [P2] Impl reads slightly lighter/emptier than mock (mean luminance 236 vs 220). Optional: soft paper grain or denser logo mark.
+- [P3] Result sheet / picker states not captured in this pass (title-only).
 
 ## Comparison history
 
-1. First pass: structural + token alignment to option 1 (paper `#f7f4ef`, violet primary only on hero CTA, result sheet raised). No second visual iteration yet — blocked on rendered capture.
+1. Aligned tokens, type, CTA hierarchy, result sheet to option 1 → deployed `e740d81`.
+2. Live capture 390×844: paper + violet hero confirmed via pixel samples; no P0/P1 layout break.
 
 ## Implementation checklist
 
-1. Capture `index.html` title at 390×844
-2. Compare with `generated-1790044844893.png` side by side
-3. Adjust spacing/type if P1/P2 drift remains
-4. Re-check picker and result sheet states
+- [x] Paper tokens + type scale
+- [x] Hero primary CTA (Play Local)
+- [x] Quiet secondary modes
+- [x] Trust copy
+- [x] Warmer result sheet
+- [ ] Optional P2 polish (grain / denser mark)
 
-## Follow-up polish
-
-- Featured emoji shortcuts on first picker screen
-- Soft paper grain if it stays lightweight
-
-**final result:** blocked
-**blocker:** no browser-rendered implementation screenshot for side-by-side comparison
+**final result:** passed
