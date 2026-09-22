@@ -14,8 +14,16 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
+    const url = new URL(e.request.url);
+
+    // Never cache third-party SDK (Firebase / gstatic) — always fetch fresh
+    if (url.origin !== self.location.origin) {
+        e.respondWith(fetch(e.request));
+        return;
+    }
+
     // Network-first for HTML pages — always get fresh when online, fall back to cache when offline
-    if (e.request.mode === 'navigate' || e.request.headers.get('accept')?.includes('text/html')) {
+    if (e.request.mode === 'navigate' || (e.request.headers.get('accept') || '').includes('text/html')) {
         e.respondWith(
             fetch(e.request).then(res => {
                 if (res.ok) {
@@ -27,7 +35,8 @@ self.addEventListener('fetch', e => {
         );
         return;
     }
-    // Cache-first for everything else (icons, manifest, etc.)
+
+    // Cache-first for same-origin assets (icons, manifest, etc.)
     e.respondWith(
         caches.match(e.request).then(r => r || fetch(e.request).then(res => {
             if (res.ok && e.request.method === 'GET') {
