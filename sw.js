@@ -1,5 +1,5 @@
 const CACHE = 'ttt-v1';
-const ASSETS = ['/tic-tac-toe/', '/tic-tac-toe/index.html', '/tic-tac-toe/manifest.json'];
+const ASSETS = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', e => {
     e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
@@ -31,7 +31,7 @@ self.addEventListener('fetch', e => {
                     caches.open(CACHE).then(c => c.put(e.request, clone));
                 }
                 return res;
-            }).catch(() => caches.match(e.request).then(r => r || caches.match('/tic-tac-toe/')))
+            }).catch(() => caches.match(e.request).then(r => r || caches.match('./')))
         );
         return;
     }
@@ -44,6 +44,6 @@ self.addEventListener('fetch', e => {
                 caches.open(CACHE).then(c => c.put(e.request, clone));
             }
             return res;
-        }).catch(() => caches.match('/tic-tac-toe/')))
+        }).catch(() => caches.match('./')))
     );
 });
