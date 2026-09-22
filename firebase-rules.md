@@ -23,7 +23,8 @@ Paste the JSON below into Firebase Console → Realtime Database → Rules.
               && newData.hasChildren(['disconnected', 'uid'])
               && newData.child('uid').val() === auth.uid
               && newData.child('disconnected').isBoolean()
-              && (!newData.hasChildren(['photo']) || newData.child('photo').isString())
+              && (!newData.hasChildren(['photo'])
+                || newData.child('photo').val().matches(/^data:image\\/(jpeg|jpg|png|webp);base64,[A-Za-z0-9+/=]*$/))
               && (!newData.hasChildren(['emoji']) || newData.child('emoji').isString())"
           }
         },
