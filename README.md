@@ -80,11 +80,17 @@ A polished, mobile-first tic-tac-toe game with local and online multiplayer.
 ## Project structure
 
 ```
-index.html          # The entire game (HTML + CSS + JS)
+index.html          # Markup + boot scripts
+css/game.css        # All styles
+js/game-logic.js    # Pure rules/AI/board helpers (tested)
+js/game.js          # UI, Firebase, online multiplayer
+test/               # node --test for game-logic
 manifest.json       # PWA manifest
-sw.js               # Service worker (network-first for HTML, cache-first for assets)
-icon-192.png        # PWA icon (192×192)
-icon-512.png        # PWA icon (512×512)
+sw.js               # Service worker (network-first HTML, no CDN cache)
+icon-192.png        # PWA icon (192×192, purpose any)
+icon-512.png        # PWA icon (512×512, purpose any)
+icon-192-maskable.png   # Maskable icon (192×192)
+icon-512-maskable.png   # Maskable icon (512×512)
 firebase-rules.md   # Firebase Realtime Database security rules
 .gitignore          # Git ignore rules
 README.md           # This file
