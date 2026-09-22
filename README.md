@@ -1,67 +1,126 @@
 # 過三關 — Tic Tac Toe
 
-A polished, mobile-first tic-tac-toe game with local and online multiplayer.
+Mobile-first tic-tac-toe: local, AI, and online with friends.
 
 **[▶ Play now](https://47096.github.io/tic-tac-toe/)**
 
 ## Features
 
-- **Local mode** — two players on the same device
-- **Computer mode** — play against AI with Easy, Medium (blocks/takes wins), or Hard (minimax) difficulty
-- **Online mode** — real-time multiplayer via Firebase Realtime Database (anonymous auth, transactional moves)
-- **Offline-first** — loads instantly, Local and Computer modes work with no internet; Firebase loads only when entering Online mode
-- **Invite links** — share a URL to invite someone to your game
-- **Emoji avatars** — 5 categories (Faces, Animals, Cars, Nature, Photo) or upload your own (shared with your opponent; deleted with the room)
-- **Dark mode** — warm paper palette in light, matching ink tones at night (system preference or toggle)
-- **Win effects** — purple glow on winning cells, near-win glow on threatening cells, confetti
-- **Win streak** — tracks consecutive wins against the computer (persisted in localStorage)
-- **PWA** — install to home screen, play offline in local/computer mode
-- **Session recovery** — refresh mid-game without losing your spot (online mode)
-- **Room cleanup** — Firebase rooms auto-delete when both players disconnect
+- **Local / Computer / Online** — same board, three ways to play (AI: Easy / Medium / Hard)
+- **Offline-first** — Local and Computer work with no network; Firebase loads only for Online
+- **Invite links** — share a URL; rooms clean up when both players leave
+- **Emoji or photo avatars** — photo is shared with your opponent and deleted with the room
+- **Paper UI** — warm light theme, matching dark mode, hand-drawn mark
+- **Sound** — distinct place ticks for each player, win line synced to the stroke, mute toggle
+- **Win effects** — line draw, glow, confetti (respects reduced motion)
+- **PWA** — installable; session recovery in online mode
 
 ## Accessibility
 
-- **Keyboard accessible** — arrow keys navigate the 3×3 board and emoji grid
-- **Screen reader support** — ARIA labels, live announcements for turns and results
-- **Focus management** — focus moves between screens, traps in result dialog
-- **Reduced motion** — respects `prefers-reduced-motion`, disables confetti and animations
-- **Touch targets** — all interactive elements meet 44×44px minimum
-- **Safe areas** — respects `safe-area-inset` for notched devices
+Keyboard board/emoji navigation, ARIA labels and live regions, focus management, `prefers-reduced-motion`, 44px targets, safe-area insets.
 
 ## How to play
 
-### Local
-1. Choose **Local** mode from the title screen
-2. Pick avatars for Player 1 and Player 2
-3. Take turns tapping cells
-4. Tap **Play Again** to start the next round
+**Local** — pick two avatars, take turns, **Play Again**.
 
-### Computer
-1. Choose **Computer** mode from the title screen
-2. Pick your avatar and AI difficulty (Easy / Medium / Hard)
-3. Play against the AI
+**Computer** — pick your avatar and difficulty, then play the AI.
 
-### Online
-1. Choose **Online** mode from the title screen
-2. Pick your avatar
-3. Tap **Create Room** and share the invite link
-4. Friend opens the link, picks their avatar, and taps **Join Room**
+**Online** — pick an avatar → **Create Room** → share the link; your friend opens it and **Join Room**.
 
-## Tech stack
+## Tech
 
-- Vanilla JavaScript (no frameworks, no runtime dependencies)
-- Split assets: `index.html` + `css/game.css` + `js/game-logic.js` + `js/game.js`
-- Firebase Realtime Database + Anonymous Auth (lazy-loaded, online only)
-- CSS custom properties (paper theme, light/dark)
-- Canvas API (win line, confetti)
-- Web Share / clipboard (invite links)
+Vanilla HTML/CSS/JS (no build step). Firebase Realtime Database + Anonymous Auth (lazy). Canvas for win line and confetti. Web Audio for SFX.
 
-## Online safety
+| Piece | Role |
+|-------|------|
+| `index.html` | Markup + boot |
+| `css/game.css` | Theme + layout |
+| `js/game-logic.js` | Pure win/AI/board helpers (unit-tested) |
+| `js/game.js` | UI, audio, Firebase |
+| `sw.js` | PWA cache (network-first for HTML/CSS/JS) |
+| `test/` | `node --test` for game logic |
 
-- Writes require anonymous auth and match a seat `uid` in that room
-- Moves commit via `transaction` (empty cell, your turn, game not over)
-- Room codes use `crypto.getRandomValues` (8 chars, no `0`/`1`/`I`/`O`)
-- Avatar photos are small `data:image/…` JPEGs only (see `firebase-rules.md`)
+## Online setup (Firebase)
+
+1. Create a Realtime Database project and enable **Anonymous** auth.
+2. Paste the web config into `FIREBASE_CONFIG` in `js/game.js`.
+3. Publish these rules (also keeps avatar photos as small `data:image/…` strings):
+
+```json
+{
+  "rules": {
+    "rooms": {
+      "$roomCode": {
+        ".read": true,
+
+        ".write": "auth != null && (
+          (!data.exists() && newData.child('players').child('0').child('uid').val() === auth.uid) ||
+          (data.child('players').child('0').child('uid').val() === auth.uid) ||
+          (data.child('players').child('1').child('uid').val() === auth.uid)
+        )",
+
+        "players": {
+          "$i": {
+            ".validate": "($i === '0' || $i === '1')
+              && newData.hasChildren(['disconnected', 'uid'])
+              && newData.child('uid').val() === auth.uid
+              && newData.child('disconnected').isBoolean()
+              && (!newData.hasChildren(['photo'])
+                || newData.child('photo').val().matches(/^data:image\\/(jpeg|jpg|png|webp);base64,[A-Za-z0-9+/=]*$/))
+              && (!newData.hasChildren(['emoji']) || newData.child('emoji').isString())"
+          }
+        },
+
+        "board": {
+          "$cell": {
+            ".validate": "($cell === '0' || $cell === '1' || $cell === '2' || $cell === '3' || $cell === '4' || $cell === '5' || $cell === '6' || $cell === '7' || $cell === '8')
+              && newData.isNumber()
+              && (newData.val() === 0 || newData.val() === 1)"
+          }
+        },
+
+        "turn": {
+          ".validate": "newData.isNumber() && (newData.val() === 0 || newData.val() === 1)"
+        },
+
+        "scores": {
+          "$s": {
+            ".validate": "($s === '0' || $s === '1' || $s === '2') && newData.isNumber()"
+          }
+        },
+
+        "gameOver": {
+          ".validate": "newData.isBoolean()"
+        },
+
+        "status": {
+          ".validate": "newData.isString()"
+        },
+
+        "created": {
+          ".validate": "newData.isNumber()"
+        },
+
+        "host": {
+          ".validate": "newData.isString()"
+        },
+
+        "startedAt": {
+          ".validate": "newData.isNumber()"
+        },
+
+        "endedAt": {
+          ".validate": "newData.isNumber()"
+        }
+      }
+    },
+    ".read": false,
+    ".write": false
+  }
+}
+```
+
+Writes require auth and a matching seat `uid`. Moves use transactions. Room codes come from `crypto.getRandomValues`.
 
 ## Tests
 
@@ -69,50 +128,20 @@ A polished, mobile-first tic-tac-toe game with local and online multiplayer.
 node --test test/game-logic.test.mjs
 ```
 
-Covers win/draw detection, board/score serialization, room codes, and AI (easy/medium/hard).
-
 ## Customisation
 
 | What | Where | Default |
 |------|-------|---------|
-| Accent colour | `--accent` in `:root` CSS | Violet `#a29bfe` |
-| Primary accent | `--accent-primary` in `:root` CSS | Purple `#7c6fde` |
-| Paper background | `--bg` in `:root` CSS | `#f7f4ef` |
-| Emoji categories | `EMOJI_CATS` in `js/game.js` | Faces, Animals, Cars, Nature |
-| Photo limits | upload handler | 10 MB file → ~12KB compressed JPEG |
-| AI difficulty | `aiDifficulty` in `js/game.js` | medium |
+| Accent / primary | `--accent`, `--accent-primary` | Violet `#a29bfe` / `#7c6fde` |
+| Paper background | `--bg` | `#f7f4ef` |
+| Emoji sets | `EMOJI_CATS` in `js/game.js` | Faces, Animals, Cars, Nature |
+| Photo limits | upload handler | 10 MB in → ~12 KB out |
+| Mute | 🔊 control | Saved in `localStorage` |
 | Format | `.prettierrc` | single quotes, width 100 |
 
 ## Browser support
 
-| Browser | Version |
-|---------|---------|
-| Chrome | 90+ |
-| Safari | 15+ |
-| Firefox | 90+ |
-| Edge | 90+ |
-| Mobile Safari | iOS 15+ |
-| Chrome Android | 90+ |
-
-## Project structure
-
-```
-index.html          # Markup + boot scripts
-css/game.css        # All styles
-js/game-logic.js    # Pure rules/AI/board helpers (tested)
-js/game.js          # UI, Firebase, online multiplayer
-test/               # node --test for game-logic
-.prettierrc         # Formatter config
-manifest.json       # PWA manifest
-sw.js               # Service worker (network-first HTML, no CDN cache)
-icon-192.png        # PWA icon (192×192, purpose any)
-icon-512.png        # PWA icon (512×512, purpose any)
-icon-192-maskable.png   # Maskable icon (192×192)
-icon-512-maskable.png   # Maskable icon (512×512)
-firebase-rules.md   # Firebase Realtime Database security rules
-.gitignore          # Git ignore rules
-README.md           # This file
-```
+Chrome / Edge / Firefox 90+, Safari 15+, iOS Safari 15+, Chrome Android 90+.
 
 ## License
 
