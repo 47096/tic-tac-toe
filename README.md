@@ -102,7 +102,6 @@ css/game.css        # All styles
 js/game-logic.js    # Pure rules/AI/board helpers (tested)
 js/game.js          # UI, Firebase, online multiplayer
 test/               # node --test for game-logic
-design-qa.md        # Design QA notes for the home screen pass
 .prettierrc         # Formatter config
 manifest.json       # PWA manifest
 sw.js               # Service worker (network-first HTML, no CDN cache)
