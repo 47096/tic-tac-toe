@@ -1,198 +1,474 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tic Tac Toe — 過三關</title>
-    <meta name="description" content="Classic tic-tac-toe with local and online multiplayer. Pick your emoji and play!">
-    <meta name="theme-color" content="#a29bfe">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="icon-192.png">
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Cpath d=%22M21 9 C20 20 22 35 21 55%22 fill=%22none%22 stroke=%22%231a1a1a%22 stroke-width=%222.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M43 8 C44 22 42 38 43 56%22 fill=%22none%22 stroke=%22%231a1a1a%22 stroke-width=%222.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M9 21 C20 20 38 22 55 21%22 fill=%22none%22 stroke=%22%231a1a1a%22 stroke-width=%222.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 43 C22 44 36 42 56 43%22 fill=%22none%22 stroke=%22%231a1a1a%22 stroke-width=%222.5%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
-    <meta property="og:title" content="過三關 — Tic Tac Toe">
-    <meta property="og:description" content="Classic tic-tac-toe with local and online multiplayer. Pick your emoji and play!">
-    <meta property="og:type" content="website">
-    <meta property="og:image" content="https://47096.github.io/tic-tac-toe/icon-512.png">
+    <meta
+      name="description"
+      content="Classic tic-tac-toe with local and online multiplayer. Pick your emoji and play!"
+    />
+    <meta name="theme-color" content="#a29bfe" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="manifest" href="manifest.json" />
+    <link rel="apple-touch-icon" href="icon-192.png" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Cpath d=%22M21 9 C20 20 22 35 21 55%22 fill=%22none%22 stroke=%22%231a1a1a%22 stroke-width=%222.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M43 8 C44 22 42 38 43 56%22 fill=%22none%22 stroke=%22%231a1a1a%22 stroke-width=%222.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M9 21 C20 20 38 22 55 21%22 fill=%22none%22 stroke=%22%231a1a1a%22 stroke-width=%222.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 43 C22 44 36 42 56 43%22 fill=%22none%22 stroke=%22%231a1a1a%22 stroke-width=%222.5%22 stroke-linecap=%22round%22/%3E%3C/svg%3E"
+    />
+    <meta property="og:title" content="過三關 — Tic Tac Toe" />
+    <meta
+      property="og:description"
+      content="Classic tic-tac-toe with local and online multiplayer. Pick your emoji and play!"
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://47096.github.io/tic-tac-toe/icon-512.png" />
 
-    <link rel="preconnect" href="https://www.gstatic.com">
-    <script>try{const t=localStorage.getItem('theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
-    <link rel="stylesheet" href="css/game.css">
-</head>
-<body>
-    <noscript><div style="text-align:center;padding:40px;font-family:system-ui;"><h2>JavaScript Required</h2><p>This game needs JavaScript to run. Please enable it in your browser settings.</p></div></noscript>
+    <link rel="preconnect" href="https://www.gstatic.com" />
+    <script>
+      try {
+        const t = localStorage.getItem('theme');
+        if (t) document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {}
+    </script>
+    <link rel="stylesheet" href="css/game.css" />
+  </head>
+  <body>
+    <noscript
+      ><div style="text-align: center; padding: 40px; font-family: system-ui">
+        <h2>JavaScript Required</h2>
+        <p>This game needs JavaScript to run. Please enable it in your browser settings.</p>
+      </div></noscript
+    >
 
-    <button class="theme-toggle" id="theme-toggle" title="Toggle dark mode" aria-label="Toggle dark mode">🌙 Dark</button>
+    <button
+      class="theme-toggle"
+      id="theme-toggle"
+      title="Toggle dark mode"
+      aria-label="Toggle dark mode"
+    >
+      🌙 Dark
+    </button>
 
     <!-- TITLE SCREEN -->
     <div class="screen no-select" id="title-screen" tabindex="-1">
-        <div class="title-bg">
-            <span class="drift drift-a" style="top:8%; left:12%;">✕</span>
-            <span class="drift drift-b" style="top:20%; right:18%;">○</span>
-            <span class="drift drift-a" style="top:45%; left:65%;">✕</span>
-            <span class="drift drift-b" style="top:60%; left:8%;">○</span>
-            <span class="drift drift-a" style="top:78%; right:12%;">✕</span>
-            <span class="drift drift-b" style="top:35%; left:40%;">○</span>
-        </div>
-        <svg class="logo-mark" viewBox="0 0 64 64" width="56" height="56" aria-hidden="true"><path d="M21 9 C20 20, 22 35, 21 55" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M43 8 C44 22, 42 38, 43 56" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M9 21 C20 20, 38 22, 55 21" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M8 43 C22 44, 36 42, 56 43" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
-        <h1>過三關</h1>
-        <div class="subtitle">tic tac toe</div>
-        <div style="font-size:0.75rem; color:var(--text-dim); text-align:center; line-height:1.6; max-width:240px; margin-bottom:20px;">The classic strategy game.<br>Play with friends or challenge the AI.</div>
-        <div style="display:flex; flex-direction:column; gap:8px; width:100%; max-width:260px;">
-            <button class="btn btn-sm" id="title-local-btn">Local</button>
-            <button class="btn btn-sm" id="title-ai-btn">Computer</button>
-            <button class="btn btn-sm" id="title-online-btn">Online</button>
-        </div>
+      <div class="title-bg">
+        <span class="drift drift-a" style="top: 8%; left: 12%">✕</span>
+        <span class="drift drift-b" style="top: 20%; right: 18%">○</span>
+        <span class="drift drift-a" style="top: 45%; left: 65%">✕</span>
+        <span class="drift drift-b" style="top: 60%; left: 8%">○</span>
+        <span class="drift drift-a" style="top: 78%; right: 12%">✕</span>
+        <span class="drift drift-b" style="top: 35%; left: 40%">○</span>
+      </div>
+      <svg class="logo-mark" viewBox="0 0 64 64" width="56" height="56" aria-hidden="true">
+        <path
+          d="M21 9 C20 20, 22 35, 21 55"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+        />
+        <path
+          d="M43 8 C44 22, 42 38, 43 56"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+        />
+        <path
+          d="M9 21 C20 20, 38 22, 55 21"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+        />
+        <path
+          d="M8 43 C22 44, 36 42, 56 43"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+        />
+      </svg>
+      <h1>過三關</h1>
+      <div class="subtitle">tic tac toe</div>
+      <div
+        style="
+          font-size: 0.75rem;
+          color: var(--text-dim);
+          text-align: center;
+          line-height: 1.6;
+          max-width: 240px;
+          margin-bottom: 20px;
+        "
+      >
+        The classic strategy game.<br />Play with friends or challenge the AI.
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 260px">
+        <button class="btn btn-sm" id="title-local-btn">Local</button>
+        <button class="btn btn-sm" id="title-ai-btn">Computer</button>
+        <button class="btn btn-sm" id="title-online-btn">Online</button>
+      </div>
     </div>
 
     <!-- PICKER (avatar selection) -->
     <div class="screen hidden no-select" id="picker" tabindex="-1">
-        <div style="position:relative; width:100%; max-width:300px; margin-bottom:4px; text-align:center;">
-            <div class="pick-header active" id="pick-header" style="margin-bottom:0;">Player 1 — pick your avatar</div>
-            <div id="picker-mode-label" style="font-size:0.65rem; color:var(--text-dim);"></div>
-            <button id="picker-close-btn" aria-label="Close" style="position:absolute; right:0; top:50%; transform:translateY(-50%); background:none; border:none; font-size:1.2rem; color:var(--text-dim); cursor:pointer; min-width:44px; min-height:44px; display:flex; align-items:center; justify-content:center;">×</button>
+      <div
+        style="
+          position: relative;
+          width: 100%;
+          max-width: 300px;
+          margin-bottom: 4px;
+          text-align: center;
+        "
+      >
+        <div class="pick-header active" id="pick-header" style="margin-bottom: 0">
+          Player 1 — pick your avatar
         </div>
-        <div id="cat-tabs" class="cat-tabs" role="tablist"></div>
-        <div id="emoji-grid" class="emoji-grid"></div>
-        <div id="photo-wrap" style="display:none; width:100%; max-width:300px;">
-            <div id="upload-area" tabindex="0" role="button" aria-label="Upload a photo" style="width:100%; aspect-ratio:1; border:2px dashed var(--border); border-radius:var(--radius-sm); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; cursor:pointer; background:var(--surface); transition:border-color 0.2s;">
-                <div style="font-size:2rem; opacity:0.4;">+</div>
-                <div style="font-size:0.8rem; color:var(--text-dim);">Upload a photo</div>
-                <div style="font-size:0.65rem; color:var(--text-dim); opacity:0.6;">Tap or drop an image</div>
-                <div style="font-size:0.6rem; color:var(--text-dim); opacity:0.7; max-width:90%; text-align:center;">Shared with your opponent. Deleted when the room closes.</div>
-            </div>
-            <input type="file" id="photo-upload" accept="image/*" capture="environment" style="display:none;">
-            <canvas id="snap-canvas" class="snap-hidden"></canvas>
+        <div id="picker-mode-label" style="font-size: 0.65rem; color: var(--text-dim)"></div>
+        <button
+          id="picker-close-btn"
+          aria-label="Close"
+          style="
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            color: var(--text-dim);
+            cursor: pointer;
+            min-width: 44px;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          "
+        >
+          ×
+        </button>
+      </div>
+      <div id="cat-tabs" class="cat-tabs" role="tablist"></div>
+      <div id="emoji-grid" class="emoji-grid"></div>
+      <div id="photo-wrap" style="display: none; width: 100%; max-width: 300px">
+        <div
+          id="upload-area"
+          tabindex="0"
+          role="button"
+          aria-label="Upload a photo"
+          style="
+            width: 100%;
+            aspect-ratio: 1;
+            border: 2px dashed var(--border);
+            border-radius: var(--radius-sm);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            background: var(--surface);
+            transition: border-color 0.2s;
+          "
+        >
+          <div style="font-size: 2rem; opacity: 0.4">+</div>
+          <div style="font-size: 0.8rem; color: var(--text-dim)">Upload a photo</div>
+          <div style="font-size: 0.65rem; color: var(--text-dim); opacity: 0.6">
+            Tap or drop an image
+          </div>
+          <div
+            style="
+              font-size: 0.6rem;
+              color: var(--text-dim);
+              opacity: 0.7;
+              max-width: 90%;
+              text-align: center;
+            "
+          >
+            Shared with your opponent. Deleted when the room closes.
+          </div>
         </div>
-        <div class="ready-area">
-            <div class="ready-row">
-                <div class="ready-player" id="p1-ready">
-                    <div class="rp-icon" id="pick-p1-icon">👤</div>
-                    <div class="rp-label">P1</div>
-                    <div class="rp-status" id="pick-p1-status">Pick your avatar</div>
-                </div>
-                <div class="ready-player" id="p2-ready">
-                    <div class="rp-icon" id="pick-p2-icon">👤</div>
-                    <div class="rp-label">P2</div>
-                    <div class="rp-status" id="pick-p2-status">Waiting</div>
-                </div>
-            </div>
+        <input
+          type="file"
+          id="photo-upload"
+          accept="image/*"
+          capture="environment"
+          style="display: none"
+        />
+        <canvas id="snap-canvas" class="snap-hidden"></canvas>
+      </div>
+      <div class="ready-area">
+        <div class="ready-row">
+          <div class="ready-player" id="p1-ready">
+            <div class="rp-icon" id="pick-p1-icon">👤</div>
+            <div class="rp-label">P1</div>
+            <div class="rp-status" id="pick-p1-status">Pick your avatar</div>
+          </div>
+          <div class="ready-player" id="p2-ready">
+            <div class="rp-icon" id="pick-p2-icon">👤</div>
+            <div class="rp-label">P2</div>
+            <div class="rp-status" id="pick-p2-status">Waiting</div>
+          </div>
         </div>
-        <div class="ctrls" style="max-width:300px;margin-top:4px;">
-            <button class="btn btn-sm" id="start-game-btn" disabled>Start Game</button>
-        </div>
+      </div>
+      <div class="ctrls" style="max-width: 300px; margin-top: 4px">
+        <button class="btn btn-sm" id="start-game-btn" disabled>Start Game</button>
+      </div>
     </div>
 
     <!-- ONLINE -->
     <div class="screen hidden no-select" id="online-screen" tabindex="-1">
-        <div style="position:relative; width:100%; max-width:300px; margin-bottom:4px; text-align:center;">
-            <div class="pick-header active" id="online-header" style="margin-bottom:0;">Player 1 — pick your avatar</div>
-            <div style="font-size:0.65rem; color:var(--text-dim);">Play with a friend via link</div>
-            <button id="online-close-btn" aria-label="Close" style="position:absolute; right:0; top:50%; transform:translateY(-50%); background:none; border:none; font-size:1.2rem; color:var(--text-dim); cursor:pointer; min-width:44px; min-height:44px; display:flex; align-items:center; justify-content:center;">×</button>
+      <div
+        style="
+          position: relative;
+          width: 100%;
+          max-width: 300px;
+          margin-bottom: 4px;
+          text-align: center;
+        "
+      >
+        <div class="pick-header active" id="online-header" style="margin-bottom: 0">
+          Player 1 — pick your avatar
         </div>
-        <div id="online-cat-tabs" class="cat-tabs" role="tablist"></div>
-        <div id="online-emoji-grid" class="emoji-grid"></div>
-        <div id="online-photo-wrap" style="display:none; width:100%; max-width:300px;">
-            <div id="online-upload-area" tabindex="0" role="button" aria-label="Upload a photo" style="width:100%; aspect-ratio:1; border:2px dashed var(--border); border-radius:var(--radius-sm); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; cursor:pointer; background:var(--surface); transition:border-color 0.2s;">
-                <div style="font-size:2rem; opacity:0.4;">+</div>
-                <div style="font-size:0.8rem; color:var(--text-dim);">Upload a photo</div>
-                <div style="font-size:0.65rem; color:var(--text-dim); opacity:0.6;">Tap or drop an image</div>
-                <div style="font-size:0.6rem; color:var(--text-dim); opacity:0.7; max-width:90%; text-align:center;">Shared with your opponent. Deleted when the room closes.</div>
-            </div>
-            <input type="file" id="online-photo-upload" accept="image/*" capture="environment" style="display:none;">
-            <canvas id="online-snap-canvas" class="snap-hidden"></canvas>
+        <div style="font-size: 0.65rem; color: var(--text-dim)">Play with a friend via link</div>
+        <button
+          id="online-close-btn"
+          aria-label="Close"
+          style="
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            color: var(--text-dim);
+            cursor: pointer;
+            min-width: 44px;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          "
+        >
+          ×
+        </button>
+      </div>
+      <div id="online-cat-tabs" class="cat-tabs" role="tablist"></div>
+      <div id="online-emoji-grid" class="emoji-grid"></div>
+      <div id="online-photo-wrap" style="display: none; width: 100%; max-width: 300px">
+        <div
+          id="online-upload-area"
+          tabindex="0"
+          role="button"
+          aria-label="Upload a photo"
+          style="
+            width: 100%;
+            aspect-ratio: 1;
+            border: 2px dashed var(--border);
+            border-radius: var(--radius-sm);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            background: var(--surface);
+            transition: border-color 0.2s;
+          "
+        >
+          <div style="font-size: 2rem; opacity: 0.4">+</div>
+          <div style="font-size: 0.8rem; color: var(--text-dim)">Upload a photo</div>
+          <div style="font-size: 0.65rem; color: var(--text-dim); opacity: 0.6">
+            Tap or drop an image
+          </div>
+          <div
+            style="
+              font-size: 0.6rem;
+              color: var(--text-dim);
+              opacity: 0.7;
+              max-width: 90%;
+              text-align: center;
+            "
+          >
+            Shared with your opponent. Deleted when the room closes.
+          </div>
         </div>
+        <input
+          type="file"
+          id="online-photo-upload"
+          accept="image/*"
+          capture="environment"
+          style="display: none"
+        />
+        <canvas id="online-snap-canvas" class="snap-hidden"></canvas>
+      </div>
 
-        <div class="ready-area">
-            <div class="ready-row">
-                <div class="ready-player active" id="online-p1-ready">
-                    <div class="rp-icon" id="online-pick-p1-icon">👤</div>
-                    <div class="rp-label">P1 (You)</div>
-                    <div class="rp-status" id="online-pick-p1-status">Pick your avatar</div>
-                </div>
-                <div class="ready-player" id="online-p2-ready">
-                    <div class="rp-icon" id="online-pick-p2-icon">👤</div>
-                    <div class="rp-label">P2</div>
-                    <div class="rp-status" id="online-pick-p2-status">Waiting</div>
-                </div>
-            </div>
+      <div class="ready-area">
+        <div class="ready-row">
+          <div class="ready-player active" id="online-p1-ready">
+            <div class="rp-icon" id="online-pick-p1-icon">👤</div>
+            <div class="rp-label">P1 (You)</div>
+            <div class="rp-status" id="online-pick-p1-status">Pick your avatar</div>
+          </div>
+          <div class="ready-player" id="online-p2-ready">
+            <div class="rp-icon" id="online-pick-p2-icon">👤</div>
+            <div class="rp-label">P2</div>
+            <div class="rp-status" id="online-pick-p2-status">Waiting</div>
+          </div>
         </div>
+      </div>
 
-        <div class="error-msg hidden" id="online-error"></div>
+      <div class="error-msg hidden" id="online-error"></div>
 
-        <button class="btn" id="create-btn" disabled style="width:100%; max-width:300px; margin-top:4px;">Create Room</button>
-        <button class="btn" id="join-btn" disabled style="width:100%; max-width:300px; margin-top:4px; display:none;">Join Room</button>
+      <button
+        class="btn"
+        id="create-btn"
+        disabled
+        style="width: 100%; max-width: 300px; margin-top: 4px"
+      >
+        Create Room
+      </button>
+      <button
+        class="btn"
+        id="join-btn"
+        disabled
+        style="width: 100%; max-width: 300px; margin-top: 4px; display: none"
+      >
+        Join Room
+      </button>
     </div>
 
     <!-- WAITING -->
     <div class="screen hidden no-select" id="waiting-screen" tabindex="-1">
-        <div class="waiting"><div class="spinner"></div><span id="waiting-text">Waiting for Player 2…</span></div>
-        <button class="btn btn-sm btn-primary" id="copy-invite-btn" style="margin-top:16px;">📋 Copy Invite Link</button>
-        <div style="font-size:0.65rem; color:var(--text-dim); text-align:center; margin-top:8px;">Paste it in a message to your friend</div>
-        <button class="btn btn-sm btn-ghost" id="cancel-btn" style="margin-top:12px;">Cancel</button>
+      <div class="waiting">
+        <div class="spinner"></div>
+        <span id="waiting-text">Waiting for Player 2…</span>
+      </div>
+      <button class="btn btn-sm btn-primary" id="copy-invite-btn" style="margin-top: 16px">
+        📋 Copy Invite Link
+      </button>
+      <div style="font-size: 0.65rem; color: var(--text-dim); text-align: center; margin-top: 8px">
+        Paste it in a message to your friend
+      </div>
+      <button class="btn btn-sm btn-ghost" id="cancel-btn" style="margin-top: 12px">Cancel</button>
     </div>
 
     <!-- GAME -->
     <div class="screen hidden no-select" id="game-screen" tabindex="-1">
-        <div style="position:relative; width:100%; max-width:400px;">
-            <div class="game-players">
-                <div class="game-tab active" id="p1-game-box">
-                    <div class="gt-label">P1</div>
-                    <div class="gt-body">
-                        <span class="gt-emoji" id="p1-icon">😎</span>
-                        <span class="gt-val"><span id="p1-score">0</span></span>
-                    </div>
-                    <div id="streak-display" style="font-size:0.55rem; color:var(--accent); min-height:0.7rem;"></div>
-                </div>
-                <div class="game-tab" id="draw-game-box">
-                    <div class="gt-label">Draw</div>
-                    <div class="gt-body">
-                        <span class="gt-emoji">🤝</span>
-                        <span class="gt-val"><span id="draw-score">0</span></span>
-                    </div>
-                </div>
-                <div class="game-tab" id="p2-game-box">
-                    <div class="gt-label">P2</div>
-                    <div class="gt-body">
-                        <span class="gt-emoji" id="p2-icon">🐱</span>
-                        <span class="gt-val"><span id="p2-score">0</span></span>
-                    </div>
-                </div>
+      <div style="position: relative; width: 100%; max-width: 400px">
+        <div class="game-players">
+          <div class="game-tab active" id="p1-game-box">
+            <div class="gt-label">P1</div>
+            <div class="gt-body">
+              <span class="gt-emoji" id="p1-icon">😎</span>
+              <span class="gt-val"><span id="p1-score">0</span></span>
             </div>
-            <button id="game-close-btn" aria-label="Close" style="position:absolute; right:0; top:-36px; background:none; border:none; font-size:1.2rem; color:var(--text-dim); cursor:pointer; min-width:44px; min-height:44px; display:flex; align-items:center; justify-content:center; z-index:1;">×</button>
-        </div>
-        <div class="board-wrap" id="board-wrap">
-            <div class="board no-select" id="board" role="grid" aria-label="Tic tac toe board">
-                <div class="board-lines"><div class="v"></div><div class="v"></div><div class="h"></div><div class="h"></div></div>
+            <div
+              id="streak-display"
+              style="font-size: 0.55rem; color: var(--accent); min-height: 0.7rem"
+            ></div>
+          </div>
+          <div class="game-tab" id="draw-game-box">
+            <div class="gt-label">Draw</div>
+            <div class="gt-body">
+              <span class="gt-emoji">🤝</span>
+              <span class="gt-val"><span id="draw-score">0</span></span>
             </div>
-            <canvas id="win-canvas"></canvas>
-        </div>
-        <div class="ctrls">
-            <div class="diff-chip" id="diff-chip" style="display:none;">
-                <button class="diff-chip-item" data-diff="easy" title="Easy" aria-pressed="false"><span class="diff-emoji">😊</span><span class="diff-text">Easy</span></button>
-                <button class="diff-chip-item active" data-diff="medium" title="Medium" aria-pressed="true"><span class="diff-emoji">🤔</span><span class="diff-text">Med</span></button>
-                <button class="diff-chip-item" data-diff="hard" title="Hard" aria-pressed="false"><span class="diff-emoji">😈</span><span class="diff-text">Hard</span></button>
+          </div>
+          <div class="game-tab" id="p2-game-box">
+            <div class="gt-label">P2</div>
+            <div class="gt-body">
+              <span class="gt-emoji" id="p2-icon">🐱</span>
+              <span class="gt-val"><span id="p2-score">0</span></span>
             </div>
+          </div>
         </div>
-        <div id="aria-announcer" aria-live="polite" class="sr-only"></div>
+        <button
+          id="game-close-btn"
+          aria-label="Close"
+          style="
+            position: absolute;
+            right: 0;
+            top: -36px;
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            color: var(--text-dim);
+            cursor: pointer;
+            min-width: 44px;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+          "
+        >
+          ×
+        </button>
+      </div>
+      <div class="board-wrap" id="board-wrap">
+        <div class="board no-select" id="board" role="grid" aria-label="Tic tac toe board">
+          <div class="board-lines">
+            <div class="v"></div>
+            <div class="v"></div>
+            <div class="h"></div>
+            <div class="h"></div>
+          </div>
+        </div>
+        <canvas id="win-canvas"></canvas>
+      </div>
+      <div class="ctrls">
+        <div class="diff-chip" id="diff-chip" style="display: none">
+          <button class="diff-chip-item" data-diff="easy" title="Easy" aria-pressed="false">
+            <span class="diff-emoji">😊</span><span class="diff-text">Easy</span>
+          </button>
+          <button
+            class="diff-chip-item active"
+            data-diff="medium"
+            title="Medium"
+            aria-pressed="true"
+          >
+            <span class="diff-emoji">🤔</span><span class="diff-text">Med</span>
+          </button>
+          <button class="diff-chip-item" data-diff="hard" title="Hard" aria-pressed="false">
+            <span class="diff-emoji">😈</span><span class="diff-text">Hard</span>
+          </button>
+        </div>
+      </div>
+      <div id="aria-announcer" aria-live="polite" class="sr-only"></div>
     </div>
 
-    <div class="result-overlay" id="result-overlay" role="dialog" aria-modal="true" aria-label="Game result">
-        <div class="big" id="result-big"></div>
-        <h2 id="result-text"></h2>
-        <div id="result-line" style="font-size:0.75rem; color:var(--text-dim); margin-bottom:10px;"></div>
-        <div style="display:flex; gap:8px; justify-content:center;">
-            <button class="btn btn-sm" id="leave-btn">Play Again</button>
-            <button class="btn btn-sm btn-ghost" id="menu-btn">Menu</button>
-        </div>
+    <div
+      class="result-overlay"
+      id="result-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Game result"
+    >
+      <div class="big" id="result-big"></div>
+      <h2 id="result-text"></h2>
+      <div
+        id="result-line"
+        style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 10px"
+      ></div>
+      <div style="display: flex; gap: 8px; justify-content: center">
+        <button class="btn btn-sm" id="leave-btn">Play Again</button>
+        <button class="btn btn-sm btn-ghost" id="menu-btn">Menu</button>
+      </div>
     </div>
 
     <div id="network-banner" class="network-banner hidden">Reconnecting…</div>
 
     <script src="js/game-logic.js"></script>
     <script src="js/game.js"></script>
-    <script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}</script>
-</body>
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js').catch(() => {});
+      }
+    </script>
+  </body>
 </html>
