@@ -93,24 +93,16 @@
         />
       </svg>
       <h1>過三關</h1>
-      <div class="subtitle">tic tac toe</div>
-      <div
-        style="
-          font-size: 0.75rem;
-          color: var(--text-dim);
-          text-align: center;
-          line-height: 1.6;
-          max-width: 240px;
-          margin-bottom: 20px;
-        "
-      >
-        The classic strategy game.<br />Play with friends or challenge the AI.
+      <div class="subtitle">Tic Tac Toe</div>
+      <p class="title-lede">
+        The classic strategy game.<br />Play here with a friend, or challenge the AI.
+      </p>
+      <div class="mode-stack">
+        <button class="btn btn-hero" id="title-local-btn">Play Local</button>
+        <button class="btn btn-quiet" id="title-ai-btn">Play Computer</button>
+        <button class="btn btn-quiet" id="title-online-btn">Play Online</button>
       </div>
-      <div style="display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 260px">
-        <button class="btn btn-sm" id="title-local-btn">Local</button>
-        <button class="btn btn-sm" id="title-ai-btn">Computer</button>
-        <button class="btn btn-sm" id="title-online-btn">Online</button>
-      </div>
+      <p class="title-note">No account. Online rooms delete when you both leave.</p>
     </div>
 
     <!-- PICKER (avatar selection) -->
@@ -188,7 +180,7 @@
               text-align: center;
             "
           >
-            Shared with your opponent. Deleted when the room closes.
+            Shown to your opponent only. Deleted when the room closes.
           </div>
         </div>
         <input
@@ -294,7 +286,7 @@
               text-align: center;
             "
           >
-            Shared with your opponent. Deleted when the room closes.
+            Shown to your opponent only. Deleted when the room closes.
           </div>
         </div>
         <input
@@ -443,7 +435,7 @@
     </div>
 
     <div
-      class="result-overlay"
+      class="result-overlay panel"
       id="result-overlay"
       role="dialog"
       aria-modal="true"
@@ -451,13 +443,10 @@
     >
       <div class="big" id="result-big"></div>
       <h2 id="result-text"></h2>
-      <div
-        id="result-line"
-        style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 10px"
-      ></div>
-      <div style="display: flex; gap: 8px; justify-content: center">
-        <button class="btn btn-sm" id="leave-btn">Play Again</button>
-        <button class="btn btn-sm btn-ghost" id="menu-btn">Menu</button>
+      <div id="result-line" class="result-line"></div>
+      <div class="result-actions">
+        <button class="btn btn-hero" id="leave-btn">Play Again</button>
+        <button class="btn btn-quiet" id="menu-btn">Back to Menu</button>
       </div>
     </div>
 
