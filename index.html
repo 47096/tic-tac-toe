@@ -1212,6 +1212,86 @@
             return o;
         }
 
+        function boardFromStore(rb) {
+            const b = Array(9).fill(null);
+            if (rb && typeof rb === 'object') {
+                for (let i = 0; i < 9; i++) if (rb[i] != null) b[i] = rb[i];
+            }
+            return b;
+        }
+
+        function scoresFromStore(rs) {
+            const s = [0, 0, 0];
+            if (rs && typeof rs === 'object') {
+                if (rs[0] != null) s[0] = rs[0];
+                if (rs[1] != null) s[1] = rs[1];
+                if (rs[2] != null) s[2] = rs[2];
+            }
+            return s;
+        }
+
+        function findWin(b) {
+            for (const [a, bb, c] of WIN_LINES) {
+                if (b[a] !== null && b[a] === b[bb] && b[a] === b[c]) return { w: b[a], wl: [a, bb, c] };
+            }
+            return { w: null, wl: null };
+        }
+
+        // Online: DB is the referee — abort if cell taken, not your turn, or game over.
+        function commitOnlineMove(i) {
+            const myIndex = playerIndex;
+            if (myIndex === null || !roomRef) return;
+            moveInProgress = true;
+            roomRef.transaction(room => {
+                if (!room || room.gameOver) return; // abort
+                const raw = (room.board && typeof room.board === 'object') ? room.board : {};
+                if (raw[i] != null) return; // abort — cell taken
+                const turn = room.turn != null ? room.turn : 0;
+                if (turn !== myIndex) return; // abort — not your turn
+                const nextBoard = {};
+                for (let k = 0; k < 9; k++) if (raw[k] != null) nextBoard[k] = raw[k];
+                nextBoard[i] = myIndex;
+                const b = boardFromStore(nextBoard);
+                const { w } = findWin(b);
+                const draw = w === null && b.every(c => c !== null);
+                const scores = scoresFromStore(room.scores);
+                if (w !== null) scores[w]++;
+                else if (draw) scores[2]++;
+                const next = {};
+                for (const k in room) next[k] = room[k];
+                next.board = nextBoard;
+                next.turn = (w !== null || draw) ? turn : 1 - turn;
+                next.scores = { 0: scores[0], 1: scores[1], 2: scores[2] };
+                next.gameOver = w !== null || draw;
+                return next;
+            }, (err, committed, snap) => {
+                moveInProgress = false;
+                if (err) {
+                    console.error('Move failed:', err);
+                    showOnlineError('Move failed — try again');
+                    return;
+                }
+                if (!committed) {
+                    showOnlineError('Move rejected — cell taken or not your turn');
+                    return;
+                }
+                sndPlace();
+                const row = Math.floor(i / 3) + 1, col = i % 3 + 1;
+                announce('Player ' + (myIndex + 1) + ' placed at row ' + row + ' column ' + col);
+                if (navigator.vibrate) navigator.vibrate(10);
+                const room = snap.val() || {};
+                state.board = boardFromStore(room.board);
+                state.turn = room.turn != null ? room.turn : 0;
+                state.scores = scoresFromStore(room.scores);
+                const { w, wl } = findWin(state.board);
+                const draw = w === null && state.board.every(c => c !== null);
+                renderBoard();
+                if (w !== null) endGame(w, wl);
+                else if (draw) endGame(null);
+                else updateTurn();
+            }, false);
+        }
+
         function handleClick(i) {
             if(state.gameOver||state.board[i]!==null)return;
             if(moveInProgress)return; // Lock board until Firebase confirms move
@@ -1225,6 +1305,8 @@
                 setTimeout(()=>cells[i].classList.remove('shake'),300);
                 return;
             }
+            // Online: transaction checks cell empty + turn + gameOver atomically
+            if(roomRef){ commitOnlineMove(i); return; }
             const cur=state.turn; state.board[i]=cur; sndPlace();
             const row=Math.floor(i/3)+1, col=i%3+1;
             announce('Player '+(cur+1)+' placed at row '+row+' column '+col);
@@ -1233,20 +1315,8 @@
             for(const[a,b,c]of WIN_LINES){if(state.board[a]!==null&&state.board[a]===state.board[b]&&state.board[a]===state.board[c]){w=state.board[a];wl=[a,b,c];break;}}
             const draw=w===null&&state.board.every(c=>c!==null);
             if(w!==null)state.scores[w]++;else if(draw)state.scores[2]++;
-            if(roomRef){
-                moveInProgress=true;
-                const nt=(w!==null||draw)?cur:1-cur;
-                const prevBoard=state.board.slice(),prevScores=state.scores.slice(),prevTurn=state.turn;
-                const moveTimeout=setTimeout(()=>{moveInProgress=false;state.gameOver=false;resultOverlay.classList.remove('show');state.board=prevBoard;state.scores=prevScores;state.turn=prevTurn;renderBoard();updateScores();updateTurn();},5000);
-                roomRef.update({board:boardToStore(state.board),turn:nt,scores:{0:state.scores[0],1:state.scores[1],2:state.scores[2]},gameOver:w!==null||draw}).then(()=>{
-                    clearTimeout(moveTimeout);moveInProgress=false;
-                }).catch(()=>{clearTimeout(moveTimeout);moveInProgress=false;state.gameOver=false;resultOverlay.classList.remove('show');state.board=prevBoard;state.scores=prevScores;state.turn=prevTurn;renderBoard();updateScores();updateTurn();});
-                renderBoard();
-                if(w!==null)endGame(w,wl);else if(draw)endGame(null);else{state.turn=1-cur;updateTurn();}
-            }else{
-                renderBoard();
-                if(w!==null)endGame(w,wl);else if(draw)endGame(null);else{state.turn=1-cur;updateTurn();}
-            }
+            renderBoard();
+            if(w!==null)endGame(w,wl);else if(draw)endGame(null);else{state.turn=1-cur;updateTurn();}
             // Trigger AI move after human's turn
             if(vsComputer && !state.gameOver && state.turn===1) {
                 setTimeout(aiMakeMove, 400);
