@@ -1,6 +1,8 @@
 # Firebase Realtime Database Security Rules
 
-Copy the JSON below and paste into Firebase Console → Realtime Database → Rules.
+Requires **Anonymous Auth** (Firebase Console → Authentication → Sign-in method → Anonymous → Enable).
+
+Paste the JSON below into Firebase Console → Realtime Database → Rules.
 
 ```json
 {
@@ -8,29 +10,64 @@ Copy the JSON below and paste into Firebase Console → Realtime Database → Ru
     "rooms": {
       "$roomCode": {
         ".read": true,
-        ".write": true,
+
+        ".write": "auth != null && (
+          (!data.exists() && newData.child('players').child('0').child('uid').val() === auth.uid) ||
+          (data.child('players').child('0').child('uid').val() === auth.uid) ||
+          (data.child('players').child('1').child('uid').val() === auth.uid)
+        )",
+
         "players": {
-          "$playerIndex": {
-            ".validate": (
-              ($playerIndex == '0' || $playerIndex == '1')
-              && newData.hasChildren(['disconnected'])
-            )
+          "$i": {
+            ".validate": "($i === '0' || $i === '1')
+              && newData.hasChildren(['disconnected', 'uid'])
+              && newData.child('uid').val() === auth.uid
+              && newData.child('disconnected').isBoolean()
+              && (!newData.hasChildren(['photo']) || newData.child('photo').isString())
+              && (!newData.hasChildren(['emoji']) || newData.child('emoji').isString())"
           }
         },
+
         "board": {
-          ".validate": "newData.isList() && newData.val().size() == 9"
+          "$cell": {
+            ".validate": "($cell === '0' || $cell === '1' || $cell === '2' || $cell === '3' || $cell === '4' || $cell === '5' || $cell === '6' || $cell === '7' || $cell === '8')
+              && newData.isNumber()
+              && (newData.val() === 0 || newData.val() === 1)"
+          }
         },
+
         "turn": {
-          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1"
+          ".validate": "newData.isNumber() && (newData.val() === 0 || newData.val() === 1)"
         },
+
         "scores": {
-          ".validate": "newData.isList()"
+          "$s": {
+            ".validate": "($s === '0' || $s === '1' || $s === '2') && newData.isNumber()"
+          }
         },
+
         "gameOver": {
           ".validate": "newData.isBoolean()"
         },
+
         "status": {
           ".validate": "newData.isString()"
+        },
+
+        "created": {
+          ".validate": "newData.isNumber()"
+        },
+
+        "host": {
+          ".validate": "newData.isString()"
+        },
+
+        "startedAt": {
+          ".validate": "newData.isNumber()"
+        },
+
+        "endedAt": {
+          ".validate": "newData.isNumber()"
         }
       }
     },
@@ -40,29 +77,30 @@ Copy the JSON below and paste into Firebase Console → Realtime Database → Ru
 }
 ```
 
-## What these rules do
+## Why this shape
 
-| Path | Read | Write | Validation |
-|------|------|-------|------------|
-| `/rooms/{roomCode}` | Anyone | Anyone | — |
-| `/rooms/{roomCode}/players/{0 or 1}` | Anyone | Anyone | Must be index 0 or 1, must have `disconnected` field |
-| `/rooms/{roomCode}/board` | Anyone | Anyone | Must be array of 9 |
-| `/rooms/{roomCode}/turn` | Anyone | Anyone | Must be 0 or 1 |
-| `/rooms/{roomCode}/gameOver` | Anyone | Anyone | Must be boolean |
-| `/rooms/{roomCode}/status` | Anyone | Anyone | Must be string |
-| Everything else | Denied | Denied | — |
+RTDB write rules at **child** paths see only that child's `newData` (e.g. `created` is just a number), so
+`newData.child('players')…` is always null there and create gets `PERMISSION_DENIED` even when the room
+rule would pass.
 
-## Notes
+**Fix:** one `.write` at `$roomCode` (parent grant cascades to children). Children only have `.validate`.
 
-- **Read is open** — needed for invite links (anyone with the link can read the room to join)
-- **Write is open** — the app already handles turn enforcement and room hijack prevention client-side
-- **Validation only** — prevents malformed data from being written (wrong types, invalid board size, etc.)
-- For stricter rules (e.g. only the room creator can write to certain fields), you'd need Firebase Auth, which this game doesn't use
+| Path | Read | Write | Validate |
+|------|------|-------|----------|
+| `/rooms/{roomCode}` | Anyone (invite links) | Create if `players/0.uid` is you; then only a player in that room | — |
+| `players/{0\|1}` | (via parent) | (via parent) | `uid` must be `auth.uid`; `disconnected` boolean; photo/emoji optional strings |
+| `board` cells | (via parent) | (via parent) | index `0`–`8`, value `0` or `1` |
+| `turn` / `scores` / `gameOver` / … | (via parent) | (via parent) | shape checks |
+
+## Client contract
+
+1. Load `firebase-app-compat`, `firebase-auth-compat`, `firebase-database-compat`
+2. `signInAnonymously()` before any write
+3. Put `uid` on `players/0` (create) and `players/1` (join)
+4. Never send `null` fields in `set()`/`update()` (null = delete)
 
 ## How to apply
 
-1. Go to [Firebase Console](https://console.firebase.google.com/)
-2. Select your project (`tic-tac-toe-dd488`)
-3. Left sidebar → Realtime Database → Rules tab
-4. Replace the existing rules with the JSON above
-5. Click "Publish"
+1. Enable Anonymous Auth
+2. Realtime Database → Rules → replace JSON → **Publish**
+3. Deploy the updated `index.html` (view-source must show `signInAnonymously`)

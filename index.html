@@ -378,32 +378,44 @@
             appId: "1:366226840426:web:32f9a7ab26cb4fa0466313"
         };
         let db = null;
-        function initFirebase() {
-            if (db) return Promise.resolve(db);
-            if (!navigator.onLine) return Promise.reject(new Error('offline'));
+        let uid = null;
+        function loadScript(src) {
             return new Promise((resolve, reject) => {
-                function doInit() {
-                    try {
-                        if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
-                        db = firebase.database();
-                        resolve(db);
-                    } catch(e) { reject(e); }
-                }
-                if (window.firebase && firebase.database) {
-                    doInit();
-                } else {
-                    const s1 = document.createElement('script');
-                    s1.src = 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js';
-                    s1.onload = () => {
-                        const s2 = document.createElement('script');
-                        s2.src = 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js';
-                        s2.onload = doInit;
-                        s2.onerror = () => reject(new Error('Failed to load Firebase'));
-                        document.head.appendChild(s2);
-                    };
-                    s1.onerror = () => reject(new Error('Failed to load Firebase'));
-                    document.head.appendChild(s1);
-                }
+                const s = document.createElement('script');
+                s.src = src;
+                s.onload = resolve;
+                s.onerror = () => reject(new Error('Failed to load ' + src));
+                document.head.appendChild(s);
+            });
+        }
+        function initFirebase() {
+            if (db && uid) return Promise.resolve(db);
+            if (!navigator.onLine) return Promise.reject(new Error('offline'));
+            const base = 'https://www.gstatic.com/firebasejs/10.12.0/';
+            const ready = (window.firebase && firebase.database && firebase.auth)
+                ? Promise.resolve()
+                : loadScript(base + 'firebase-app-compat.js').then(() =>
+                    Promise.all([
+                        loadScript(base + 'firebase-auth-compat.js'),
+                        loadScript(base + 'firebase-database-compat.js')
+                    ])
+                  ).then(() => {
+                    if (!(window.firebase && firebase.database && firebase.auth)) {
+                        throw new Error('Failed to load Firebase');
+                    }
+                  });
+            return ready.then(() => {
+                if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+                const auth = firebase.auth();
+                const signedIn = auth.currentUser
+                    ? Promise.resolve(auth.currentUser)
+                    : auth.signInAnonymously().then(cred => cred.user);
+                return signedIn.then(user => {
+                    if (!user || !user.uid) throw new Error('Auth failed');
+                    uid = user.uid;
+                    db = firebase.database();
+                    return db;
+                });
             });
         }
         function showOnlineError(msg) { const el = $('online-error'); if (el) { el.textContent = msg; el.classList.remove('hidden'); } }
@@ -464,7 +476,13 @@
         function hasEmoji(i) { return emojis[i]!==null; }
         function safePhotoSrc(src) { return src && typeof src==='string' && src.startsWith('data:image/') ? src : ''; }
         function safeEmoji(e) { return (typeof e === 'string' && e.length <= 8 && !/[<>&"']/.test(e)) ? e : '❓'; }
-        function genCode() { return Math.random().toString(36).substring(2,8).toUpperCase(); }
+        function genCode() {
+            const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            const bytes = crypto.getRandomValues(new Uint8Array(8));
+            let out = '';
+            for (let i = 0; i < 8; i++) out += alphabet[bytes[i] % alphabet.length];
+            return out;
+        }
 
         // ===== AI =====
         function aiBestMove(board, aiPlayer) {
@@ -904,15 +922,25 @@
                 emojis=[myEmoji,null]; photos=[null,null];
             }
             initFirebase().then(d => { db = d;
+            if (!uid) throw new Error('AUTH_DISABLED — enable Anonymous Auth in Firebase Console');
             roomRef = db.ref('rooms/'+roomCode);
 
             // If P1 disconnects before P2 joins, mark as disconnected (cleanup listener handles removal)
-            roomRef.child('players/0').onDisconnect().update({disconnected:true}).catch(()=>{});
+            roomRef.child('players/0').onDisconnect().update({disconnected:true, uid}).catch(()=>{});
+
+            // Single set() — parent write rule cascades. Never include null keys (null = delete).
+            const seat = { disconnected: false, uid };
+            if (myPhoto) seat.photo = myPhoto; else seat.emoji = myEmoji;
 
             roomRef.set({
-                players:{0:{emoji:myPhoto ? null : myEmoji, photo:myPhoto, disconnected:false},1:null},
-                board:Array(9).fill(null),turn:0,scores:[0,0,0],gameOver:false,
-                created:Date.now(),host:deviceId,status:'waiting'
+                players: { 0: seat },
+                board: {},
+                turn: 0,
+                scores: { 0: 0, 1: 0, 2: 0 },
+                gameOver: false,
+                created: Date.now(),
+                host: uid,
+                status: 'waiting'
             }).then(() => {
                 // Listen for player 2 joining
                 joinListener = roomRef.child('players/1').on('value', snap => {
@@ -923,8 +951,8 @@
                         roomRef.child('players/1').off('value',joinListener); joinListener=null;
                         // P2 joined — both mark as disconnected on disconnect
                         roomRef.onDisconnect().cancel();
-                        roomRef.child('players/0').onDisconnect().update({disconnected:true}).catch(()=>{});
-                        roomRef.child('players/1').onDisconnect().update({disconnected:true}).catch(()=>{});
+                        roomRef.child('players/0').onDisconnect().update({disconnected:true, uid}).catch(()=>{});
+                        roomRef.child('players/1').onDisconnect().update({disconnected:true, uid}).catch(()=>{});
                         startOnlineGame();
                     }
                 });
@@ -939,13 +967,26 @@
                     }
                 }, 30000);
             }).catch(err => {
-                console.error('Create failed:', err);
-                $('online-error').textContent='Failed: '+err.message;
+                console.error('Create failed:', err && err.code, err);
+                const code = (err && err.code) || '';
+                let msg = 'Failed: ' + ((err && err.message) || err);
+                if (code === 'PERMISSION_DENIED') {
+                    msg = 'Permission denied. Check: (1) Anonymous Auth is ON, (2) rules published from firebase-rules.md, (3) this page is the build with signInAnonymously.';
+                } else if (String(err && err.message || err).indexOf('AUTH_DISABLED') !== -1) {
+                    msg = 'Enable Anonymous Auth in Firebase Console → Authentication → Sign-in method.';
+                }
+                $('online-error').textContent = msg;
                 $('online-error').classList.remove('hidden');
                 btn.innerHTML='Create Room'; btn.disabled=false;
                 isOnline = false;
             });
-            }).catch(() => { btn.innerHTML='Create Room'; btn.disabled=false; isOnline = false; showOnlineError('You need an internet connection to play online.'); });
+            }).catch(err => {
+                console.error('Create init failed:', err);
+                btn.innerHTML='Create Room'; btn.disabled=false; isOnline = false;
+                showOnlineError(String(err && err.message || err).indexOf('AUTH_DISABLED') !== -1
+                    ? 'Enable Anonymous Auth in Firebase Console → Authentication → Sign-in method.'
+                    : 'You need an internet connection to play online.');
+            });
         });
 
         $('copy-invite-btn').addEventListener('click', () => {
@@ -1011,7 +1052,7 @@
                         // Record win for remaining player
                         state.scores[playerIndex]++;
                         updateScores();
-                        if(roomRef) roomRef.update({gameOver:true, scores:state.scores}).catch(()=>{});
+                        if(roomRef) roomRef.update({gameOver:true, scores:{0:state.scores[0],1:state.scores[1],2:state.scores[2]}}).catch(()=>{});
                         resultBig.textContent='🏆';
                         resultText.textContent='You win!';
                         $('result-line').textContent='Opponent left';
@@ -1065,8 +1106,8 @@
                 const connected = snap.val() === true;
                 $('network-banner').classList.toggle('hidden', connected);
                 if(connected && roomRef && playerIndex!==null) {
-                    roomRef.child('players/'+playerIndex).update({disconnected:false}).catch(()=>{});
-                    roomRef.child('players/'+playerIndex).onDisconnect().update({disconnected:true}).catch(()=>{});
+                    roomRef.child('players/'+playerIndex).update({disconnected:false, uid}).catch(()=>{});
+                    roomRef.child('players/'+playerIndex).onDisconnect().update({disconnected:true, uid}).catch(()=>{});
                 }
             };
             db.ref('.info/connected').on('value', connectedListener);
@@ -1165,6 +1206,12 @@
         function updateScores(){updatePlayerBoxes();if(!isOnline)saveScores();}
         function updateStreakDisplay(){const el=$('streak-display');if(!el)return;el.textContent=vsComputer&&streak>1?`${streak}🔥 streak`:'';}
 
+        function boardToStore(b) {
+            const o = {};
+            for (let i = 0; i < 9; i++) if (b[i] !== null && b[i] !== undefined) o[i] = b[i];
+            return o;
+        }
+
         function handleClick(i) {
             if(state.gameOver||state.board[i]!==null)return;
             if(moveInProgress)return; // Lock board until Firebase confirms move
@@ -1191,7 +1238,7 @@
                 const nt=(w!==null||draw)?cur:1-cur;
                 const prevBoard=state.board.slice(),prevScores=state.scores.slice(),prevTurn=state.turn;
                 const moveTimeout=setTimeout(()=>{moveInProgress=false;state.gameOver=false;resultOverlay.classList.remove('show');state.board=prevBoard;state.scores=prevScores;state.turn=prevTurn;renderBoard();updateScores();updateTurn();},5000);
-                roomRef.update({board:state.board,turn:nt,scores:state.scores,gameOver:w!==null||draw}).then(()=>{
+                roomRef.update({board:boardToStore(state.board),turn:nt,scores:{0:state.scores[0],1:state.scores[1],2:state.scores[2]},gameOver:w!==null||draw}).then(()=>{
                     clearTimeout(moveTimeout);moveInProgress=false;
                 }).catch(()=>{clearTimeout(moveTimeout);moveInProgress=false;state.gameOver=false;resultOverlay.classList.remove('show');state.board=prevBoard;state.scores=prevScores;state.turn=prevTurn;renderBoard();updateScores();updateTurn();});
                 renderBoard();
@@ -1329,7 +1376,7 @@
             clearWinLine();
             state.gameOver = false;
             if (roomRef) {
-                roomRef.update({ board: Array(9).fill(null), turn: firstTurn, gameOver: false }).catch(() => {});
+                roomRef.update({ board: {}, turn: firstTurn, gameOver: false, scores: { 0: state.scores[0], 1: state.scores[1], 2: state.scores[2] } }).catch(() => {});
             }
             resetBoard();
             // If AI goes first after reset
@@ -1352,12 +1399,12 @@
                 roomRef.update({status:'finished',endedAt:Date.now()}).catch(()=>{});
                 if(playerIndex===0){
                     // Host: mark disconnected, then remove room after short delay
-                    roomRef.child('players/0').update({disconnected:true}).then(()=>{
+                    roomRef.child('players/0').update({disconnected:true, uid}).then(()=>{
                         setTimeout(()=>{ roomRef.remove().catch(()=>{}); }, 2000);
                     }).catch(()=>{});
                 } else {
                     // Guest: mark disconnected, then remove room after delay
-                    roomRef.child('players/1').update({disconnected:true}).then(()=>{
+                    roomRef.child('players/1').update({disconnected:true, uid}).then(()=>{
                         setTimeout(()=>{ roomRef.remove().catch(()=>{}); }, 5000);
                     }).catch(()=>{});
                 }
@@ -1537,10 +1584,11 @@
                 if (data.players[0].emoji) emojis[0] = data.players[0].emoji;
                 if (data.players[0].photo) photos[0] = data.players[0].photo;
 
-                return roomRef.child('players/1').set({
-                    emoji: myPhoto ? null : myEmoji, photo: myPhoto, disconnected: false
-                }).then(() => {
-                    roomRef.child('players/1').onDisconnect().update({disconnected:true}).catch(()=>{});
+                // Omit nulls — Firebase treats them as deletes
+                const seat1 = { disconnected: false, uid };
+                if (myPhoto) seat1.photo = myPhoto; else seat1.emoji = myEmoji;
+                return roomRef.child('players/1').set(seat1).then(() => {
+                    roomRef.child('players/1').onDisconnect().update({disconnected:true, uid}).catch(()=>{});
                     startOnlineGame();
                 });
             }).catch(err => {
