@@ -8,11 +8,11 @@ A polished, mobile-first tic-tac-toe game with local and online multiplayer.
 
 - **Local mode** — two players on the same device
 - **Computer mode** — play against AI with Easy, Medium (blocks/takes wins), or Hard (minimax) difficulty
-- **Online mode** — real-time multiplayer via Firebase Realtime Database
+- **Online mode** — real-time multiplayer via Firebase Realtime Database (anonymous auth, transactional moves)
 - **Offline-first** — loads instantly, Local and Computer modes work with no internet; Firebase loads only when entering Online mode
 - **Invite links** — share a URL to invite someone to your game
-- **Emoji avatars** — 5 categories (Faces, Animals, Cars, Nature, Photo) or upload your own
-- **Dark mode** — automatic (system preference) or manual toggle with smooth transition
+- **Emoji avatars** — 5 categories (Faces, Animals, Cars, Nature, Photo) or upload your own (shared with your opponent; deleted with the room)
+- **Dark mode** — warm paper palette in light, matching ink tones at night (system preference or toggle)
 - **Win effects** — purple glow on winning cells, near-win glow on threatening cells, confetti
 - **Win streak** — tracks consecutive wins against the computer (persisted in localStorage)
 - **PWA** — install to home screen, play offline in local/computer mode
@@ -49,12 +49,27 @@ A polished, mobile-first tic-tac-toe game with local and online multiplayer.
 
 ## Tech stack
 
-- Single HTML file (~1,580 lines)
-- Vanilla JavaScript (no frameworks, no dependencies)
-- Firebase Realtime Database (lazy-loaded, online multiplayer only)
-- CSS custom properties (theming with `--accent` and `--accent-primary`)
-- Canvas API (win line animation, confetti)
-- Web Share API (mobile sharing)
+- Vanilla JavaScript (no frameworks, no runtime dependencies)
+- Split assets: `index.html` + `css/game.css` + `js/game-logic.js` + `js/game.js`
+- Firebase Realtime Database + Anonymous Auth (lazy-loaded, online only)
+- CSS custom properties (paper theme, light/dark)
+- Canvas API (win line, confetti)
+- Web Share / clipboard (invite links)
+
+## Online safety
+
+- Writes require anonymous auth and match a seat `uid` in that room
+- Moves commit via `transaction` (empty cell, your turn, game not over)
+- Room codes use `crypto.getRandomValues` (8 chars, no `0`/`1`/`I`/`O`)
+- Avatar photos are small `data:image/…` JPEGs only (see `firebase-rules.md`)
+
+## Tests
+
+```bash
+node --test test/game-logic.test.mjs
+```
+
+Covers win/draw detection, board/score serialization, room codes, and AI (easy/medium/hard).
 
 ## Customisation
 
@@ -62,9 +77,11 @@ A polished, mobile-first tic-tac-toe game with local and online multiplayer.
 |------|-------|---------|
 | Accent colour | `--accent` in `:root` CSS | Violet `#a29bfe` |
 | Primary accent | `--accent-primary` in `:root` CSS | Purple `#7c6fde` |
-| Emoji categories | `EMOJI_CATS` array in JavaScript | Faces, Animals, Cars, Nature |
-| Photo upload limit | file size check in upload handler | 10 MB |
-| AI difficulty | `aiDifficulty` variable | medium |
+| Paper background | `--bg` in `:root` CSS | `#f7f4ef` |
+| Emoji categories | `EMOJI_CATS` in `js/game.js` | Faces, Animals, Cars, Nature |
+| Photo limits | upload handler | 10 MB file → ~12KB compressed JPEG |
+| AI difficulty | `aiDifficulty` in `js/game.js` | medium |
+| Format | `.prettierrc` | single quotes, width 100 |
 
 ## Browser support
 
@@ -85,6 +102,8 @@ css/game.css        # All styles
 js/game-logic.js    # Pure rules/AI/board helpers (tested)
 js/game.js          # UI, Firebase, online multiplayer
 test/               # node --test for game-logic
+design-qa.md        # Design QA notes for the home screen pass
+.prettierrc         # Formatter config
 manifest.json       # PWA manifest
 sw.js               # Service worker (network-first HTML, no CDN cache)
 icon-192.png        # PWA icon (192×192, purpose any)
