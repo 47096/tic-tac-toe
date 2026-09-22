@@ -1008,3 +1008,20 @@ body::before {
 .title-bg .drift {
   opacity: 0.04;
 }
+
+
+.top-toggles {
+  position: fixed;
+  top: max(env(safe-area-inset-top, 0px), 10px);
+  right: 10px;
+  z-index: 100;
+  display: flex;
+  gap: 6px;
+}
+.top-toggles .theme-toggle {
+  position: static;
+  min-width: 44px;
+  min-height: 36px;
+  justify-content: center;
+  padding: 6px 10px;
+}

@@ -277,17 +277,22 @@
 
   // Sound
   const ax = new (window.AudioContext || window.webkitAudioContext)();
+  let muted = false;
+  try {
+    muted = localStorage.getItem('ttt-muted') === '1';
+  } catch (e) {}
   function resumeAudio() {
     if (ax.state === 'suspended') ax.resume();
   }
   document.addEventListener('click', resumeAudio, { once: true });
   document.addEventListener('touchstart', resumeAudio, { once: true });
-  function note(freq, dur, type, vol, sweep) {
+  function note(freq, dur, type, vol, sweep, delay) {
+    if (muted) return;
     try {
       resumeAudio();
-      const t = ax.currentTime,
-        o = ax.createOscillator(),
-        g = ax.createGain();
+      const t = ax.currentTime + (delay || 0);
+      const o = ax.createOscillator();
+      const g = ax.createGain();
       o.type = type || 'sine';
       o.frequency.setValueAtTime(freq, t);
       if (sweep) o.frequency.exponentialRampToValueAtTime(sweep, t + dur);
@@ -301,27 +306,48 @@
       o.stop(t + dur);
     } catch (e) {}
   }
-  function sndPlace() {
-    note(900, 0.08, 'sine', 0.06, 500);
-    note(600, 0.06, 'triangle', 0.04);
+  function tick(vol, freq, delay) {
+    note(freq || 2400, 0.018, 'triangle', vol || 0.03, (freq || 2400) * 0.4, delay || 0);
+  }
+  function pitchJitter(base) {
+    return base * (1 + (Math.random() - 0.5) * 0.06);
+  }
+  // P1 = lower wood knock, P2 = lighter tick
+  function sndPlace(player) {
+    const j = pitchJitter(1);
+    if (player === 1) {
+      note(720 * j, 0.07, 'sine', 0.055, 420 * j);
+      note(980 * j, 0.04, 'triangle', 0.03);
+      tick(0.025, 3200 * j);
+    } else {
+      note(520 * j, 0.08, 'sine', 0.06, 300 * j);
+      note(640 * j, 0.05, 'triangle', 0.035);
+      tick(0.03, 1800 * j);
+    }
   }
   function sndWin() {
-    const v = 0.08;
-    note(523, 0.15, 'sine', v);
-    note(523, 0.15, 'triangle', v * 0.5);
-    setTimeout(() => {
-      note(659, 0.15, 'sine', v);
-      note(659, 0.15, 'triangle', v * 0.5);
-    }, 100);
-    setTimeout(() => {
-      note(784, 0.3, 'sine', v);
-      note(784, 0.3, 'triangle', v * 0.5);
-      note(1047, 0.3, 'sine', v * 0.3);
-    }, 200);
+    // Rise timed to the ~400ms win-line draw
+    const v = 0.07;
+    const seq = [
+      [523, 0.12, 0],
+      [659, 0.12, 120],
+      [784, 0.14, 240],
+      [1047, 0.35, 360]
+    ];
+    for (let i = 0; i < seq.length; i++) {
+      const f = seq[i][0];
+      const d = seq[i][1];
+      const delay = seq[i][2] / 1000;
+      note(f, d, 'sine', v, undefined, delay);
+      note(f, d, 'triangle', v * 0.4, undefined, delay);
+    }
+    tick(0.04, 5200, 0.02);
   }
   function sndDraw() {
-    note(440, 0.15, 'triangle', 0.06);
-    setTimeout(() => note(370, 0.25, 'triangle', 0.05), 120);
+    note(440, 0.15, 'triangle', 0.055);
+    setTimeout(function () {
+      note(370, 0.25, 'triangle', 0.045);
+    }, 120);
   }
 
   // Helpers
@@ -1140,7 +1166,7 @@
       // Play sound for opponent's new placement
       for (let i = 0; i < 9; i++) {
         if (nb[i] !== null && prevBoard[i] === null && nb[i] !== playerIndex) {
-          sndPlace();
+          sndPlace(nb[i]);
           break;
         }
       }
@@ -1349,7 +1375,7 @@
           showOnlineError('Move rejected — cell taken or not your turn');
           return;
         }
-        sndPlace();
+        sndPlace(myIndex);
         const row = Math.floor(i / 3) + 1,
           col = (i % 3) + 1;
         announce('Player ' + (myIndex + 1) + ' placed at row ' + row + ' column ' + col);
@@ -1389,7 +1415,7 @@
     }
     const cur = state.turn;
     state.board[i] = cur;
-    sndPlace();
+    sndPlace(cur);
     const row = Math.floor(i / 3) + 1,
       col = (i % 3) + 1;
     announce('Player ' + (cur + 1) + ' placed at row ' + row + ' column ' + col);
@@ -1428,7 +1454,7 @@
     const move = aiBestMove(state.board.slice(), 1);
     if (move < 0) return;
     state.board[move] = 1;
-    sndPlace();
+    sndPlace(1);
     const row = Math.floor(move / 3) + 1,
       col = (move % 3) + 1;
     announce('Computer placed at row ' + row + ' column ' + col);
@@ -2059,4 +2085,26 @@
   themeToggle.textContent = initialTheme === 'dark' ? '☀️ Light' : '🌙 Dark';
 
   themeToggle.addEventListener('click', toggleTheme);
+
+  // Sound mute
+  const muteToggle = $('mute-toggle');
+  function syncMuteBtn() {
+    if (!muteToggle) return;
+    muteToggle.textContent = muted ? '🔇' : '🔊';
+    muteToggle.setAttribute('aria-label', muted ? 'Unmute sounds' : 'Mute sounds');
+    muteToggle.title = muted ? 'Unmute sounds' : 'Mute sounds';
+    muteToggle.setAttribute('aria-pressed', muted ? 'true' : 'false');
+  }
+  function toggleMute() {
+    muted = !muted;
+    try {
+      localStorage.setItem('ttt-muted', muted ? '1' : '0');
+    } catch (e) {}
+    syncMuteBtn();
+    if (!muted) sndPlace(0);
+  }
+  if (muteToggle) {
+    syncMuteBtn();
+    muteToggle.addEventListener('click', toggleMute);
+  }
 })();
