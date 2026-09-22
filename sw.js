@@ -1,9 +1,19 @@
-const CACHE = 'ttt-v1';
+// Cache shell for offline; always revalidate code so HTML/CSS/JS never split.
+const CACHE = 'ttt-v2';
 const ASSETS = ['./', './index.html', './manifest.json'];
 
+function isCode(req) {
+  const path = new URL(req.url).pathname;
+  return path.endsWith('.css') || path.endsWith('.js') || path.endsWith('.html') || path.endsWith('/');
+}
+
+function isImmutableAsset(req) {
+  const path = new URL(req.url).pathname;
+  return path.endsWith('.png') || path.endsWith('.svg') || path.endsWith('.webp') || path.endsWith('.ico') || path.endsWith('manifest.json');
+}
+
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)));
-  self.skipWaiting();
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (e) => {
@@ -11,52 +21,57 @@ self.addEventListener('activate', (e) => {
     caches
       .keys()
       .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+      .then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
 self.addEventListener('fetch', (e) => {
-  const url = new URL(e.request.url);
+  const req = e.request;
+  if (req.method !== 'GET') return;
 
-  // Never cache third-party SDK (Firebase / gstatic) — always fetch fresh
+  const url = new URL(req.url);
+
+  // Third-party SDK (Firebase / gstatic) — always network
   if (url.origin !== self.location.origin) {
-    e.respondWith(fetch(e.request));
+    e.respondWith(fetch(req));
     return;
   }
 
-  // Network-first for HTML pages — always get fresh when online, fall back to cache when offline
-  if (
-    e.request.mode === 'navigate' ||
-    (e.request.headers.get('accept') || '').includes('text/html')
-  ) {
+  // HTML / CSS / JS — network-first so a soft refresh never pairs new markup with old styles
+  if (req.mode === 'navigate' || isCode(req)) {
     e.respondWith(
-      fetch(e.request)
+      fetch(req)
         .then((res) => {
           if (res.ok) {
             const clone = res.clone();
-            caches.open(CACHE).then((c) => c.put(e.request, clone));
+            caches.open(CACHE).then((c) => c.put(req, clone));
           }
           return res;
         })
-        .catch(() => caches.match(e.request).then((r) => r || caches.match('./')))
+        .catch(() =>
+          caches.match(req).then((r) => r || caches.match('./').then((home) => home || Response.error()))
+        )
     );
     return;
   }
 
-  // Cache-first for same-origin assets (icons, manifest, etc.)
-  e.respondWith(
-    caches.match(e.request).then(
-      (r) =>
-        r ||
-        fetch(e.request)
-          .then((res) => {
-            if (res.ok && e.request.method === 'GET') {
+  // Icons / manifest — cache-first
+  if (isImmutableAsset(req)) {
+    e.respondWith(
+      caches.match(req).then(
+        (hit) =>
+          hit ||
+          fetch(req).then((res) => {
+            if (res.ok) {
               const clone = res.clone();
-              caches.open(CACHE).then((c) => c.put(e.request, clone));
+              caches.open(CACHE).then((c) => c.put(req, clone));
             }
             return res;
           })
-          .catch(() => caches.match('./'))
-    )
-  );
+      )
+    );
+    return;
+  }
+
+  e.respondWith(fetch(req).catch(() => caches.match(req).then((r) => r || Response.error())));
 });
